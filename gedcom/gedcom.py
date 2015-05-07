@@ -3,6 +3,43 @@ import re
 
 reline = re.compile("^ *([0-9]+) +((@[^\s]*@) +)?([^\s]+)( +(.*))?$")
 
+class SpecialHandling:
+    def __init__(self):
+        self.redate = re.compile(
+                "^(?P<beforeafter>BEF\. |AFT\. |ABT\. )?"
+                "(?P<full>"
+                    "(?P<yearA>[1-9][0-9]*)"
+                    "|"
+                    "(?P<dayB>[1-9][0-9]?) (?P<monthB>[A-Z]+) (?P<yearB>[1-9][0-9]*)"
+                    "|"
+                    "BET\. (?P<yearC1>[1-9][0-9]*) - (?P<yearC2>[1-9][0-9]*)"
+                ")$")
+    def check(self, entry):
+        if hasattr(self, entry.tag):
+            func = getattr(self, entry.tag)
+            func(entry)
+    def DATE(self, entry):
+        match = self.redate.match(entry.value)
+        if match:
+            modifier = match.groupdict()["beforeafter"]
+            if modifier:
+                modifier = modifier.strip(". ")
+            if match.groupdict()["yearA"]:
+                year = int(match.groupdict()["yearA"])
+            elif match.groupdict()["yearB"]:
+                year = int(match.groupdict()["yearB"])
+            elif match.groupdict()["yearC1"]:
+                year = (int(match.groupdict()["yearC1"]) + int(match.groupdict()["yearC2"])) / 2
+                if not modifier:
+                    modifier = match.groupdict()["full"]
+            else:
+                year = None
+            entry.additional["year"] = year
+            entry.additional["year_modifier"] = modifier
+        else:
+            print "no match: " + entry.value
+specials = SpecialHandling()
+
 class Entry:
     def __init__(self, level, xref, tag, value):
         self.level = level
@@ -12,6 +49,9 @@ class Entry:
 
         self.children = {}
         self.parent = None
+
+        self.additional = {}
+        specials.check(self)
 
     def add_child(self, child):
         if child.tag not in self.children:
@@ -33,13 +73,15 @@ class Entry:
         for tag, lst in self.children.items():
             for entry in lst:
                 children.append(entry.as_dict())
-        return {
+        obj = {
             "level": self.level,
             "xref": self.xref,
             "tag": self.tag,
             "value": self.value,
             "children": children,
         }
+        obj.update(self.additional)
+        return obj
 
     def by_tag(self, tag):
         return children.get(tag, None)
