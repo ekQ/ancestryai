@@ -1,4 +1,8 @@
 
+* {
+    font-family: Arial;
+}
+
 /*#infoviz {
     background-color: #222222;
     color: #cccccc;
@@ -6,9 +10,19 @@
     height: 400px;
 }*/
 
+.topmenu ul {
+    display: flex;
+    flex-direction: row;
+    padding: 0px;
+}
+.topmenu ul li {
+    display: inline-block;
+    padding: 0px 20px;
+}
+
 svg#tree {
-    width: 400px;
-    height: 400px;
+    width: 800px;
+    height: 600px;
 }
 svg .node circle {
     fill: #ccffcc;
@@ -22,3 +36,4 @@ svg text {
     color: #000;
     box-shadow:
 }
+
