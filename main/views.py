@@ -8,6 +8,7 @@ from flask import (
     abort,
     jsonify,
 )
+from flask.ext.babel import refresh
 from . import app
 from gedcom import gedcom
 
@@ -24,4 +25,11 @@ def json_individual(xref):
         "result": True if entry else False,
         "entry": entry.as_dict() if entry else None,
     })
+
+# todo: only accept as post
+@app.route("/language/<lang>/", methods=["get", "post"])
+def language(lang):
+    app.config["BABEL_DEFAULT_LOCALE"] = lang
+    refresh()
+    return redirect(url_for("index"))
 

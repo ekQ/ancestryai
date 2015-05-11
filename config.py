@@ -7,5 +7,6 @@ DEBUG_TB_INTERCEPT_REDIRECTS = False
 CSRF_ENABLED = True
 SECRET_KEY = "secret_key"
 
-DB_URI = "sqlite:///{0}".format(os.path.join(basedir, "data.db"))
+DB_URI = "sqlite:///{}".format(os.path.join(basedir, "data.db"))
 
+BABEL_DEFAULT_LOCALE = "en"

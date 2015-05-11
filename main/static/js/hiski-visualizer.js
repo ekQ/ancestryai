@@ -1,5 +1,27 @@
 
-i18n.init(function(t) {});
+//i18n.init(function(t) {});
+
+app = angular.module("HiskiVisualizer", ["pascalprecht.translate"]);
+app.controller("TopMenuController", function($scope, $translate) {
+        var topMenu = this;
+        topMenu.blue = function() {
+            $(".main").css("background-color", "#ccccff");
+        };
+        topMenu.set_language = function(lang) {
+            $translate.use(lang);
+        };
+    });
+app.config(function($translateProvider) {
+    for(key in translations) {
+        $translateProvider.translations(key, translations[key]);
+        console.warn(key + " added?");
+    }
+    $translateProvider.preferredLanguage("en");
+    // no sanitation strategy, because we should be in full control of all data
+    $translateProvider.useSanitizeValueStrategy(null);
+//    $translateProvider.useCookieStorage();
+});
+
 
 function get_field_obj(field) {
     var subs = field.split(".");
@@ -426,14 +448,6 @@ var Hiski = {
         }
     },
 };
-
-angular.module("HiskiVisualizer", [])
-    .controller("TopMenuController", function($scope) {
-        var topMenu = this;
-        topMenu.blue = function() {
-            $(".main").css("background-color", "#ccccff");
-        };
-    });
 
 
 function d3_init() {

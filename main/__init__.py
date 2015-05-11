@@ -6,6 +6,7 @@ from flask import (
     request,
 )
 from flask.ext.debugtoolbar import DebugToolbarExtension
+from flask.ext.babel import Babel, gettext
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -20,6 +21,8 @@ def create_app():
     database.init_database(app)
 
     app.toolbar = DebugToolbarExtension(app)
+
+    app.babel = Babel(app)
 
     @app.before_request
     def before_request():
