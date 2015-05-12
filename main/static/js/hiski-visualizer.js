@@ -70,6 +70,7 @@ function Node(data) {
     this.x = _.random(0, 400) + 200;
     this.y = 0;//(this.get_field_obj("BIRT.DATE").year - 1750)*3 - 100;
     this.y = (this.get_field_obj("BIRT.DATE").year - 1750)*3 - 200;
+    this.year = this.get_field_obj("BIRT.DATE").year;
     this.name = this.get_field("NAME");
     this.real_y = this.y;
 
@@ -421,7 +422,7 @@ var Hiski = {
         };
         var x = 100;
         var pad = 80;
-        var pad_years = 30;
+        var pad_years = 10;
         var years_x = [];
         for(var i = 0; i < 3000; i++) {
             years_x.push(x);
@@ -431,11 +432,11 @@ var Hiski = {
             var pos = node_preferred_position(node);
             node.y = pos[1];
             var maxx = 0;
-            for(var j = node.y - pad_years; j < node.y + pad_years; j++) {
+            for(var j = node.year - pad_years; j < node.year + pad_years; j++) {
                 maxx = Math.max(maxx, years_x[j]);
             }
             node.x = maxx + pad;
-            for(var j = node.y - pad_years; j < node.y + pad_years; j++) {
+            for(var j = node.year - pad_years; j < node.year + pad_years; j++) {
                 years_x[j] = node.x;
             }
             node.real_y = pos[1];
@@ -488,20 +489,63 @@ var Hiski = {
     },
 };
 
+var container = null;
+var zoom = null;
+function zoomed() {
+    container.attr("transform", "translate("+d3.event.translate+")scale("+d3.event.scale+")");
+    console.warn(zoom.scale());
+}
+function dragstarted(d) {
+    d3.event.sourceEvent.stopPropagation();
+    d3.select(this).classed("dragging", true);
+}
+function dragged(d) {
+    d3.select(this)
+            .attr("cx", d.x = d3.event.x)
+            .attr("cy", dy = d3.event.y);
+}
+function dragended(d) {
+    d3.select(this).classed("dragging", false);
+}
 
 function d3_init() {
-    svg = d3.select("svg#tree");
+    zoom = d3.behavior.zoom()
+            .scaleExtent([0.1, 10])
+            .on("zoom", zoomed)
+            ;
+    var drag = d3.behavior.drag()
+            .origin(function(d) { return d; })
+            .on("dragstart", dragstarted)
+            .on("drag", dragged)
+            .on("dragend", dragended)
+            ;
+
+    svg = d3.select("svg#tree")
+            .append("g")
+            .classed("zoomnpan", true)
+            .call(zoom)
+            ;
+    var background = svg.append("rect")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .style("fill", "none")
+            .style("pointer-events", "all")
+            ;
+    container = svg.append("g")
+            .classed("container", true)
+            ;
     var layers = ["debug", "links", "nodes", "relations"];
-    svg.selectAll("g.layer")
+    container.selectAll("g.layer")
             .data(layers)
             .enter()
             .append("g")
             .attr("class", function(d) { return d; })
             .classed("layer", true)
             ;
-    Hiski.linksvg = svg.selectAll("g.layer.links").selectAll("g.link");
-    Hiski.nodesvg = svg.selectAll("g.layer.nodes").selectAll("g.node");
-    Hiski.relationsvg = svg.selectAll("g.layer.relations").selectAll("g.relation");
+    Hiski.linksvg = container.selectAll("g.layer.links").selectAll("g.link");
+    Hiski.nodesvg = container.selectAll("g.layer.nodes").selectAll("g.node");
+    Hiski.relationsvg = container.selectAll("g.layer.relations").selectAll("g.relation");
+
 
 //    Hiski.forcenodes = [];
 //    Hiski.forcelinks = [];
