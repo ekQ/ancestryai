@@ -1,6 +1,4 @@
 
-//i18n.init(function(t) {});
-
 app = angular.module("HiskiVisualizer", ["pascalprecht.translate"]);
 app.controller("TopMenuController", function($scope, $translate) {
         var menu = this;
@@ -17,7 +15,6 @@ app.controller("TopMenuController", function($scope, $translate) {
 app.config(function($translateProvider) {
     for(key in translations) {
         $translateProvider.translations(key, translations[key]);
-//        console.warn(key + " added?");
     }
     $translateProvider.preferredLanguage("en");
 //    $translateProvider.useCookieStorage();
@@ -68,8 +65,8 @@ function Node(data) {
     this.get_field_obj = get_field_obj;
 
     this.x = _.random(0, 400) + 200;
-    this.y = 0;//(this.get_field_obj("BIRT.DATE").year - 1750)*3 - 100;
-    this.y = (this.get_field_obj("BIRT.DATE").year - 1750)*3 - 200;
+    this.y = 0;//(this.get_field_obj("BIRT.DATE").year - 1750)*4 - 100;
+    this.y = (this.get_field_obj("BIRT.DATE").year - 1750)*4 - 600;
     this.year = this.get_field_obj("BIRT.DATE").year;
     this.name = this.get_field("NAME");
     this.real_y = this.y;
@@ -149,36 +146,35 @@ function Relation(data) {
         return (avgchildren + avgspouse) / 2;
     };
     this.get_preferred_y = function() {
-        var sumspouse = 0.0;
-        var numspouse = 0;
-        var sumchildren = 0.0;
-        var numchildren = 0;
         var arr = this.get_nodes();
+        var minchild = null;
+        var maxspouse = null;
         for(var i = 0; i < arr.length; i++) {
             var xref = arr[i][0];
             var type = arr[i][1];
             if(xref in Hiski.node_dict) {
+                var val = Hiski.node_dict[xref].get_y();
                 if(type == "child") {
-                    sumchildren += Hiski.node_dict[xref].get_y();
-                    numchildren += 1;
+                    if(minchild === null)
+                        minchild = val;
+                    else
+                        minchild = Math.min(minchild, val);
                 } else {
-                    sumspouse += Hiski.node_dict[xref].get_y();
-                    numspouse += 1;
+                    if(maxspouse === null)
+                        maxspouse = val;
+                    else
+                        maxspouse = Math.max(maxspouse, val);
                 }
             }
         }
-        if(numspouse == 0 && numchildren == 0)
+        if(minchild === null && maxspouse === null)
             return this.y;
-        if(numspouse == 0) {
-            var avgchildren = sumchildren / numchildren;
-            return avgchildren - 40;
-        } else if(numchildren == 0) {
-            var avgspouse = sumspouse / numspouse;
-            return avgspouse + 40;
+        if(maxspouse === null) {
+            return minchild - 40;
+        } else if(minchild === null) {
+            return maxspouse + 40;
         }
-        var avgchildren = sumchildren / numchildren;
-        var avgspouse = sumspouse / numspouse;
-        return (avgchildren + avgspouse) / 2;
+        return (minchild + maxspouse) / 2;
     };
 
     this.get_nodes = function() {
@@ -402,17 +398,12 @@ var Hiski = {
         });
     },
 
-    // force layout stuff
-    forcenodes: [],
-    forcelinks: [],
-/*    force_links: [],
-    layout: null,*/
     // custom layout stuff
     node_order: [],
     calc_layout: function() {
         var node_preferred_position = function(node) {
             var x = node.x;
-            var y = (node.get_field_obj("BIRT.DATE").year - 1750)*3 - 200;
+            var y = (node.get_field_obj("BIRT.DATE").year - 1750)*4 - 600;
             return [x, y];
         };
         var relation_preferred_position = function(relation) {
@@ -447,44 +438,6 @@ var Hiski = {
             relation.x = pos[0];
             relation.y = pos[1];
             relation.real_y = pos[1];
-        }
-        return;
-        for(var i = 0; i < this.nodes.length; i++) {
-            var node = this.nodes[i];
-            var pos = node_preferred_position(node);
-            node.x = pos[0];
-            node.y = pos[1];
-            node.real_y = pos[1];
-        }
-/*        var node_distance = 80;
-        for(var i = 0; i < this.relations.length; i++) {
-            var relation = this.relations[i];
-            var husband = relation.get_husband();
-            var wife = relation.get_wife();
-            if(husband && wife) {
-//                if(Math.abs(husband.x - wife.x) < node_distance) {
-//                    var avg = (husband.x + wife.x) / 2;
-                    var avg = relation.get_x();
-                    if(husband.x < wife.x) {
-                        husband.x = avg - node_distance / 2;
-                        wife.x = avg + node_distance / 2;
-                    } else {
-                        husband.x = avg - node_distance / 2;
-                        wife.x = avg + node_distance / 2;
-                    }
-//                }
-            }
-            var children = relation.get_children();
-            for(var j = 0; j < children.length; j++) {
-                var child = children[j];
-                if(!child)
-                    continue;
-                child.x = relation.get_x() + node_distance * (j - children.length/2.0);
-            }
-        }*/
-        for(var i = 0; i < this.nodes.length; i++) {
-            var node = this.nodes[i];
-            node.x = 800.0 / (this.nodes.length + 1) * (i + 1);
         }
     },
 };
@@ -545,38 +498,6 @@ function d3_init() {
     Hiski.linksvg = container.selectAll("g.layer.links").selectAll("g.link");
     Hiski.nodesvg = container.selectAll("g.layer.nodes").selectAll("g.node");
     Hiski.relationsvg = container.selectAll("g.layer.relations").selectAll("g.relation");
-
-
-//    Hiski.forcenodes = [];
-//    Hiski.forcelinks = [];
-//    Hiski.forcenodesvg = svg.selectAll("g.layer.debug").selectAll(".forcenode");
-//    Hiski.forcelinksvg = svg.selectAll("g.layer.debug").selectAll(".forcelink");
-
-/*    var bbox = d3.select("div.main").node().getBoundingClientRect();
-    Hiski.layout = d3.layout.force()
-            .nodes(Hiski.forcenodes)
-            .links(Hiski.forcelinks)
-            .charge(function(d) {
-                    return d.type == "relation" ? 1800 : -1800;
-                })
-            .chargeDistance(60)
-            .linkDistance(2)
-            .friction(0.8)
-            .gravity(0.02)
-            .linkStrength(0.01)
-            .size([bbox.width, bbox.height])
-            .on("tick", forcetick)
-            ;*/
-
-/*    setTimeout(function() {
-        var gety = function() { return this.forcey; };
-        var a = {id: "aa", x:200, y:200, forcey:200, get_y:gety},
-            b = {id: "bb", x:300, y:300, forcey:210, get_y:gety},
-            c = {id: "cc", x:200, y:300, forcey:220, get_y:gety};
-        Hiski.forcenodes.push(a, b, c);
-        Hiski.forcelinks.push({source:a, target:b}, {source:a, target:c});
-        forcestart();
-    }, 1000);*/
 }
 
 function render() {
@@ -690,76 +611,9 @@ function render() {
             ;
 
 
-//    forcestart();
-}
-function forcestart() {
-    Hiski.forcelinksvg = Hiski.forcelinksvg
-            .data(Hiski.layout.links(), function(d) { return d.source.xref + "-" + d.target.xref; })
-            ;
-    Hiski.forcelinksvg.enter()
-            .insert("line", ".forcenode")
-                .attr("class", "forcelink")
-                .attr("stroke", "#000")
-            ;
-    Hiski.forcelinksvg.exit()
-            .remove()
-            ;
-
-    Hiski.forcenodesvg = Hiski.forcenodesvg
-            .data(Hiski.layout.nodes(), function(d) { return d.xref; })
-            ;
-    Hiski.forcenodesvg.enter()
-            .append("circle")
-                .attr("class", function(d) { return ".forcenode " + d.xref; })
-                .attr("r", 8)
-//                .attr("cx", function(d) { return d.x; })
-                .attr("cx", function(d) { return d.x > 0 && d.x < 800 ? d.x : 10; })
-                .attr("cy", function(d) { return d.y > 0 && d.y < 800 ? d.y : 10; })
-            ;
-    Hiski.forcenodesvg.exit()
-            .remove()
-            ;
-
-    Hiski.layout.start();
-}
-function forcetick() {
-    Hiski.forcenodesvg
-            .attr("cx", function(d) { return d.x > 0 && d.x < 800 ? d.x : 10; })
-            .attr("cy", function(d) {
-                    d.y = d.get_y();
-                    if(d.type == "relation")
-                        d.y = d.get_preferred_y();
-                    return d.y > 0 && d.y < 800 ? d.y : 10;
-                })
-            ;
-    Hiski.forcelinksvg
-            .attr("x1", function(d) { return d.source.x; })
-            .attr("y1", function(d) { return d.source.y; })
-            .attr("x2", function(d) { return d.target.x; })
-            .attr("y2", function(d) { return d.target.y; })
-            ;
-    Hiski.nodesvg
-            .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
-            ;
-    Hiski.relationsvg
-            .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
-            ;
-    Hiski.linksvg
-            .attr("transform", function(d) {
-                    var x = d.relation.get_x();
-                    var y = d.relation.get_y();
-                    return "translate("+x+","+y+")";
-                })
-            ;
-    Hiski.linksvg.selectAll("path")
-            .attr("d", function(d) {
-                    return line_function(d.get_path_points())
-                })
-            ;
 }
 
 $(document).ready(function() {
-    //infoviz_init();
     d3_init();
     render();
     Hiski.load("@I01@", null);
