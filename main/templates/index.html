@@ -1,5 +1,5 @@
 {% extends "base.html" %}
 
 {% block body %}
-{{_("hello world")}} &lt;- that one is from flask-babel and thus won't change with angular translation change.
+{{_("hello world")}} &lt;- that one is from flask-babel and thus won't change with angular translation change. <a href="{{ url_for('language', lang='fi') }}">fi</a> <a href="{{ url_for('language', lang='en') }}">en</a>
 {% endblock %}

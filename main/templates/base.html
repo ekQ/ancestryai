@@ -18,19 +18,19 @@
 </head>
 <body>
     {% raw %}
-    <div class="topmenu" ng-controller="TopMenuController as topMenu">
+    <div class="topmenu" ng-controller="TopMenuController as menu">
         <ul>
-            <li ng-click="topMenu.blue()" translate>Entry</li>
-            <li ng-click="topMenu.blue()" translate>Tree</li>
-            <li translate>Map</li>
+            <li ng-click="menu.blue()" translate>Entry</li>
+            <li ng-click="menu.blue()" translate>Tree</li>
+            <li ng-click="menu.set_color('#c0ffee')" translate>Map</li>
             <li translate>Search</li>
-            <li ng-click="topMenu.set_language('fi')" translate>Finnish</li>
-            <li ng-click="topMenu.set_language('en')" translate>English</li>
+            <li ng-click="menu.set_language('fi')" translate>Finnish</li>
+            <li ng-click="menu.set_language('en')" translate>English</li>
         </ul>
     </div>
     {% endraw %}
     <div class="body">
-        <div id="infoviz" class="main" width=400px height=400px>
+        <div id="infoviz" class="main">
             <svg id="tree">
                 <filter id="dropshadow" height="130%">
                     <feGaussianBlur in="SourceAlpha" stdDeviation="1"/> <!-- how much to blur -->
@@ -47,8 +47,10 @@
                     </feMerge>
                 </filter>
             </svg>
-            {% block body %}
-            {% endblock %}
+            <div class="teststuff">
+                {% block body %}
+                {% endblock %}
+            </div>
         </div>
         <div class="sidebar">
             {% block sidebar %}
