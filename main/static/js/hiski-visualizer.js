@@ -318,74 +318,74 @@ var Hiski = {
     // nodes / people
     nodes: [],
     node_dict: {},
-    add_node: function(node, reference) {
-        if(node.xref in this.node_dict) {
+    add_node: function(node_data, reference) {
+        if(node_data.xref in this.node_dict) {
             // update existing?
         } else {
-            var nodeobj = new Node(node);
+            var node = new Node(node_data);
 
-            this.nodes.push(nodeobj);
-            this.node_dict[nodeobj.xref] = nodeobj;
-            var neighbors = nodeobj.get_relation_xrefs();
+            this.nodes.push(node);
+            this.node_dict[node.xref] = node;
+            var neighbors = node.get_relation_xrefs();
             for(var i = 0; i < neighbors.length; i++) {
                 var n = neighbors[i];
                 var nxref = n[0];
                 var type = n[1];
-                this.add_link(this.relation_dict[nxref], nodeobj, type);
+                this.add_link(this.relation_dict[nxref], node, type);
             }
-//            this.node_order.push(nodeobj);
+//            this.node_order.push(node);
             var order_i = 0;
             if(reference) {
-                var linktype = find_link_type(nodeobj, reference);
+                var linktype = find_link_type(node, reference);
                 if(linktype == "child") {
-                    if(nodeobj.parents.length > 0) {
-                        order_i = this.node_order.indexOf(nodeobj.parents[0].rightmost_subnode) + 1;
-                    } else if(nodeobj.siblings.length > 0) {
-                        order_i = this.node_order.indexOf(_.last(nodeobj.siblings).rightmost_subnode) + 1;
+                    if(node.parents.length > 0) {
+                        order_i = this.node_order.indexOf(node.parents[0].rightmost_subnode) + 1;
+                    } else if(node.siblings.length > 0) {
+                        order_i = this.node_order.indexOf(_.last(node.siblings).rightmost_subnode) + 1;
                     }
-                } else if(nodeobj.spouses.length > 0) {
-                    order_i = this.node_order.indexOf(nodeobj.spouses[0]) + 1;
-                } else if(nodeobj.children.length > 0) {
-                    order_i = this.node_order.indexOf(nodeobj.children[0]);
+                } else if(node.spouses.length > 0) {
+                    order_i = this.node_order.indexOf(node.spouses[0]) + 1;
+                } else if(node.children.length > 0) {
+                    order_i = this.node_order.indexOf(node.children[0]);
                 } else {
                     throw new Error("Eh?");
                 }
             }
-            this.node_order.splice(order_i, 0, nodeobj);
-            update_rightmost_subnode(nodeobj);
+            this.node_order.splice(order_i, 0, node);
+            update_rightmost_subnode(node);
         }
     },
     // relations / families
     relations: [],
     relation_dict: {},
-    add_relation: function(relation) {
-        if(relation.xref in this.relation_dict) {
+    add_relation: function(relation_data) {
+        if(relation_data.xref in this.relation_dict) {
             // update existing?
         } else {
-            var relationobj = new Relation(relation);
-            this.relations.push(relationobj);
-            this.relation_dict[relationobj.xref] = relationobj;
-            var neighbors = relationobj.get_node_xrefs();
+            var relation = new Relation(relation_data);
+            this.relations.push(relation);
+            this.relation_dict[relation.xref] = relation;
+            var neighbors = relation.get_node_xrefs();
             for(var i = 0; i < neighbors.length; i++) {
                 var n = neighbors[i];
                 var nxref = n[0];
                 var type = n[1];
-                this.add_link(relationobj, this.node_dict[nxref], type);
+                this.add_link(relation, this.node_dict[nxref], type);
             }
         }
     },
     // links between nodes and relations
     links: [],
     link_dict: {},
-    add_link: function(relationobj, nodeobj, type) {
-        if(!relationobj || !nodeobj)
+    add_link: function(relation, node, type) {
+        if(!relation || !node)
             return;
-        link_node_to(nodeobj, relationobj, find_link_type(nodeobj, relationobj));
-        var linkid = create_link_id(relationobj, nodeobj);
+        link_node_to(node, relation, find_link_type(node, relation));
+        var linkid = create_link_id(relation, node);
         if(linkid in this.link_dict) {
             // update existing or ignore?
         } else {
-            linkobj = new Link(relationobj, nodeobj, type);
+            linkobj = new Link(relation, node, type);
             this.links.push(linkobj);
             this.link_dict[linkobj.id] = linkobj;
         }
