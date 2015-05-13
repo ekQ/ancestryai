@@ -458,6 +458,9 @@ var Hiski = {
             relation.real_y = pos[1];
         }
     },
+
+    // map related
+    map: null,
 };
 
 var container = null;
@@ -523,8 +526,8 @@ function render() {
             .data(Hiski.links)
             ;
     Hiski.linksvg
-//            .transition()
-//            .duration(duration)
+            .transition()
+            .duration(duration)
             .attr("transform", function(d) {
                     var x = d.relation.get_x();
                     var y = d.relation.get_y();
@@ -546,8 +549,8 @@ function render() {
             .attr("stroke", "#000")
             ;
     Hiski.linksvg.selectAll("path")
-//            .transition()
-//            .duration(duration)
+            .transition()
+            .duration(duration)
             .attr("d", function(d) {
                     return line_function(d.get_path_points())
                 })
@@ -558,8 +561,8 @@ function render() {
             .data(Hiski.nodes)
             ;
     Hiski.nodesvg
-//            .transition()
-//            .duration(duration)
+            .transition()
+            .duration(duration)
             .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
             ;
     var newnodes = Hiski.nodesvg.enter()
@@ -613,8 +616,8 @@ function render() {
             .data(Hiski.relations)
             ;
     Hiski.relationsvg
-//            .transition()
-//            .duration(duration)
+            .transition()
+            .duration(duration)
             .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
             ;
     var newrelations = Hiski.relationsvg.enter()
@@ -630,8 +633,61 @@ function render() {
 
 }
 
+function map_init() {
+    Hiski.map = new google.maps.Map(d3.select("#map").node(), {
+            zoom: 8,
+            center: new google.maps.LatLng(37., 12.),
+            mapTypeId: google.maps.MapTypeId.TERRAIN,
+            });
+    var overlay = new google.maps.OverlayView();
+    var fakedata = [
+        {xx: 37.1, yy: 12.1},
+        {xx: 37.01, yy: 12.01},
+        {xx: 37.001, yy: 12.001},
+        {xx: 37.0001, yy: 12.0001},
+        {xx: 37., yy: 12.},
+    ];
+    overlay.onAdd = function() {
+        var layer = d3.select(this.getPanes().overlayLayer)
+                .append("svg")
+                .attr("class", "foobar")
+                ;
+
+        // if it is panned over 1000 pixels in a direction, we are out of drawable area of this svg...
+        overlay.draw = function() {
+            layer.style("margin-left", "-1000px")
+                    .style("margin-top", "-1000px")
+                    .attr("width", "3000px")
+                    .attr("height", "3000px")
+                    ;
+
+            var projection = this.getProjection();
+            var padding = 10;
+            var marker = layer.selectAll("circle")
+                    .data(fakedata)
+                    .each(transform)
+                .enter()
+                    .append("svg:circle")
+                    .attr("r", 4.5)
+                    .each(transform)
+                    .attr("class", "marker")
+                    ;
+            function transform(d) {
+                d = new google.maps.LatLng(d.xx, d.yy);
+                d = projection.fromLatLngToDivPixel(d);
+                return d3.select(this)
+                        .attr("cx", d.x + 1000)
+                        .attr("cy", d.y + 1000)
+                        ;
+            }
+        };
+    };
+    overlay.setMap(Hiski.map);
+}
+
 $(document).ready(function() {
     d3_init();
+    map_init();
     render();
     Hiski.load("@I01@", null);
 });
