@@ -11,7 +11,11 @@ metadata = None
 
 def init_database(app):
     global engine, session, Base, metadata
-    engine = create_engine(app.config["DB_URI"], echo=True, convert_unicode=True)
+    engine = create_engine(
+            app.config["DB_URI"],
+            echo=False,
+            convert_unicode=True,
+            )
     session = scoped_session(sessionmaker(
             autocommit = False,
             autoflush = False,

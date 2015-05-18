@@ -7,15 +7,17 @@ commands
      |  subcommands
      |   |
      V   V
-    run           - runs the server
-        debug       - has the debug mode on while running
-        open        - open for connections from outside localhost
-    db            - database related commands
-        delete      - deletes the current database
-        create      - creates an empty database
-        export      - exports database into data.json
-        import      - imports database data from data.json
-        fixture     - imports database data from fixture.json
+    run               - runs the server
+        debug           - has the debug mode on while running
+        open            - open for connections from outside localhost
+    db                - database related commands
+        delete          - deletes the current database
+        create          - creates an empty database
+        export          - exports database into data.json
+        import          - imports database data from data.json
+        fixture         - imports database data from fixture.json
+    populate          - populate database entries from a source
+        gedcom <fname>  - populate from a gedcom file
 """.format(sys.argv[0])
     sys.exit(0)
 
@@ -51,5 +53,11 @@ if command == "db":
         from nirflaskaid import fixturetools
         fixturetools.export_file("data.json")
         print "* database exported"
-
+if command == "populate":
+    import main
+    from main.populate import *
+    for i,sub in enumerate(subs):
+        if sub == "gedcom":
+            fname = subs[i+1]
+            populate_from_gedcom(fname)
 

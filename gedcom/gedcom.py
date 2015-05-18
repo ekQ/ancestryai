@@ -84,7 +84,7 @@ class Entry:
         return obj
 
     def by_tag(self, tag):
-        return children.get(tag, None)
+        return self.children.get(tag, [])
     def by_xref(self, xref):
         for tag, lst in self.children.items():
             for entry in lst:

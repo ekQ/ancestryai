@@ -103,14 +103,14 @@ function Node(data) {
 
     this.x = _.random(0, 400) + 200;
     this.y = 0;//(this.get_field_obj("BIRT.DATE").year - 1750)*4 - 100;
-    this.y = (this.get_field_obj("BIRT.DATE").year - 1750)*4 - 600;
-    this.year = this.get_field_obj("BIRT.DATE").year;
-    this.name = this.get_field("NAME");
+//    this.y = (this.get_field_obj("BIRT.DATE").year - 1750)*4 - 600;
+    this.year = data.birth_date_year;
+    this.name = data.name;
     this.first_name = this.name.split("/")[0];
     this.family_name = this.name.split("/")[1];
     this.real_y = this.y;
     this.color_by_name = color_hash(this.family_name);
-    this.color_by_sex = color_sex(this.get_field("SEX"));
+    this.color_by_sex = color_sex(this.data.sex);
 
     this.get_x = function() {
         return this.x;
@@ -121,13 +121,11 @@ function Node(data) {
 
     this.get_relation_xrefs = function() {
         res = [];
-        for(var i = 0; i < this.data.children.length; i++) {
-            var obj = this.data.children[i];
-            if(obj.tag == "FAMC") {
-                res.push([obj.value, "child"]);
-            } else if(obj.tag == "FAMS") {
-                res.push([obj.value, "spouse"]);
-            }
+        for(var i = 0; i < this.data.sub_families.length; i++) {
+            res.push([this.data.sub_families[i], "spouse"]);
+        }
+        for(var i = 0; i < this.data.sup_families.length; i++) {
+            res.push([this.data.sup_families[i], "child"]);
         }
         return res;
     };
@@ -138,17 +136,22 @@ function Node(data) {
             Hiski.load(value, this);
         }
     };
+    this.expandable = function() {
+        var arr = this.get_relation_xrefs();
+        for(var i = 0; i < arr.length; i++) {
+            var xref = arr[i][0];
+            if(!(xref in Hiski.relation_dict))
+                return true;
+        }
+        return false;
+    };
 }
 
 function link_node_to(node, relation, type) {
     if(type == "child") {
-        if(relation.wife !== null) {
-            node.parents.push(relation.wife);
-            relation.wife.children.push(node);
-        }
-        if(relation.husband !== null) {
-            node.parents.push(relation.husband);
-            relation.husband.children.push(node);
+        for(var i = 0; i < relation.parents.length; i++) {
+            node.parents.push(relation.parents[i]);
+            relation.parents[i].children.push(node);
         }
         for(var i = 0; i < relation.children.length; i++) {
             node.siblings.push(relation.children[i]);
@@ -156,9 +159,9 @@ function link_node_to(node, relation, type) {
         }
         relation.children.push(node);
     } else if(type == "wife") {
-        if(relation.husband !== null) {
-            node.spouses.push(relation.husband);
-            relation.husband.spouses.push(node);
+        for(var i = 0; i < relation.parents.length; i++) {
+            node.spouses.push(relation.parents[i]);
+            relation.parents[i].spouses.push(node);
         }
         for(var i = 0; i < relation.children.length; i++) {
             node.children.push(relation.children[i]);
@@ -167,9 +170,9 @@ function link_node_to(node, relation, type) {
         relation.wife = node;
         relation.parents.push(node);
     } else if(type == "husband") {
-        if(relation.wife !== null) {
-            node.spouses.push(relation.wife);
-            relation.wife.spouses.push(node);
+        for(var i = 0; i < relation.parents.length; i++) {
+            node.spouses.push(relation.parents[i]);
+            relation.parents[i].spouses.push(node);
         }
         for(var i = 0; i < relation.children.length; i++) {
             node.children.push(relation.children[i]);
@@ -177,21 +180,26 @@ function link_node_to(node, relation, type) {
         }
         relation.husband = node;
         relation.parents.push(node);
+    } else if(type == "parent") {
+        for(var i = 0; i < relation.parents.length; i++) {
+            node.spouses.push(relation.parents[i]);
+            relation.parents[i].spouses.push(node);
+        }
+        for(var i = 0; i < relation.children.length; i++) {
+            node.children.push(relation.children[i]);
+            relation.children[i].parents.push(node);
+        }
+        relation.parents.push(node);
     }
     relation.nodes.push(node);
     node.relations.push(relation);
 }
 function find_link_type(node, relation) {
-    for(var i = 0; i < relation.data.children.length; i++) {
-        var obj = relation.data.children[i];
-        if(obj.value == node.xref) {
-            if(obj.tag == "HUSB")
-                return "husband";
-            if(obj.tag == "WIFE")
-                return "wife";
-            if(obj.tag == "CHIL")
-                return "child";
-        }
+    if(_.indexOf(relation.data.children, node.xref) != -1) {
+        return "child";
+    }
+    if(_.indexOf(relation.data.parents, node.xref) != -1) {
+        return "parent";
     }
     throw new Error("No node '"+obj.xref+"' in relation '"+relation.xref+"'");
 }
@@ -271,14 +279,10 @@ function Relation(data) {
     this.get_node_xrefs = function() {
         var res = [];
         for(var i = 0; i < this.data.children.length; i++) {
-            var obj = this.data.children[i];
-            if(obj.tag == "CHIL") {
-                res.push([obj.value, "child"]);
-            } else if(obj.tag == "HUSB") {
-                res.push([obj.value, "husband"]);
-            } else if(obj.tag == "WIFE") {
-                res.push([obj.value, "wife"]);
-            }
+            res.push([this.data.children[i], "child"]);
+        }
+        for(var i = 0; i < this.data.parents.length; i++) {
+            res.push([this.data.parents[i], "parent"]);
         }
         return res;
     };
@@ -290,10 +294,9 @@ function Relation(data) {
         }
     };
     this.get_any = function() {
-        if(this.husband !== null)
-            return this.husband;
-        if(this.wife !== null)
-            return this.wife;
+        alert("Deprecated?");
+        if(this.parents.length > 0)
+            return this.parents[0];
         if(this.children.length > 0)
             return this.children[0];
         return null;
@@ -389,6 +392,7 @@ var Hiski = {
         }
     },
     // relations / families
+    auto_expand_relations: true,
     relations: [],
     relation_dict: {},
     add_relation: function(relation_data) {
@@ -404,6 +408,9 @@ var Hiski = {
                 var nxref = n[0];
                 var type = n[1];
                 this.add_link(relation, this.node_dict[nxref], type);
+            }
+            if(this.auto_expand_relations) {
+                relation.expand_surroundings();
             }
         }
     },
@@ -454,7 +461,7 @@ var Hiski = {
     calc_layout: function() {
         var node_preferred_position = function(node) {
             var x = node.x;
-            var y = (node.get_field_obj("BIRT.DATE").year - 1750)*4 - 600;
+            var y = (node.year - 1750) * 4 - 600;
             return [x, y];
         };
         var relation_preferred_position = function(relation) {
@@ -494,13 +501,15 @@ var Hiski = {
     },
     color_mode: 0,
     next_color_mode: function() {
-        this.color_mode = (this.color_mode + 1) % 2;
+        this.color_mode = (this.color_mode + 1) % 3;
     },
     node_color_function: function(d) {
         if(Hiski.color_mode == 0) {
             return d.color_by_name;
         } else if(Hiski.color_mode == 1) {
             return d.color_by_sex;
+        } else if(Hiski.color_mode == 2) {
+            return d.expandable() ? "#ccffcc" : "#dddddd";
         }
         return "#ff0000";
     },
@@ -642,7 +651,7 @@ function render() {
             .attr("y", 5)
             .attr("dominant-baseline", "central")
             .text(function(d) {
-                return d.get_field("BIRT.DATE");
+                return d.data.birth_date_string;
             })
             .style("filter", "url(#dropshadow)")
             .style("font-weight", "normal")
@@ -654,7 +663,7 @@ function render() {
             .attr("y", 15)
             .attr("dominant-baseline", "central")
             .text(function(d) {
-                return d.get_field("DEAT.DATE");
+                return d.data.death_date_string;
             })
             .style("filter", "url(#dropshadow)")
             .style("font-weight", "normal")
