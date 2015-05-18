@@ -8,6 +8,10 @@ app.controller("TopMenuController", function($scope, $translate) {
         menu.set_color = function(color) {
             $(".topmenu").css("background-color", color);
         };
+        menu.toggle_color_mode = function() {
+            Hiski.next_color_mode();
+            render();
+        };
         menu.set_language = function(lang) {
             $translate.use(lang);
         };
@@ -56,6 +60,31 @@ function get_field(field) {
     return null;
 }
 
+function color_hash(str) {
+    var hash = 0;
+    var chr;
+    if(str.length == 0)
+        return "#000000";
+    var len = str.length;
+    for(var i = 0; i < len; i++) {
+        chr = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash = hash & 0xffffff;
+    }
+    var s = hash.toString(16);
+    while(s.length < 6)
+        s = "0" + s;
+    return "#" + s;
+}
+function color_sex(sex) {
+    if(sex == "F")
+        return "#ffcccc";
+    if(sex == "M")
+        return "#ccccff";
+    alert("unhandled sex: '"+sex+"'");
+    return "#dddddd";
+}
+
 function Node(data) {
     this.type = "node";
     this.data = data;
@@ -77,7 +106,11 @@ function Node(data) {
     this.y = (this.get_field_obj("BIRT.DATE").year - 1750)*4 - 600;
     this.year = this.get_field_obj("BIRT.DATE").year;
     this.name = this.get_field("NAME");
+    this.first_name = this.name.split("/")[0];
+    this.family_name = this.name.split("/")[1];
     this.real_y = this.y;
+    this.color_by_name = color_hash(this.family_name);
+    this.color_by_sex = color_sex(this.get_field("SEX"));
 
     this.get_x = function() {
         return this.x;
@@ -227,9 +260,9 @@ function Relation(data) {
         if(minchild === null && maxspouse === null)
             return this.y;
         if(maxspouse === null) {
-            return minchild - 40;
+            return minchild - 50;
         } else if(minchild === null) {
-            return maxspouse + 40;
+            return maxspouse + 50;
         }
         this.y_space = (minchild - maxspouse) / 2;
         return (minchild + maxspouse) / 2;
@@ -449,6 +482,7 @@ var Hiski = {
                 years_x[j] = node.x;
             }
             node.real_y = pos[1];
+//            node.x = i*60+60;
         }
         for(var i = 0; i < this.relations.length; i++) {
             var relation = this.relations[i];
@@ -458,6 +492,19 @@ var Hiski = {
             relation.real_y = pos[1];
         }
     },
+    color_mode: 0,
+    next_color_mode: function() {
+        this.color_mode = (this.color_mode + 1) % 2;
+    },
+    node_color_function: function(d) {
+        if(Hiski.color_mode == 0) {
+            return d.color_by_name;
+        } else if(Hiski.color_mode == 1) {
+            return d.color_by_sex;
+        }
+        return "#ff0000";
+    },
+
 
     // map related
     map: null,
@@ -565,6 +612,9 @@ function render() {
             .duration(duration)
             .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
             ;
+    Hiski.nodesvg.selectAll("circle")
+            .style("fill", Hiski.node_color_function)
+            ;
     var newnodes = Hiski.nodesvg.enter()
             .append("g")
                 .classed("node", true)
@@ -572,6 +622,7 @@ function render() {
             ;
     newnodes.append("circle")
             .attr("r", 20)
+            .style("fill", Hiski.node_color_function)
             .on("click", function(d) { d.expand_surroundings(); })
             ;
     newnodes.append("svg:text")

@@ -6,6 +6,7 @@ translations.fi = {
     "Tree": "Puu",
     "Map": "Kartta",
     "Search": "Haku",
+    "Toggle colouring": "Vaihda väritystä",
 
     // language selection
     "Finnish": "Suomi",

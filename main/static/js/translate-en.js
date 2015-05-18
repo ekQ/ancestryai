@@ -6,6 +6,7 @@ translations.en = {
     "Tree": "Tree",
     "Map": "Map",
     "Search": "Search",
+    "Toggle colouring": "Toggle colouring",
 
     // language selection
     "Finnish": "Suomi",

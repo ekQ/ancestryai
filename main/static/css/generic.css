@@ -58,7 +58,7 @@ svg#tree {
 }
 
 svg .node circle {
-    fill: #ccffcc;
+/*    fill: #ccffcc;*/
     stroke: #000;
 }
 svg .relation circle {
