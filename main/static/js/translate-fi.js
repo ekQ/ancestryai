@@ -7,6 +7,8 @@ translations.fi = {
     "Map": "Kartta",
     "Search": "Haku",
     "Toggle colouring": "Vaihda väritystä",
+    "Load random": "Lataa satunnainen",
+    "Toggle layout": "Vaihda asettelua",
 
     // language selection
     "Finnish": "Suomi",

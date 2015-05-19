@@ -15,6 +15,19 @@ app.controller("TopMenuController", function($scope, $translate) {
         menu.set_language = function(lang) {
             $translate.use(lang);
         };
+        menu.load_random = function() {
+            Hiski.load(null);
+        };
+        menu.print_order = function() {
+            console.warn("----------------------------------");
+            for(var i = 0; i < Hiski.node_order.length; i++) {
+                var node = Hiski.node_order[i];
+                console.warn(i + ":  " + node.xref + ",  " + node.name + "        -- " + node.order_reason);
+            }
+        };
+        menu.toggle_layout = function() {
+            Hiski.toggle_layout();
+        };
     });
 app.config(function($translateProvider) {
     for(key in translations) {
@@ -81,8 +94,38 @@ function color_sex(sex) {
         return "#ffcccc";
     if(sex == "M")
         return "#ccccff";
-    alert("unhandled sex: '"+sex+"'");
+//    alert("unhandled sex: '"+sex+"'");
     return "#dddddd";
+}
+
+function traverse_nodes(nodes) {
+    var newlist = [];
+    var visit = function(node) {
+        node.visited = true;
+        newlist.push(node);
+    };
+    var traverse_up = function(node) {
+        if(node.visited)
+            return;
+        for(var i = 0; i < node.parents.length; i++) {
+            traverse_up(node.parents[i]);
+        }
+        traverse_down(node);
+    };
+    var traverse_down = function(node) {
+        visit(node);
+        for(var i = 0; i < node.children.length; i++) {
+            traverse_up(node.children[i]);
+        }
+    };
+    for(var i = 0; i < nodes.length; i++) {
+        nodes[i].visited = false;
+    }
+    for(var i = 0; i < nodes.length; i++) {
+        if(!nodes[i].visited)
+            traverse_up(nodes[i]);
+    }
+    return newlist;
 }
 
 function Node(data) {
@@ -97,6 +140,8 @@ function Node(data) {
     this.siblings = [];
 
     this.rightmost_subnode = this;
+    this.rightmost_child = null;
+    this.rightmost_spouse = null;
 
     this.get_field = get_field;
     this.get_field_obj = get_field_obj;
@@ -111,6 +156,9 @@ function Node(data) {
     this.real_y = this.y;
     this.color_by_name = color_hash(this.family_name);
     this.color_by_sex = color_sex(this.data.sex);
+    this.last_open_descendant_year = this.year;
+
+    this.order_reason = "None";
 
     this.get_x = function() {
         return this.x;
@@ -144,6 +192,30 @@ function Node(data) {
                 return true;
         }
         return false;
+    };
+    this.get_leftmost_parent = function() {
+        var leftmost = null;
+        var leftmost_index = 0;
+        for(var i = 0; i < this.parents.length; i++) {
+            var index = Hiski.node_order.indexOf(this.parents[i]);
+            if(leftmost === null || index < leftmost_index) {
+                leftmost = this.parents[i];
+                leftmost_index = index;
+            }
+        }
+        return leftmost;
+    };
+    this.get_rightmost_parent = function() {
+        var rightmost = null;
+        var rightmost_index = 0;
+        for(var i = 0; i < this.parents.length; i++) {
+            var index = Hiski.node_order.indexOf(this.parents[i]);
+            if(rightmost === null || index > rightmost_index) {
+                rightmost = this.parents[i];
+                rightmost_index = index;
+            }
+        }
+        return rightmost;
     };
 }
 
@@ -204,11 +276,77 @@ function find_link_type(node, relation) {
     throw new Error("No node '"+obj.xref+"' in relation '"+relation.xref+"'");
 }
 function update_rightmost_subnode(node) {
+    var childsub = null;
     if(node.children.length > 0) {
-        node.rightmost_subnode = _.last(node.children).rightmost_subnode;
+        node.rightmost_subnode = node.rightmost_child.rightmost_subnode;
+        var childsub = node.rightmost_child.rightmost_subnode;
+    }
+    var spousesub = null;
+    if(node.spouses.length > 0) {
+        var spousesub = node.rightmost_spouse.rightmost_subnode;
+    }
+    if(childsub !== null && spousesub !== null) {
+        var childsub_index = Hiski.node_order.indexOf(childsub);
+        var spousesub_index = Hiski.node_order.indexOf(spousesub);
+        if(childsub_index > spousesub_index) {
+            node.rightmost_subnode = childsub;
+        } else {
+            node.rightmost_subnode = spousesub;
+        }
+    } else if(childsub !== null) {
+        node.rightmost_subnode = childsub;
+    } else if(spousesub !== null) {
+        node.rightmost_subnode = spousesub;
     }
     for(var i = 0; i < node.parents.length; i++) {
         update_rightmost_subnode(node.parents[i]);
+    }
+}
+function get_rightmost(arr) {
+    var rightmost = null;
+    var rightmost_index = 0;
+    for(var i = 0; i < arr.length; i++) {
+        var index = Hiski.node_order.indexOf(arr[i]);
+        if(rightmost === null || index > rightmost_index) {
+            rightmost = arr[i];
+            rightmost_index = index;
+        }
+    }
+    return rightmost;
+}
+function update_rightmost_spouse(node) {
+    var update = function(node) {
+        node.rightmost_spouse = get_rightmost(node.spouses);
+    };
+    update(node);
+    for(var i = 0; i < node.spouses.length; i++) {
+        update(node.spouses[i]);
+    }
+}
+function update_rightmost_child(node) {
+    var update = function(node) {
+        node.rightmost_child = get_rightmost(node.children);
+    };
+    update(node);
+    for(var i = 0; i < node.parents.length; i++) {
+        update(node.parents[i]);
+    }
+}
+function update_descendant_year(node, newyear) {
+    var year = node.last_open_descendant_year;
+    if(newyear === null) {
+        for(var i = 0; i < node.children.length; i++) {
+            year = Math.min(node.children[i].last_open_descendant_year, year);
+        }
+        node.last_open_descendant_year = year;
+        for(var i = 0; i < node.parents.length; i++) {
+            update_descendant_year(node.parents[i], year);
+        }
+    } else {
+        node.last_open_descendant_year = Math.min(year, newyear);
+        for(var i = 0; i < node.parents.length; i++) {
+            update_descendant_year(node.parents[i], year);
+        }
     }
 }
 
@@ -322,24 +460,34 @@ function Link(relation, node, type) {
 
     this.get_path_points = function() {
         var points = [];
-        var xdiff = this.node.get_x() - this.relation.get_x();
-        var ydiff = this.node.get_y() - this.relation.get_y();
+//        var xdiff = this.node.get_x() - this.relation.get_x();
+//        var ydiff = this.node.get_y() - this.relation.get_y();
         var node_size = 20;
         var relation_size = 5;
         var pad = 0;
         var straight = 4;
         var y_space = this.relation.y_space - node_size - relation_size - straight*2 - pad*2;
         if(this.type == "child") {
-            points.push([0,     relation_size + pad]);
+/*            points.push([0,     relation_size + pad]);
             points.push([0,     relation_size + pad + straight]);
             points.push([xdiff, relation_size + y_space]);
-            points.push([xdiff, ydiff - node_size - pad]);
+            points.push([xdiff, ydiff - node_size - pad]);*/
+            points.push([this.relation.get_x(), this.relation.get_y() + relation_size + pad]);
+            points.push([this.relation.get_x(), this.relation.get_y() + relation_size + pad + straight]);
+            points.push([this.node.get_x(),     this.relation.get_y() + relation_size + y_space]);
+            points.push([this.node.get_x(),     this.node.get_y() - node_size - pad]);
         } else {
-            points.push([0,     -relation_size - pad]);
+/*            points.push([0,     -relation_size - pad]);
             points.push([0,     -relation_size - pad - straight]);
             points.push([xdiff, -relation_size - y_space]);
-            points.push([xdiff, ydiff + node_size + pad]);
+            points.push([xdiff, ydiff + node_size + pad]);*/
+            points.push([this.relation.get_x(), this.relation.get_y() -relation_size - pad]);
+            points.push([this.relation.get_x(), this.relation.get_y() -relation_size - pad - straight]);
+            points.push([this.node.get_x(),     this.relation.get_y() -relation_size - y_space]);
+            points.push([this.node.get_x(),     this.node.get_y() + node_size + pad]);
         }
+//        points.push([this.relation.get_x(), this.relation.get_y()]);
+//        points.push([0,0]);
         return points;
     };
 }
@@ -374,20 +522,41 @@ var Hiski = {
             if(reference) {
                 var linktype = find_link_type(node, reference);
                 if(linktype == "child") {
-                    if(node.parents.length > 0) {
-                        order_i = this.node_order.indexOf(node.parents[0].rightmost_subnode) + 1;
-                    } else if(node.siblings.length > 0) {
+                    if(node.siblings.length > 0) {
                         order_i = this.node_order.indexOf(_.last(node.siblings).rightmost_subnode) + 1;
+                        node.order_reason = "right of siblings " + _.last(node.siblings).xref +
+                                " -> " + _.last(node.siblings).rightmost_subnode.xref;
+                    } else if(node.parents.length > 0) {
+                        order_i = this.node_order.indexOf(node.get_rightmost_parent()) + 1;
+                        node.order_reason = "right of parents " + node.get_rightmost_parent().xref;
+//                        order_i = this.node_order.indexOf(node.parents[0].rightmost_subnode) + 1;
+//                        node.order_reason = "right of family " + node.parents[0] + " -> " +
+//                                node.parents[0].rightmost_subnode.xref;
                     }
                 } else if(node.spouses.length > 0) {
-                    order_i = this.node_order.indexOf(node.spouses[0]) + 1;
+/*                    console.warn("adding "+node.xref+", "+node.data.sub_families.length + ", " +
+                            node.spouses[0].data.sub_families.length + ", " +
+                            node.spouses[0].spouses.length + " -- " + node.name);*/
+                    if(node.data.sub_families.length == 1 &&
+                                node.spouses[0].data.sub_families.length > 1 &&
+                                node.spouses[0].spouses.length == 2) {
+                        order_i = this.node_order.indexOf(node.spouses[0]);
+                        node.order_reason = "left of familyswapper " + node.spouses[0].xref;
+                    } else {
+                        order_i = this.node_order.indexOf(node.spouses[0]) + 1;
+                        node.order_reason = "right of spouse " + node.spouses[0].xref;
+                    }
                 } else if(node.children.length > 0) {
                     order_i = this.node_order.indexOf(node.children[0]);
+                    node.order_reason = "left of children " + node.children[0].xref;
                 } else {
                     throw new Error("Eh?");
                 }
             }
             this.node_order.splice(order_i, 0, node);
+            update_descendant_year(node, null);
+            update_rightmost_child(node);
+            update_rightmost_spouse(node);
             update_rightmost_subnode(node);
         }
     },
@@ -445,7 +614,10 @@ var Hiski = {
             return;
         if(xref in this.relation_dict)
             return;
-        d3.json(this.url_root + "json/load/"+xref+"/", function(json) {
+        var addr = this.url_root + "json/load/"+xref+"/";
+        if(xref === null)
+            addr = this.url_root + "json/load-any/";
+        d3.json(addr, function(json) {
             if(json) {
                 Hiski.add_entry(json.entry, reference);
                 Hiski.calc_layout();
@@ -458,10 +630,80 @@ var Hiski = {
 
     // custom layout stuff
     node_order: [],
+    layout_mode: 0,
+    toggle_layout: function() {
+        Hiski.layout_mode = (Hiski.layout_mode + 1) % 3;
+        Hiski.calc_layout();
+        render();
+    },
     calc_layout: function() {
+        var guess_node_year = function(node) {
+            var year = null;
+            if(node.year !== null) {
+                year = node.year;
+            } else {
+                if(node.spouses.length > 0) {
+                    for(var i = 0; i < node.spouses.length; i++) {
+                        if(node.spouses[i].year !== null) {
+                            year = node.spouses[i].year;
+                            break;
+                        }
+                    }
+                }
+                if(year === null && node.siblings.length > 0) {
+                    for(var i = 0; i < node.siblings.length; i++) {
+                        if(node.siblings[i].year !== null) {
+                            year = node.siblings[i].year;
+                            break;
+                        }
+                    }
+                }
+                if(year === null) {
+                    var parent_max = null;
+                    if(node.parents.length > 0) {
+                        for(var i = 0; i < node.parents.length; i++) {
+                            if(parent_max === null) {
+                                parent_max = node.parents[i].year;
+                            } else if(node.parents[i].year !== null) {
+                                parent_max = Math.max(parent_max, node.parents[i].year);
+                            }
+                        }
+                    }
+                    var child_min = null;
+                    if(node.children.length > 0) {
+                        for(var i = 0; i < node.children.length; i++) {
+                            if(child_min === null) {
+                                child_min = node.children[i].year;
+                            } else if(node.children[i].year !== null) {
+                                child_min = Math.min(child_min, node.children[i].year);
+                            }
+                        }
+                    }
+                    if(parent_max !== null) {
+                        if(child_min !== null) {
+                            year = (parent_max + child_min) / 2;
+                        } else {
+                            // guessing the parents were about 30 on birth
+                            year = parent_max + 20;
+                        }
+                    } else {
+                        if(child_min !== null) {
+                            // guessing the parents were about 30 on birth
+                            year = child_min - 20;
+                        }
+                    }
+                }
+            }
+            if(year === null) {
+                console.warn("Still unable to guess year for '"+node.xref+"' after looking at family members.");
+                year = 0;
+            }
+            return year;
+        };
         var node_preferred_position = function(node) {
             var x = node.x;
-            var y = (node.year - 1750) * 4 - 600;
+            var year = guess_node_year(node);
+            var y = (year - 1750) * 4 - 600;
             return [x, y];
         };
         var relation_preferred_position = function(relation) {
@@ -476,20 +718,43 @@ var Hiski = {
         for(var i = 0; i < 3000; i++) {
             years_x.push(x);
         }
-        for(var i = 0; i < this.node_order.length; i++) {
-            var node = this.node_order[i];
+//        var arr = traverse_nodes(this.node_order);
+        var arr = this.node_order;
+        for(var i = 0; i < arr.length; i++) {
+            arr[i].visited = false;
+        }
+        for(var i = 0; i < arr.length; i++) {
+            var node = arr[i];
             var pos = node_preferred_position(node);
             node.y = pos[1];
+            node.real_y = pos[1];
             var maxx = 0;
-            for(var j = node.year - pad_years; j < node.year + pad_years; j++) {
+            var year = guess_node_year(node);
+            var endyear = node.last_open_descendant_year + pad_years;
+            for(var j = Math.max(0, year - pad_years); j < endyear && j < years_x.length; j++) {
                 maxx = Math.max(maxx, years_x[j]);
             }
             node.x = maxx + pad;
-            for(var j = node.year - pad_years; j < node.year + pad_years; j++) {
+            if(node.parents.length > 0 && node.get_leftmost_parent().visited)
+                node.x = Math.max(node.x, node.get_leftmost_parent().x);
+            for(var j = Math.max(0, year - pad_years); j < endyear && j < years_x.length; j++) {
                 years_x[j] = node.x;
             }
-            node.real_y = pos[1];
-//            node.x = i*60+60;
+            if(Hiski.layout_mode == 1)
+                node.x = i*60+60;
+            if(node.parents.length > 0 && !node.get_leftmost_parent().visited) {
+                // This really happens at some point when I have hundreds of nodes opened.
+                // Might be related to cycles? maybe? not entirely sure.
+                // Need some fake data with simpler cycles.
+                // Another weirdness are the nodes that still are not getting x coordinate properly.
+                alert("foo");
+            }
+            node.visited = true;
+        }
+        if(Hiski.layout_mode == 2) {
+            for(var i = 0; i < this.nodes.length; i++) {
+                this.nodes[i].x = i*60 + 60;
+            }
         }
         for(var i = 0; i < this.relations.length; i++) {
             var relation = this.relations[i];
@@ -571,7 +836,7 @@ function d3_init() {
             .attr("class", function(d) { return d; })
             .classed("layer", true)
             ;
-    Hiski.linksvg = container.selectAll("g.layer.links").selectAll("g.link");
+    Hiski.linksvg = container.selectAll("g.layer.links").selectAll("path.link");
     Hiski.nodesvg = container.selectAll("g.layer.nodes").selectAll("g.node");
     Hiski.relationsvg = container.selectAll("g.layer.relations").selectAll("g.relation");
 }
@@ -581,7 +846,7 @@ function render() {
     Hiski.linksvg = Hiski.linksvg
             .data(Hiski.links)
             ;
-    Hiski.linksvg
+/*    Hiski.linksvg
             .transition()
             .duration(duration)
             .attr("transform", function(d) {
@@ -603,8 +868,18 @@ function render() {
             .attr("stroke-width", 2)
             .attr("fill", "none")
             .attr("stroke", "#000")
+            ;*/
+    var newlinks = Hiski.linksvg.enter()
+            .append("path")
+                .attr("stroke-width", 2)
+                .attr("fill", "none")
+                .attr("stroke", "#000")
+                .classed("link", true)
+                .attr("d", function(d) {
+                        return line_function(d.get_path_points())
+                    })
             ;
-    Hiski.linksvg.selectAll("path")
+    Hiski.linksvg
             .transition()
             .duration(duration)
             .attr("d", function(d) {
@@ -749,5 +1024,8 @@ $(document).ready(function() {
     d3_init();
     map_init();
     render();
-    Hiski.load("@I01@", null);
+//    Hiski.load("@I01@", null);
+//    Hiski.load("@I2131@", null);
+    Hiski.load("@I1307@", null);
+//    Hiski.load(null, null);
 });

@@ -1,4 +1,5 @@
 
+import random
 from flask import (
     g,
     render_template,
@@ -26,9 +27,17 @@ def json_individual(xref):
         "entry": entry.as_dict() if entry else None,
     })
 
+
 @app.route("/json/load/<xref>/")
-def json_load(xref):
-    ind = Individual.query.filter_by(xref = xref).first()
+@app.route("/json/load-any/")
+def json_load(xref = None):
+    if xref:
+        ind = Individual.query.filter_by(xref = xref).first()
+    else:
+        query = Individual.query
+        count = int(query.count())
+        i = int(random.random() * count)
+        ind = query.offset(i).first()
     if ind:
         return jsonify({
             "result": True,

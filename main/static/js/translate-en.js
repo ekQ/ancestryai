@@ -7,6 +7,8 @@ translations.en = {
     "Map": "Map",
     "Search": "Search",
     "Toggle colouring": "Toggle colouring",
+    "Load random": "Load random",
+    "Toggle layout": "Toggle layout",
 
     // language selection
     "Finnish": "Suomi",

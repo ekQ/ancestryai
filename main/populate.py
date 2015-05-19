@@ -3,6 +3,11 @@ from gedcom import gedcom
 from .models import *
 from .database import session
 
+def ensure_unicode(s):
+    if isinstance(s, str):
+        return s.decode("utf8")
+    return s
+
 def get_chain(root, chain):
     tag = root
     for key in chain.split("."):
@@ -14,9 +19,7 @@ def get_chain(root, chain):
             tag = tag.first_tag(key)
             if not tag:
                 return None
-    if isinstance(tag, str):
-        return unicode(tag)
-    return tag
+    return ensure_unicode(tag)
 
 def populate_from_gedcom(fname):
     root = gedcom.read_file(fname)
@@ -24,12 +27,12 @@ def populate_from_gedcom(fname):
         if entry.tag == "FAM":
             if entry.level != 0:
                 continue
-            candidate = Family.query.filter_by(xref = unicode(entry.xref)).first()
+            candidate = Family.query.filter_by(xref = ensure_unicode(entry.xref)).first()
             if candidate:
                 print "Family '{}' already exists".format(entry.xref)
                 continue
             fam = Family(
-                    xref = unicode(entry.xref),
+                    xref = ensure_unicode(entry.xref),
                     tag = u"FAM",
                     )
             session.add(fam)
@@ -38,12 +41,12 @@ def populate_from_gedcom(fname):
         if entry.tag == "INDI":
             if entry.level != 0:
                 continue
-            candidate = Individual.query.filter_by(xref = unicode(entry.xref)).first()
+            candidate = Individual.query.filter_by(xref = ensure_unicode(entry.xref)).first()
             if candidate:
                 print "Individual '{}' already exists".format(entry.xref)
                 continue
             ind = Individual(
-                    xref = unicode(entry.xref),
+                    xref = ensure_unicode(entry.xref),
                     name = get_chain(entry, "NAME.value"),
                     tag = u"INDI",
                     sex = get_chain(entry, "SEX.value"),
@@ -55,13 +58,13 @@ def populate_from_gedcom(fname):
                     # death_date
                     )
             for tag in entry.by_tag("FAMC"):
-                fam = Family.query.filter_by(xref = unicode(tag.value)).first()
+                fam = Family.query.filter_by(xref = ensure_unicode(tag.value)).first()
                 if not fam:
                     print "Family '{}' not found for individual '{}'".format(tag.xref, xref)
                     continue
                 fam.children.append(ind)
             for tag in entry.by_tag("FAMS"):
-                fam = Family.query.filter_by(xref = unicode(tag.value)).first()
+                fam = Family.query.filter_by(xref = ensure_unicode(tag.value)).first()
                 if not fam:
                     print "Family '{}' not found for individual '{}'".format(tag.xref, xref)
                     continue

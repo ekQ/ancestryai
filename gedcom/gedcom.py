@@ -1,7 +1,7 @@
 
 import re
 
-reline = re.compile("^ *([0-9]+) +((@[^\s]*@) +)?([^\s]+)( +(.*))?$")
+reline = re.compile("^ *([0-9]+) +((@[^\s]*@) +)?([^\s]+)( +(.*))?\s*$")
 
 class SpecialHandling:
     def __init__(self):
@@ -13,29 +13,57 @@ class SpecialHandling:
                     "(?P<dayB>[1-9][0-9]?) (?P<monthB>[A-Z]+) (?P<yearB>[1-9][0-9]*)"
                     "|"
                     "BET\. (?P<yearC1>[1-9][0-9]*) - (?P<yearC2>[1-9][0-9]*)"
-                ")$")
+                ")\s*$")
+        self.altredate = re.compile(
+                "^(?P<full>"
+                    "EST (?P<yearA>[1-9][0-9])"
+                    "|"
+                    "(?P<monthB>[A-Z]+) (?P<yearB>[1-9][0-9]*)"
+                    "|"
+                    "BET (?P<yearC1>[1-9][0-9]*) AND (?P<yearC2>[1-9][0-9]*)"
+                ")\s*$")
+        self.redates = [
+            re.compile("(?P<modifier>BEF\\. |AFT\\. |ABT\\. |EST |CAL |ABT |BEF |)"
+                "(?P<day>[1-9][0-9]? )?(?P<month>[A-Z]+ )?(?P<year>[0-9]+)\\s*$"),
+#            re.compile("(?P<day>[1-9][0-9]? )?(?P<month>[A-Z]+ )?(?P<year>[0-9]+)\\s*$"),
+            re.compile(
+                "(?P<modifier>BEF\\. |AFT\\. |ABT\\. |EST |CAL |ABT |BEF |)"
+                "BET "
+                    "(?P<day1>[1-9][0-9]? )?(?P<month1>[A-Z]+ )?(?P<year1>[0-9]+)"
+                " AND "
+                    "(?P<day2>[1-9][0-9]? )?(?P<month2>[A-Z]+ )?(?P<year2>[0-9]+)"
+                "\\s*$"),
+            re.compile(
+                "(?P<modifier>BEF\\. |AFT\\. |ABT\\. |EST |CAL |ABT |BEF |)"
+                "FROM "
+                    "(?P<day1>[1-9][0-9]? )?(?P<month1>[A-Z]+ )?(?P<year1>[0-9]+)"
+                " TO "
+                    "(?P<day2>[1-9][0-9]? )?(?P<month2>[A-Z]+ )?(?P<year2>[0-9]+)"
+                "\\s*$"),
+            re.compile(
+                "(?P<modifier>BEF\\. |AFT\\. |ABT\\. |EST |CAL |ABT |BEF |)"
+                "BET\\. "
+                    "(?P<day1>[1-9][0-9]? )?(?P<month1>[A-Z]+ )?(?P<year1>[0-9]+)"
+                " - "
+                    "(?P<day2>[1-9][0-9]? )?(?P<month2>[A-Z]+ )?(?P<year2>[0-9]+)"
+                "\\s*$"),
+        ]
     def check(self, entry):
         if hasattr(self, entry.tag):
             func = getattr(self, entry.tag)
             func(entry)
     def DATE(self, entry):
-        match = self.redate.match(entry.value)
-        if match:
-            modifier = match.groupdict()["beforeafter"]
-            if modifier:
-                modifier = modifier.strip(". ")
-            if match.groupdict()["yearA"]:
-                year = int(match.groupdict()["yearA"])
-            elif match.groupdict()["yearB"]:
-                year = int(match.groupdict()["yearB"])
-            elif match.groupdict()["yearC1"]:
-                year = (int(match.groupdict()["yearC1"]) + int(match.groupdict()["yearC2"])) / 2
-                if not modifier:
-                    modifier = match.groupdict()["full"]
-            else:
-                year = None
-            entry.additional["year"] = year
-            entry.additional["year_modifier"] = modifier
+        for redate in self.redates:
+            match = redate.match(entry.value)
+            if match:
+                modifier = match.groupdict().get("modifier", None)
+                if "year" in match.groupdict():
+                    year = int(match.groupdict()["year"])
+                elif "year2" in match.groupdict():
+                    year = (int(match.groupdict()["year1"]) + int(match.groupdict()["year2"])) / 2
+                entry.additional["year"] = year
+                entry.additional["year_modifier"] = modifier
+                return
         else:
             print "no match: " + entry.value
 specials = SpecialHandling()
@@ -102,6 +130,7 @@ def read_file(filename):
     tagstack = [Entry(-1, None, "ROOT", None)]
     for i_, line in enumerate(lines):
         i = i_ + 1
+        line = line.rstrip("\n\r")
         match = reline.match(line)
         if match:
             level, _, xref, tag, _, value = match.groups()
@@ -116,7 +145,7 @@ def read_file(filename):
             tagstack[-1].add_child(entry)
             tagstack.append(entry)
         else:
-            print "no match"
+            raise Exception("no regexp match on line {}".format(i))
     return tagstack[0]
 
 if __name__ == "__main__":
