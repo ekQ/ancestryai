@@ -131,6 +131,8 @@ def read_file(filename):
     for i_, line in enumerate(lines):
         i = i_ + 1
         line = line.rstrip("\n\r")
+        if not line:
+            continue
         match = reline.match(line)
         if match:
             level, _, xref, tag, _, value = match.groups()

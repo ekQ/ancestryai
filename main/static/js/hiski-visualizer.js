@@ -22,7 +22,10 @@ app.controller("TopMenuController", function($scope, $translate) {
             console.warn("----------------------------------");
             for(var i = 0; i < Hiski.node_order.length; i++) {
                 var node = Hiski.node_order[i];
-                console.warn(i + ":  " + node.xref + ",  " + node.name + "        -- " + node.order_reason);
+                var second_index = Hiski.nodes.indexOf(node);
+                console.warn(i + " (" + second_index + "):  " +
+                        node.xref + ",  " + node.name + "        -- " +
+                        node.order_reason);
             }
         };
         menu.toggle_layout = function() {
@@ -278,12 +281,16 @@ function find_link_type(node, relation) {
 function update_rightmost_subnode(node) {
     var childsub = null;
     if(node.children.length > 0) {
-        node.rightmost_subnode = node.rightmost_child.rightmost_subnode;
-        var childsub = node.rightmost_child.rightmost_subnode;
+//        node.rightmost_subnode = node.rightmost_child.rightmost_subnode;
+        childsub = node.rightmost_child.rightmost_subnode;
     }
     var spousesub = null;
     if(node.spouses.length > 0) {
-        var spousesub = node.rightmost_spouse.rightmost_subnode;
+        if(node.rightmost_spouse === null) {
+            console.warn("node.rightmost_spouse was null. Likely from connecting two existing nodes to a family. Anyways, this is a bug.");
+        } else {
+            spousesub = node.rightmost_spouse.rightmost_subnode;
+        }
     }
     if(childsub !== null && spousesub !== null) {
         var childsub_index = Hiski.node_order.indexOf(childsub);
@@ -537,15 +544,15 @@ var Hiski = {
 /*                    console.warn("adding "+node.xref+", "+node.data.sub_families.length + ", " +
                             node.spouses[0].data.sub_families.length + ", " +
                             node.spouses[0].spouses.length + " -- " + node.name);*/
-                    if(node.data.sub_families.length == 1 &&
+/*                    if(node.data.sub_families.length == 1 &&
                                 node.spouses[0].data.sub_families.length > 1 &&
                                 node.spouses[0].spouses.length == 2) {
                         order_i = this.node_order.indexOf(node.spouses[0]);
                         node.order_reason = "left of familyswapper " + node.spouses[0].xref;
-                    } else {
+                    } else {*/
                         order_i = this.node_order.indexOf(node.spouses[0]) + 1;
                         node.order_reason = "right of spouse " + node.spouses[0].xref;
-                    }
+//                    }
                 } else if(node.children.length > 0) {
                     order_i = this.node_order.indexOf(node.children[0]);
                     node.order_reason = "left of children " + node.children[0].xref;
@@ -713,7 +720,7 @@ var Hiski = {
         };
         var x = 100;
         var pad = 80;
-        var pad_years = 10;
+        var pad_years = 9;
         var years_x = [];
         for(var i = 0; i < 3000; i++) {
             years_x.push(x);
@@ -843,32 +850,11 @@ function d3_init() {
 
 function render() {
     var duration = 2800;
+
+
     Hiski.linksvg = Hiski.linksvg
             .data(Hiski.links)
             ;
-/*    Hiski.linksvg
-            .transition()
-            .duration(duration)
-            .attr("transform", function(d) {
-                    var x = d.relation.get_x();
-                    var y = d.relation.get_y();
-                    return "translate("+x+","+y+")";
-                })
-            ;
-    var newlinks = Hiski.linksvg.enter()
-            .append("g")
-                .classed("link", true)
-                .attr("transform", function(d) {
-                        var x = d.relation.get_x();
-                        var y = d.relation.get_y();
-                        return "translate("+x+","+y+")";
-                    })
-            ;
-    newlinks.append("path")
-            .attr("stroke-width", 2)
-            .attr("fill", "none")
-            .attr("stroke", "#000")
-            ;*/
     var newlinks = Hiski.linksvg.enter()
             .append("path")
                 .attr("stroke-width", 2)
@@ -930,7 +916,7 @@ function render() {
             })
             .style("filter", "url(#dropshadow)")
             .style("font-weight", "normal")
-            .style("font-size", "45%")
+            .style("font-size", "50%")
             .on("click", function(d) { d.expand_surroundings(); })
             ;
     newnodes.append("svg:text")
@@ -942,7 +928,7 @@ function render() {
             })
             .style("filter", "url(#dropshadow)")
             .style("font-weight", "normal")
-            .style("font-size", "45%")
+            .style("font-size", "50%")
             .on("click", function(d) { d.expand_surroundings(); })
             ;
 
@@ -1024,8 +1010,8 @@ $(document).ready(function() {
     d3_init();
     map_init();
     render();
-//    Hiski.load("@I01@", null);
+    Hiski.load("@I01@", null);
 //    Hiski.load("@I2131@", null);
-    Hiski.load("@I1307@", null);
+//    Hiski.load("@I1307@", null);
 //    Hiski.load(null, null);
 });
