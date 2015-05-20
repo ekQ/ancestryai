@@ -68,6 +68,8 @@ class SpecialHandling:
             print "no match: " + entry.value
 specials = SpecialHandling()
 
+dropped_xrefs = set([])
+
 class Entry:
     def __init__(self, level, xref, tag, value):
         self.level = level
@@ -79,7 +81,7 @@ class Entry:
         self.parent = None
 
         self.additional = {}
-        specials.check(self)
+        self.dropped = False
 
     def add_child(self, child):
         if child.tag not in self.children:
@@ -91,10 +93,18 @@ class Entry:
         buf = [self]
         while buf:
             cur = buf.pop()
+            if cur.dropped:
+                continue
+            if cur.value in dropped_xrefs:
+                continue
             yield cur
             for tag, lst in sorted(cur.children.items(), reverse=True):
                 for entry in lst:
                     buf.append(entry)
+    def drop(self):
+        self.dropped = True
+        if self.xref:
+            dropped_xrefs.add(self.xref)
 
     def as_dict(self):
         children = []
@@ -122,12 +132,42 @@ class Entry:
     def first_tag(self, tag):
         lst = self.by_tag(tag)
         return lst[0] if lst else None
+    def get_multi_chain(self, chain):
+        if not chain:
+            return [self]
+        tag = self
+        res = []
+        key = chain.split(".")[0]
+        rest = ".".join(chain.split(".")[1:])
+        if key in ["level", "xref", "tag", "value", "children", "parent"]:
+            res.append(getattr(tag, key))
+        elif key == key.lower():
+            res.append(tag.additional.get(key, None))
+        else:
+            tags = tag.by_tag(key)
+            if tags:
+                for t in tags:
+                    res.extend(t.get_multi_chain(rest))
+        return res
+    def get_chain(self, chain):
+        tag = self
+        for key in chain.split("."):
+            if key in ["level", "xref", "tag", "value", "children", "parent"]:
+                tag = getattr(tag, key)
+            elif key == key.lower():
+                tag = tag.additional.get(key, None)
+            else:
+                tag = tag.first_tag(key)
+                if not tag:
+                    return None
+        return tag
 
 def read_file(filename):
     f = open(filename)
     lines = f.readlines()
     f.close()
     tagstack = [Entry(-1, None, "ROOT", None)]
+    lasttag = None
     for i_, line in enumerate(lines):
         i = i_ + 1
         line = line.rstrip("\n\r")
@@ -144,23 +184,71 @@ def read_file(filename):
                 tagstack.pop()
             if entry.level != tagstack[-1].level + 1:
                 raise Exception("expected level {}, got {} on line {}".format(tagstack[-1].level+1, entry.level, i))
+            if entry.tag == "CONC":
+                lasttag.value += entry.value
+                continue
+            if entry.tag == "CONT":
+                lasttag.value += "\n" + entry.value
+                continue
+            if lasttag:
+                specials.check(lasttag)
             tagstack[-1].add_child(entry)
             tagstack.append(entry)
+            lasttag = entry
         else:
             raise Exception("no regexp match on line {}".format(i))
+    if lasttag:
+        specials.check(lasttag)
     return tagstack[0]
+
+def reprint(root):
+    for entry in root.traverse():
+        if entry.tag == "ROOT":
+            continue
+        value = entry.value if entry.value else ""
+        parts = value.split("\n")
+        print "{}{} {} {}".format(
+                entry.level,
+                " "+entry.xref if entry.xref else "",
+                entry.tag,
+                parts[0],
+                )
+        for p in parts[1:]:
+            print "{}{} {} {}".format(
+                    entry.level + 1,
+                    "",
+                    "CONT",
+                    p,
+                    )
 
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
         print "python {} <gedcom-file>".format(sys.argv[0])
+        print "python {} reprint <gedcom-file>".format(sys.argv[0])
+        print "python {} count <gedcom-file>".format(sys.argv[0])
         sys.exit()
-    root = read_file(sys.argv[1])
-    for entry in root.traverse():
-        print "{}{:2}     {:8}     {:6}     '{}'".format(
-                "  "*entry.level,
-                entry.level,
-                entry.xref or "--",
-                entry.tag or "--",
-                entry.value or "--",
-                )
+    if len(sys.argv) < 3:
+        root = read_file(sys.argv[1])
+        for entry in root.traverse():
+            print "{}{:2}     {:8}     {:6}     '{}'".format(
+                    "  "*entry.level,
+                    entry.level,
+                    entry.xref or "--",
+                    entry.tag or "--",
+                    entry.value or "--",
+                    )
+    elif sys.argv[1] == "reprint":
+        root = read_file(sys.argv[2])
+        reprint(root)
+    elif sys.argv[1] == "count":
+        root = read_file(sys.argv[2])
+        inds = 0
+        fams = 0
+        for entry in root.traverse():
+            if entry.tag == "INDI":
+                inds += 1
+            if entry.tag == "FAM":
+                fams += 1
+        print "{} individuals".format(inds)
+        print "{} families".format(fams)

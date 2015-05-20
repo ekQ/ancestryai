@@ -1,4 +1,5 @@
 
+import time
 from gedcom import gedcom
 from .models import *
 from .database import session
@@ -8,6 +9,7 @@ def ensure_unicode(s):
         return s.decode("utf8")
     return s
 
+# todo: use the gedcom.py implementation instead
 def get_chain(root, chain):
     tag = root
     for key in chain.split("."):
@@ -22,7 +24,10 @@ def get_chain(root, chain):
     return ensure_unicode(tag)
 
 def populate_from_gedcom(fname):
+    t0 = time.time()
     root = gedcom.read_file(fname)
+    t1 = time.time()
+    print "gedcom parsed     {}ms".format(str(int((t1 - t0)*1000)).rjust(8))
     for entry in root.traverse():
         if entry.tag == "FAM":
             if entry.level != 0:
@@ -37,6 +42,8 @@ def populate_from_gedcom(fname):
                     )
             session.add(fam)
     session.flush()
+    t2 = time.time()
+    print "families added    {}ms".format(str(int((t2 - t1)*1000)).rjust(8))
     for entry in root.traverse():
         if entry.tag == "INDI":
             if entry.level != 0:
@@ -71,4 +78,6 @@ def populate_from_gedcom(fname):
                 fam.parents.append(ind)
             session.add(ind)
     session.commit()
+    t3 = time.time()
+    print "individuals added {}ms".format(str(int((t3 - t2)*1000)).rjust(8))
 

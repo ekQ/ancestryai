@@ -16,7 +16,7 @@ app.controller("TopMenuController", function($scope, $translate) {
             $translate.use(lang);
         };
         menu.load_random = function() {
-            Hiski.load(null);
+            Hiski.load(null, null);
         };
         menu.print_order = function() {
             console.warn("----------------------------------");
@@ -24,7 +24,10 @@ app.controller("TopMenuController", function($scope, $translate) {
                 var node = Hiski.node_order[i];
                 var second_index = Hiski.nodes.indexOf(node);
                 console.warn(i + " (" + second_index + "):  " +
-                        node.xref + ",  " + node.name + "        -- " +
+                        node.xref + ",  " +
+                        "year: " + node.year + ",  " +
+                        "lody: " + node.last_open_descendant_year + ",  " +
+                        node.name + "        -- " +
                         node.order_reason);
             }
         };
@@ -49,32 +52,6 @@ app.factory("handleMissingTranslations", function() {
     };
 });
 
-
-function get_field_obj(field) {
-    var subs = field.split(".");
-    var data = this.data;
-    for(var si = 0; si < subs.length; si++) {
-        var sval = subs[si];
-        var ok = false;
-        for(var i = 0; i < data.children.length; i++) {
-            var obj = data.children[i];
-            if(obj.tag == sval) {
-                data = obj;
-                ok = true;
-                break;
-            }
-        }
-        if(!ok)
-            return null;
-    }
-    return data;
-}
-function get_field(field) {
-    var data = this.get_field_obj(field);
-    if(data)
-        return data.value;
-    return null;
-}
 
 function color_hash(str) {
     var hash = 0;
@@ -132,10 +109,15 @@ function traverse_nodes(nodes) {
 }
 
 function Node(data) {
+    // identifying and source data
     this.type = "node";
     this.data = data;
     this.xref = data.xref;
+    this.name = data.name;
+    this.first_name = this.name.split("/")[0];
+    this.family_name = this.name.split("/")[1];
 
+    // graph and person relations
     this.relations = [];
     this.parents = [];
     this.spouses = [];
@@ -146,22 +128,29 @@ function Node(data) {
     this.rightmost_child = null;
     this.rightmost_spouse = null;
 
-    this.get_field = get_field;
-    this.get_field_obj = get_field_obj;
+    // order pointers
+    this.leftmost = this;
+    this.rightmost = this;
+    this.leftmost_sub = this;
+    this.rightmost_sub = this;
+    this.leftmost_sup = this;
+    this.rightmost_sup = this;
+    this.leftmost_sub_family = null;
+    this.rightmost_sub_family = null;
+    this.leftmost_sup_family = null;
+    this.rightmost_sup_family = null;
+    this.order_reason = "None";
+    this.order_fuzzy_index = 0.0;
 
+    // layout
     this.x = _.random(0, 400) + 200;
-    this.y = 0;//(this.get_field_obj("BIRT.DATE").year - 1750)*4 - 100;
-//    this.y = (this.get_field_obj("BIRT.DATE").year - 1750)*4 - 600;
+    this.y = 0;
     this.year = data.birth_date_year;
-    this.name = data.name;
-    this.first_name = this.name.split("/")[0];
-    this.family_name = this.name.split("/")[1];
     this.real_y = this.y;
     this.color_by_name = color_hash(this.family_name);
     this.color_by_sex = color_sex(this.data.sex);
     this.last_open_descendant_year = this.year;
 
-    this.order_reason = "None";
 
     this.get_x = function() {
         return this.x;
@@ -309,7 +298,7 @@ function update_rightmost_subnode(node) {
         update_rightmost_subnode(node.parents[i]);
     }
 }
-function get_rightmost(arr) {
+function get_rightmost_old(arr) {
     var rightmost = null;
     var rightmost_index = 0;
     for(var i = 0; i < arr.length; i++) {
@@ -323,7 +312,7 @@ function get_rightmost(arr) {
 }
 function update_rightmost_spouse(node) {
     var update = function(node) {
-        node.rightmost_spouse = get_rightmost(node.spouses);
+        node.rightmost_spouse = get_rightmost_old(node.spouses);
     };
     update(node);
     for(var i = 0; i < node.spouses.length; i++) {
@@ -332,7 +321,7 @@ function update_rightmost_spouse(node) {
 }
 function update_rightmost_child(node) {
     var update = function(node) {
-        node.rightmost_child = get_rightmost(node.children);
+        node.rightmost_child = get_rightmost_old(node.children);
     };
     update(node);
     for(var i = 0; i < node.parents.length; i++) {
@@ -343,33 +332,106 @@ function update_descendant_year(node, newyear) {
     var year = node.last_open_descendant_year;
     if(newyear === null) {
         for(var i = 0; i < node.children.length; i++) {
-            year = Math.min(node.children[i].last_open_descendant_year, year);
+            year = Math.max(node.children[i].last_open_descendant_year, year);
         }
         node.last_open_descendant_year = year;
         for(var i = 0; i < node.parents.length; i++) {
             update_descendant_year(node.parents[i], year);
         }
     } else {
-        node.last_open_descendant_year = Math.min(year, newyear);
+        node.last_open_descendant_year = Math.max(year, newyear);
         for(var i = 0; i < node.parents.length; i++) {
             update_descendant_year(node.parents[i], year);
         }
     }
 }
 
+function get_rightmost(arr, fun, old=null) {
+    var rightmost = old;
+    var rightmost_fuzzy = old === null ? 0.0 : fun(old);
+    for(var i = 0; i < arr.length; i++) {
+        var fuzzy = fun(arr[i]);
+        if(rightmost === null || fuzzy > rightmost_fuzzy) {
+            rightmost = arr[i];
+            rightmost_fuzzy = fuzzy;
+        }
+    }
+    return rightmost;
+}
+function get_leftmost(arr, fun, old=null) {
+    var leftmost = null;
+    var leftmost_fuzzy = old === null ? 0.0 : fun(old);
+    for(var i = 0; i < arr.length; i++) {
+        var fuzzy = fun(arr[i]);
+        if(leftmost === null || fuzzy < leftmost_fuzzy) {
+            leftmost = arr[i];
+            leftmost_fuzzy = fuzzy;
+        }
+    }
+    return leftmost;
+}
+function update_relation_order_pointers(relation) {
+//    relation.leftmost
+    // order pointers
+    this.leftmost = null;
+    this.rightmost = null;
+    this.leftmost_sub = null;
+    this.rightmost_sub = null;
+    this.leftmost_sup = null;
+    this.rightmost_sup = null;
+    this.left_parent = null;
+    this.right_parent = null;
+}
+function update_order_pointers(node) {
+    update_order_pointers_sub(node);
+    update_order_pointers_sup(node);
+    // order pointers
+    this.leftmost_sub_family = null;
+    this.rightmost_sub_family = null;
+    this.leftmost_sup_family = null;
+    this.rightmost_sup_family = null;
+}
+function update_order_pointers_sub(node) {
+    node.leftmost_sub = get_leftmost(node.children, function(n) {
+            return n.leftmost_sub.order_fuzzy_index; }, node);
+    node.rightmost_sub = get_rightmost(node.children, function(n) {
+            return n.rightmost_sub.order_fuzzy_index; }, node);
+    for(var i = 0; i < node.parents.length; i++) {
+        update_order_pointers_sub(node.parents[i]);
+    }
+}
+function update_order_pointers_sup(node) {
+    node.leftmost_sup = get_leftmost(node.children, function(n) {
+            return n.leftmost_sup.order_fuzzy_index; }, node);
+    node.rightmost_sup = get_rightmost(node.children, function(n) {
+            return n.rightmost_sup.order_fuzzy_index; }, node);
+    for(var i = 0; i < node.children.length; i++) {
+        update_order_pointers_sub(node.children[i]);
+    }
+}
+
 function Relation(data) {
+    // identifying and source data
     this.type = "relation";
     this.data = data;
     this.xref = data.xref;
 
+    // graph relations
     this.nodes = [];
     this.children = [];
     this.parents = [];
     this.wife = null;
     this.husband = null;
 
-    this.get_field = get_field;
-    this.get_field_obj = get_field_obj;
+    // order pointers
+    this.leftmost = null;
+    this.rightmost = null;
+    this.leftmost_sub = null;
+    this.rightmost_sub = null;
+    this.leftmost_sup = null;
+    this.rightmost_sup = null;
+    this.left_parent = null;
+    this.right_parent = null;
 
     this.get_x = function() {
         return this.x;
@@ -467,34 +529,26 @@ function Link(relation, node, type) {
 
     this.get_path_points = function() {
         var points = [];
-//        var xdiff = this.node.get_x() - this.relation.get_x();
-//        var ydiff = this.node.get_y() - this.relation.get_y();
         var node_size = 20;
         var relation_size = 5;
         var pad = 0;
         var straight = 4;
         var y_space = this.relation.y_space - node_size - relation_size - straight*2 - pad*2;
         if(this.type == "child") {
-/*            points.push([0,     relation_size + pad]);
-            points.push([0,     relation_size + pad + straight]);
-            points.push([xdiff, relation_size + y_space]);
-            points.push([xdiff, ydiff - node_size - pad]);*/
+            points.push([this.relation.get_x(), this.relation.get_y()]);
             points.push([this.relation.get_x(), this.relation.get_y() + relation_size + pad]);
             points.push([this.relation.get_x(), this.relation.get_y() + relation_size + pad + straight]);
             points.push([this.node.get_x(),     this.relation.get_y() + relation_size + y_space]);
             points.push([this.node.get_x(),     this.node.get_y() - node_size - pad]);
+            points.push([this.node.get_x(),     this.node.get_y()]);
         } else {
-/*            points.push([0,     -relation_size - pad]);
-            points.push([0,     -relation_size - pad - straight]);
-            points.push([xdiff, -relation_size - y_space]);
-            points.push([xdiff, ydiff + node_size + pad]);*/
+            points.push([this.relation.get_x(), this.relation.get_y()]);
             points.push([this.relation.get_x(), this.relation.get_y() -relation_size - pad]);
             points.push([this.relation.get_x(), this.relation.get_y() -relation_size - pad - straight]);
             points.push([this.node.get_x(),     this.relation.get_y() -relation_size - y_space]);
             points.push([this.node.get_x(),     this.node.get_y() + node_size + pad]);
+            points.push([this.node.get_x(),     this.node.get_y()]);
         }
-//        points.push([this.relation.get_x(), this.relation.get_y()]);
-//        points.push([0,0]);
         return points;
     };
 }
@@ -514,6 +568,11 @@ var Hiski = {
             // update existing?
         } else {
             var node = new Node(node_data);
+            if(reference !== null) {
+                node.x = reference.x;
+                node.y = reference.y;
+                node.real_y = reference.real_y;
+            }
 
             this.nodes.push(node);
             this.node_dict[node.xref] = node;
@@ -560,6 +619,16 @@ var Hiski = {
                     throw new Error("Eh?");
                 }
             }
+            if(this.node_order.length == 0) {
+                node.order_fuzzy_index = 0.0;
+            } else if(order_i == 0) {
+                node.order_fuzzy_index = this.node_order[0].order_fuzzy_index - 1.0;
+            } else if(order_i == this.node_order.length -1) {
+                node.order_fuzzy_index = _.last(this.node_order).order_fuzzy_index + 1.0;
+            } else {
+//                node.order_fuzzy_index = (this.node_order[order_i - 1].order_fuzzy_index +
+//                        this.node_order[order_i].order_fuzzy_index) / 2.0;
+            }
             this.node_order.splice(order_i, 0, node);
             update_descendant_year(node, null);
             update_rightmost_child(node);
@@ -571,11 +640,16 @@ var Hiski = {
     auto_expand_relations: true,
     relations: [],
     relation_dict: {},
-    add_relation: function(relation_data) {
+    add_relation: function(relation_data, reference) {
         if(relation_data.xref in this.relation_dict) {
             // update existing?
         } else {
             var relation = new Relation(relation_data);
+            if(reference !== null) {
+                relation.x = reference.x;
+                relation.y = reference.y;
+                relation.real_y = reference.real_y;
+            }
             this.relations.push(relation);
             this.relation_dict[relation.xref] = relation;
             var neighbors = relation.get_node_xrefs();
@@ -609,7 +683,7 @@ var Hiski = {
     // other
     add_entry: function(entry, reference) {
         if(entry.tag == "FAM") {
-            this.add_relation(entry);
+            this.add_relation(entry, reference);
         } else if(entry.tag == "INDI") {
             this.add_node(entry, reference);
         } else {
@@ -626,13 +700,31 @@ var Hiski = {
             addr = this.url_root + "json/load-any/";
         d3.json(addr, function(json) {
             if(json) {
+                if(json.entry.xref in Hiski.node_dict || json.entry.xref in Hiski.relation_dict) {
+                    console.warn("The node already existed, doing nothing.");
+                    return;
+                }
                 Hiski.add_entry(json.entry, reference);
-                Hiski.calc_layout();
-                render();
+                Hiski.delayed_render();
+//                Hiski.calc_layout();
+//                render();
             } else {
                 throw new Error("Loading data '"+xref+"' failed");
             }
         });
+    },
+    delay_running: false,
+    delayed_render: function() {
+        var timed = function() {
+            Hiski.delay_running = false;
+            enter();
+            Hiski.calc_layout();
+            render();
+        };
+        if(!Hiski.delay_running) {
+            Hiski.delay_running = true;
+            setTimeout(timed, 300);
+        }
     },
 
     // custom layout stuff
@@ -710,7 +802,7 @@ var Hiski = {
         var node_preferred_position = function(node) {
             var x = node.x;
             var year = guess_node_year(node);
-            var y = (year - 1750) * 4 - 600;
+            var y = (year - 1750) * 5 - 600;
             return [x, y];
         };
         var relation_preferred_position = function(relation) {
@@ -745,7 +837,10 @@ var Hiski = {
             if(node.parents.length > 0 && node.get_leftmost_parent().visited)
                 node.x = Math.max(node.x, node.get_leftmost_parent().x);
             for(var j = Math.max(0, year - pad_years); j < endyear && j < years_x.length; j++) {
-                years_x[j] = node.x;
+                if(j < year + pad_years)
+                    years_x[j] = node.x;
+                else
+                    years_x[j] = node.x - pad;
             }
             if(Hiski.layout_mode == 1)
                 node.x = i*60+60;
@@ -754,7 +849,7 @@ var Hiski = {
                 // Might be related to cycles? maybe? not entirely sure.
                 // Need some fake data with simpler cycles.
                 // Another weirdness are the nodes that still are not getting x coordinate properly.
-                alert("foo");
+                console.warn("The node order is not clean anymore. There is some child before its parent. This is a bug and related to cycles (cycle2.ged).");
             }
             node.visited = true;
         }
@@ -848,10 +943,7 @@ function d3_init() {
     Hiski.relationsvg = container.selectAll("g.layer.relations").selectAll("g.relation");
 }
 
-function render() {
-    var duration = 2800;
-
-
+function enter() {
     Hiski.linksvg = Hiski.linksvg
             .data(Hiski.links)
             ;
@@ -865,30 +957,14 @@ function render() {
                         return line_function(d.get_path_points())
                     })
             ;
-    Hiski.linksvg
-            .transition()
-            .duration(duration)
-            .attr("d", function(d) {
-                    return line_function(d.get_path_points())
-                })
-            ;
-
 
     Hiski.nodesvg = Hiski.nodesvg
             .data(Hiski.nodes)
             ;
-    Hiski.nodesvg
-            .transition()
-            .duration(duration)
-            .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
-            ;
-    Hiski.nodesvg.selectAll("circle")
-            .style("fill", Hiski.node_color_function)
-            ;
     var newnodes = Hiski.nodesvg.enter()
             .append("g")
                 .classed("node", true)
-                .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
+                .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
             ;
     newnodes.append("circle")
             .attr("r", 20)
@@ -936,22 +1012,42 @@ function render() {
     Hiski.relationsvg = Hiski.relationsvg
             .data(Hiski.relations)
             ;
-    Hiski.relationsvg
-            .transition()
-            .duration(duration)
-            .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
-            ;
     var newrelations = Hiski.relationsvg.enter()
             .append("g")
                 .classed("relation", true)
-                .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
+                .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
             ;
     newrelations.append("circle")
             .attr("r", 5)
             .on("click", function(d) { d.expand_surroundings(); })
             ;
+}
+function render() {
+    var duration = 2200;
 
+    Hiski.linksvg
+            .transition()
+            .duration(duration)
+            .attr("d", function(d) {
+                    return line_function(d.get_path_points())
+                })
+            ;
 
+    Hiski.nodesvg
+            .transition()
+            .duration(duration)
+            .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
+            ;
+    Hiski.nodesvg.selectAll("circle")
+            .style("fill", Hiski.node_color_function)
+            ;
+
+    Hiski.relationsvg
+            .transition()
+            // shorter duration here makes no sense, but the desync makes no sense either
+            .duration(duration)
+            .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
+            ;
 }
 
 function map_init() {
@@ -1010,8 +1106,8 @@ $(document).ready(function() {
     d3_init();
     map_init();
     render();
-    Hiski.load("@I01@", null);
+//    Hiski.load("@I01@", null);
 //    Hiski.load("@I2131@", null);
 //    Hiski.load("@I1307@", null);
-//    Hiski.load(null, null);
+    Hiski.load(null, null);
 });
