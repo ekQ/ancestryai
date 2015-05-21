@@ -14,7 +14,10 @@ fi
 if [ -z "$@" ]; then
     echo "usage:"
     echo "sh babel.sh init"
+    echo "    initializes translation files. If you already had the files, you want to"
+    echo "    update instead."
     echo "sh babel.sh update"
+    echo "    updates the translation files for new translations."
 elif [ "$1" = "init" ]; then
     pybabel extract -F babel.cfg -o messages.pot .
     pybabel init -i messages.pot -d main/translations -l "fi"

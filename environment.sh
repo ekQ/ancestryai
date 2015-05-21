@@ -29,13 +29,21 @@ else
         echo "creating $env"
         virtualenv $env
         echo "activating $env"
-        . $env/bin/activate
-        if [ -f $req ]; then
-            echo "installing from $req"
-            pip install -r $req
+        if [ -f $env/bin/activate ]; then
+            . $env/bin/activate
+            if [ -f $req ]; then
+                echo "installing from $req"
+                pip install -r $req
+            fi
+        else
+            echo "$env/bin/activate does not exist, something went wrong"
         fi
     else
         echo "activating $env"
-        . $env/bin/activate
+        if [ -f $env/bin/activate ]; then
+            . $env/bin/activate
+        else
+            echo "$env/bin/activate does not exist, something went wrong"
+        fi
     fi
 fi
