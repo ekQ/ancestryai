@@ -491,7 +491,7 @@ var Hiski = {
             }
         }
     },
-    node_auto_expand_delay: 3000, // -1 to disable
+    node_auto_expand_delay: -1, // -1 to disable
     node_auto_expand_queue: [],
     queue_for_expand: function(node) {
         var expander = function() {
