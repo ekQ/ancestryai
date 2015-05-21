@@ -551,6 +551,18 @@ function Link(relation, node, type) {
         }
         return points;
     };
+    this.get_color = function() {
+        // todo: if they have lighter colours, they should also have a different z-order
+        var distance = Math.abs(this.relation.get_x() - this.node.get_x());
+        if(distance < 1000)
+            return "#000000";
+        else if(distance < 3000)
+            return "#888888";
+        else if(distance < 6000)
+            return "#cccccc";
+        else
+            return "#e3e3e3";
+    };
 }
 var line_function = d3.svg.line()
         .x(function(d) { return d[0]; })
@@ -634,10 +646,30 @@ var Hiski = {
             update_rightmost_child(node);
             update_rightmost_spouse(node);
             update_rightmost_subnode(node);
+            if(this.node_auto_expand_delay != -1) {
+                this.queue_for_expand(node);
+            }
         }
     },
     // relations / families
     auto_expand_relations: true,
+    node_auto_expand_delay: -1, // -1 to disable
+    node_auto_expand_queue: [],
+    queue_for_expand: function(node) {
+        var expander = function() {
+            var node2 = Hiski.node_auto_expand_queue.pop();
+            node2.expand_surroundings();
+            if(Hiski.node_auto_expand_queue.length > 0) {
+                setTimeout(expander, Hiski.node_auto_expand_delay);
+            }
+        };
+        if(!node.expandable())
+            return;
+        Hiski.node_auto_expand_queue.push(node);
+        if(Hiski.node_auto_expand_queue.length == 1) {
+            setTimeout(expander, Hiski.node_auto_expand_delay);
+        }
+    },
     relations: [],
     relation_dict: {},
     add_relation: function(relation_data, reference) {
@@ -852,6 +884,9 @@ var Hiski = {
                 console.warn("The node order is not clean anymore. There is some child before its parent. This is a bug and related to cycles (cycle2.ged).");
             }
             node.visited = true;
+            if(node.x == 0 || node.x == undefined || node.x == NaN) {
+                console.warn("Node has x coordinate '"+node.x+"', which seems to be a bug, but I don't know what it is related to.");
+            }
         }
         if(Hiski.layout_mode == 2) {
             for(var i = 0; i < this.nodes.length; i++) {
@@ -1030,6 +1065,9 @@ function render() {
             .duration(duration)
             .attr("d", function(d) {
                     return line_function(d.get_path_points())
+                })
+            .style("stroke", function(d) {
+                    return d.get_color();
                 })
             ;
 
