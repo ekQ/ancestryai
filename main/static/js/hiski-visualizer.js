@@ -10,7 +10,8 @@ app.controller("TopMenuController", function($scope, $translate) {
         };
         menu.toggle_color_mode = function() {
             Hiski.next_color_mode();
-            render();
+//            render(Hiski);
+            render_all();
         };
         menu.set_language = function(lang) {
             $translate.use(lang);
@@ -52,6 +53,89 @@ app.factory("handleMissingTranslations", function() {
     };
 });
 
+var ItemView = function(id) {
+    this.id = id;
+    this.html_id = "ItemView"+id;
+    this.tree_id = "ItemView"+id+"Tree";
+    this.mode = "tree";
+    item_views.push(this);
+    this.close = function() {
+        var i = item_views.indexOf(this);
+        if(i != -1)
+            item_views.splice(i, 1);
+    };
+    this.tree_ready = false;
+    var item_view = this;
+    var timeout = 100;
+    var poll_dom = function() {
+        var svg = d3.select("#"+item_view.tree_id);
+        if(svg.empty()) {
+            timeout = timeout * 2;
+            setTimeout(poll_dom, timeout);
+            console.warn("timeout "+timeout);
+        } else {
+            tree_init(item_view);
+            enter(item_view);
+            render(item_view);
+            item_view.tree_ready = true;
+        }
+    };
+    setTimeout(poll_dom, timeout);
+};
+var item_views = [];
+
+app.controller("ItemViewMenuController", function($scope, $translate) {
+        var menu = this;
+        menu.color = "#ffffff";
+        menu.set_color = function(color) {
+            menu.color = color;
+        };
+    });
+
+app.controller("MultiViewController", function($scope, $translate) {
+        var multi_view = this;
+        this._next_id = 0;
+        this.next_id = function() {
+            var id = this._next_id;
+            this._next_id += 1;
+            return id;
+        };
+        this.columns = [
+            ];
+        var create_item = function() {
+            var item = new ItemView(multi_view.next_id());
+            return item;
+        }
+        this.add_column = function() {
+            multi_view.columns.push({
+                    items: [
+                        create_item()
+                    ]
+                });
+        };
+        this.add_item = function(column_i) {
+            multi_view.columns[column_i].items.push(create_item());
+        };
+        this.close_item = function(column_i, item_i) {
+            if(multi_view.columns[column_i].items.length == 1) {
+                multi_view.close_column(column_i);
+                return;
+            }
+            multi_view.columns[column_i].items[item_i].close();
+            multi_view.columns[column_i].items.splice(item_i, 1);
+        };
+        this.close_column = function(column_i) {
+            for(var i = 0; i < multi_view.columns[column_i].length; i++) {
+                multi_view.columns[column_i].items[i].close();
+            }
+            multi_view.columns.splice(column_i, 1);
+            if(multi_view.columns.length == 0) {
+                multi_view.add_column();
+            }
+        };
+
+        this.add_column();
+    });
 
 function color_hash(str) {
     var hash = 0;
@@ -591,9 +675,11 @@ var Hiski = {
         // delayed rendering, which gives a bit time for other pending nodes to get loaded
         var timed = function() {
             Hiski.delay_running = false;
-            enter();
+//            enter(Hiski);
+            enter_all();
             Hiski.calc_layout();
-            render();
+//            render(Hiski);
+            render_all();
         };
         if(!Hiski.delay_running) {
             Hiski.delay_running = true;
@@ -607,7 +693,8 @@ var Hiski = {
     toggle_layout: function() {
         Hiski.layout_mode = (Hiski.layout_mode + 1) % 3;
         Hiski.calc_layout();
-        render();
+//        render(Hiski);
+        render_all();
     },
     calc_layout: function() {
         var guess_node_year = function(node) {
@@ -779,6 +866,48 @@ function dragended(d) {
     d3.select(this).classed("dragging", false);
 }
 
+function tree_init(item_view) {
+    var container = null;
+    var zoomfun = function() {
+        container.attr("transform", "translate("+d3.event.translate+")scale("+d3.event.scale+")");
+    }
+    var zoom = d3.behavior.zoom()
+            .scaleExtent([0.05, 10])
+            .on("zoom", zoomfun)
+            ;
+    var drag = d3.behavior.drag()
+            .origin(function(d) { return d; })
+            .on("dragstart", dragstarted)
+            .on("drag", dragged)
+            .on("dragend", dragended)
+            ;
+    item_view.tree_drawable = d3.select("#"+item_view.tree_id)
+            .append("g")
+            .classed("zoomnpan", true)
+            .call(zoom)
+            ;
+    var background = item_view.tree_drawable.append("rect")
+            .attr("width", "100%")
+            .attr("height", "100%")
+            .style("fill", "none")
+            .style("pointer-events", "all")
+            ;
+    container = item_view.tree_drawable.append("g")
+            .classed("container", true)
+            ;
+    var layers = ["debug", "links", "nodes", "relations"];
+    container.selectAll("g.layer")
+            .data(layers)
+            .enter()
+            .append("g")
+            .attr("class", function(d) { return d; })
+            .classed("layer", true)
+            ;
+    item_view.linksvg = container.selectAll("g.layer.links").selectAll("path.link");
+    item_view.nodesvg = container.selectAll("g.layer.nodes").selectAll("g.node");
+    item_view.relationsvg = container.selectAll("g.layer.relations").selectAll("g.relation");
+}
+
 function d3_init() {
     zoom = d3.behavior.zoom()
             .scaleExtent([0.05, 10])
@@ -817,12 +946,19 @@ function d3_init() {
     Hiski.nodesvg = container.selectAll("g.layer.nodes").selectAll("g.node");
     Hiski.relationsvg = container.selectAll("g.layer.relations").selectAll("g.relation");
 }
-
-function enter() {
-    Hiski.linksvg = Hiski.linksvg
+function enter_all() {
+    for(var i = 0; i < item_views.length; i++) {
+        if(item_views[i].mode != "tree")
+            continue;
+        if(item_views[i].tree_ready)
+            enter(item_views[i]);
+    }
+}
+function enter(view) {
+    view.linksvg = view.linksvg
             .data(Hiski.links)
             ;
-    var newlinks = Hiski.linksvg.enter()
+    var newlinks = view.linksvg.enter()
             .append("path")
                 .attr("stroke-width", 2)
                 .attr("fill", "none")
@@ -833,10 +969,10 @@ function enter() {
                     })
             ;
 
-    Hiski.nodesvg = Hiski.nodesvg
+    view.nodesvg = view.nodesvg
             .data(Hiski.nodes)
             ;
-    var newnodes = Hiski.nodesvg.enter()
+    var newnodes = view.nodesvg.enter()
             .append("g")
                 .classed("node", true)
                 .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
@@ -884,10 +1020,10 @@ function enter() {
             ;
 
 
-    Hiski.relationsvg = Hiski.relationsvg
+    view.relationsvg = view.relationsvg
             .data(Hiski.relations)
             ;
-    var newrelations = Hiski.relationsvg.enter()
+    var newrelations = view.relationsvg.enter()
             .append("g")
                 .classed("relation", true)
                 .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
@@ -897,10 +1033,18 @@ function enter() {
             .on("click", function(d) { d.expand_surroundings(); })
             ;
 }
-function render() {
+function render_all() {
+    for(var i = 0; i < item_views.length; i++) {
+        if(item_views[i].mode != "tree")
+            continue;
+        if(item_views[i].tree_ready)
+            render(item_views[i]);
+    }
+}
+function render(view) {
     var duration = 2200;
 
-    Hiski.linksvg
+    view.linksvg
             .transition()
             .duration(duration)
             .attr("d", function(d) {
@@ -911,16 +1055,16 @@ function render() {
                 })
             ;
 
-    Hiski.nodesvg
+    view.nodesvg
             .transition()
             .duration(duration)
             .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
             ;
-    Hiski.nodesvg.selectAll("circle")
+    view.nodesvg.selectAll("circle")
             .style("fill", Hiski.node_color_function)
             ;
 
-    Hiski.relationsvg
+    view.relationsvg
             .transition()
             // shorter duration here makes no sense, but the desync makes no sense either
             .duration(duration)
@@ -981,9 +1125,10 @@ function map_init() {
 }
 
 $(document).ready(function() {
-    d3_init();
+//    d3_init();
     map_init();
-    render();
+//    render(Hiski);
+    render_all();
 //    Hiski.load("@I01@", null);
 //    Hiski.load("@I2131@", null);
 //    Hiski.load("@I1307@", null);
