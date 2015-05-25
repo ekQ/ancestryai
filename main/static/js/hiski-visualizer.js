@@ -46,17 +46,29 @@ app.config(function($translateProvider) {
     // no sanitation strategy, because we should be in full control of all data
     $translateProvider.useSanitizeValueStrategy(null);
 });
+var missing_trans = {};
 app.factory("handleMissingTranslations", function() {
     return function(translationID) {
-        console.warn("Missing translation key: '" + translationID + "'. Copy pasteable line:\n"+
-        "    \""+translationID+"\": \""+translationID+"\",\n");
+        if(!(translationID in missing_trans)) {
+            missing_trans[translationID] = true;
+        }
+        var s = "";
+        for(var id in missing_trans) {
+            s += "\""+id+"\": \""+id+"\",\n";
+        }
+        console.warn("Missing translation key: '" + translationID + "'. Copy pasteable line for all:\n"+
+        s);
+//        "    \""+translationID+"\": \""+translationID+"\",\n");
     };
 });
 
-var ItemView = function(id) {
+var ItemView = function(id, controller) {
     this.id = id;
     this.html_id = "ItemView"+id;
-    this.tree_id = "ItemView"+id+"Tree";
+    this.tree_id = this.html_id + "Tree";
+    this.map_id = this.html_id + "Map";
+    this.search_id = this.html_id + "Search";
+    this.controller = controller;
     this.mode = "tree";
     item_views.push(this);
     this.close = function() {
@@ -64,6 +76,19 @@ var ItemView = function(id) {
         if(i != -1)
             item_views.splice(i, 1);
     };
+    this.set_mode = function(mode) {
+        this.mode = mode;
+        if(mode == "tree") {
+            enter(this);
+            render(this);
+        } else if(mode == "map") {
+            $("#"+this.map_id).append($("#map"));
+            if(Hiski.map === null) {
+                map_init();
+            }
+        }
+    };
+    // for tree view
     this.tree_ready = false;
     var item_view = this;
     var timeout = 100;
@@ -81,30 +106,54 @@ var ItemView = function(id) {
         }
     };
     setTimeout(poll_dom, timeout);
+    // for info view
+    var selected_node = Hiski.selected;
+    // for map view
+    this.map = null;
+};
+this._next_id = 0;
+this.next_id = function() {
+    var id = this._next_id;
+    this._next_id += 1;
+    return id;
 };
 var item_views = [];
 
 app.controller("ItemViewMenuController", function($scope, $translate) {
         var menu = this;
+        menu.item = new ItemView(next_id(), this);
         menu.color = "#ffffff";
+        menu.selected_node = Hiski.selected;
+        menu.search_by = "name";
+        menu.search_term = "";
         menu.set_color = function(color) {
             menu.color = color;
+        };
+        menu.set_tab = function(tabname) {
+            menu.item.set_mode(tabname);
+        };
+        $scope.$on("$destroy", function() {
+            console.warn("closed item "+menu.item.id);
+            menu.item.close();
+        });
+        menu.redraw = function() {
+            $scope.$apply();
+        };
+        menu.do_search = function() {
+            if(menu.search_by == "xref") {
+                Hiski.load(menu.search_term, null);
+            } else if(menu.search_by == "name") {
+            }
         };
     });
 
 app.controller("MultiViewController", function($scope, $translate) {
         var multi_view = this;
-        this._next_id = 0;
-        this.next_id = function() {
-            var id = this._next_id;
-            this._next_id += 1;
-            return id;
-        };
         this.columns = [
             ];
         var create_item = function() {
-            var item = new ItemView(multi_view.next_id());
-            return item;
+            return null;
+            //var item = new ItemView(multi_view.next_id());
         }
         this.add_column = function() {
             multi_view.columns.push({
@@ -117,17 +166,15 @@ app.controller("MultiViewController", function($scope, $translate) {
             multi_view.columns[column_i].items.push(create_item());
         };
         this.close_item = function(column_i, item_i) {
+            console.warn("close "+column_i+","+item_i);
             if(multi_view.columns[column_i].items.length == 1) {
                 multi_view.close_column(column_i);
                 return;
             }
-            multi_view.columns[column_i].items[item_i].close();
             multi_view.columns[column_i].items.splice(item_i, 1);
         };
         this.close_column = function(column_i) {
-            for(var i = 0; i < multi_view.columns[column_i].length; i++) {
-                multi_view.columns[column_i].items[i].close();
-            }
+            console.warn("close "+column_i+",*");
             multi_view.columns.splice(column_i, 1);
             if(multi_view.columns.length == 0) {
                 multi_view.add_column();
@@ -846,6 +893,10 @@ var Hiski = {
 
     // map related
     map: null,
+    map_id: "map",
+
+
+    selected: null,
 };
 
 var container = null;
@@ -954,6 +1005,16 @@ function enter_all() {
             enter(item_views[i]);
     }
 }
+function select_node(d) {
+    Hiski.selected = d;
+    for(var i = 0; i < item_views.length; i++) {
+        item_views[i].controller.selected_node = d;
+        if(item_views[i].mode == "info") {
+            item_views[i].controller.redraw();
+            continue;
+        }
+    }
+}
 function enter(view) {
     view.linksvg = view.linksvg
             .data(Hiski.links)
@@ -976,23 +1037,26 @@ function enter(view) {
             .append("g")
                 .classed("node", true)
                 .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
+                .on("click", function(d) {
+                    Hiski.selected = d;
+                    select_node(d);
+                    d.expand_surroundings();
+                })
             ;
     newnodes.append("circle")
             .attr("r", 20)
             .style("fill", Hiski.node_color_function)
-            .on("click", function(d) { d.expand_surroundings(); })
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
             .attr("y", -10)
             .attr("dominant-baseline", "central")
             .text(function(d) {
-                return d.name;
+                return d.name + "--";
             })
             .style("filter", "url(#dropshadow)")
             .style("font-weight", "bold")
             .style("font-size", "60%")
-            .on("click", function(d) { d.expand_surroundings(); })
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
@@ -1004,7 +1068,6 @@ function enter(view) {
             .style("filter", "url(#dropshadow)")
             .style("font-weight", "normal")
             .style("font-size", "50%")
-            .on("click", function(d) { d.expand_surroundings(); })
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
@@ -1016,7 +1079,6 @@ function enter(view) {
             .style("filter", "url(#dropshadow)")
             .style("font-weight", "normal")
             .style("font-size", "50%")
-            .on("click", function(d) { d.expand_surroundings(); })
             ;
 
 
@@ -1125,9 +1187,7 @@ function map_init() {
 }
 
 $(document).ready(function() {
-//    d3_init();
-    map_init();
-//    render(Hiski);
+//    map_init();
     render_all();
 //    Hiski.load("@I01@", null);
 //    Hiski.load("@I2131@", null);
