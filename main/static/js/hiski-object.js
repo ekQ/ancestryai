@@ -357,6 +357,9 @@ var Hiski = {
     // map related
     map: null,
     map_id: "map",
+    map_overlay: null,
+    overlay_nodes: null,
+    map_projection: null,
 
 
     selected: null,

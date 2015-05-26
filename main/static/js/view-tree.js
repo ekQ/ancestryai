@@ -202,6 +202,9 @@ function render_all() {
         if(item_views[i].tree_ready)
             render(item_views[i]);
     }
+    if(Hiski.map) {
+        update_map();
+    }
     Hiski.lastselected = Hiski.selected;
 }
 function render(view) {
@@ -216,6 +219,9 @@ function render(view) {
                 })
             .style("stroke", function(d) {
                     return d.node == Hiski.selected ? "#ffffff" : d.get_color();
+                })
+            .style("stroke-width", function(d) {
+                    return d.node == Hiski.selected ? 5 : 2;
                 })
             ;
     var move_to_front = function(elem) {
@@ -252,6 +258,9 @@ function render(view) {
                 .style("fill", "#000000")
                 ;
     }
+    view.relationsvg.selectAll("circle")
+            .attr("r", 5)
+            ;
     view.relationsvg
             .transition()
             // shorter duration here makes no sense, but the desync makes no sense either
@@ -262,6 +271,7 @@ function render(view) {
             .duration(short_duration)
             .style("fill", function(d) { return next_to_selected(d) ? "#ffffff" : "#000000" })
             .style("stroke", function(d) { return next_to_selected(d) ? "#000000" : "#ffffff" })
+            .attr("r", function(d) { return next_to_selected(d) ? 8 : 5 })
             ;
 }
 

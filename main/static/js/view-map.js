@@ -1,4 +1,15 @@
 
+function map_node_transform(d) {
+    var pos = new google.maps.LatLng(d.mapy, d.mapx);
+    pos = Hiski.map_projection.fromLatLngToDivPixel(pos);
+    d.map_projection_x = pos.x;
+    d.map_projection_y = pos.y;
+    return d3.select(this)
+            .attr("cx", pos.x + 1000)
+            .attr("cy", pos.y + 1000)
+            ;
+}
+
 function map_init() {
     Hiski.map = new google.maps.Map(d3.select("#map").node(), {
             zoom: 8,
@@ -6,48 +17,87 @@ function map_init() {
             mapTypeId: google.maps.MapTypeId.TERRAIN,
             });
     var overlay = new google.maps.OverlayView();
-    var fakedata = [
-        {xx: 37.1, yy: 12.1},
-        {xx: 37.01, yy: 12.01},
-        {xx: 37.001, yy: 12.001},
-        {xx: 37.0001, yy: 12.0001},
-        {xx: 37., yy: 12.},
-    ];
+    Hiski.map_overlay = overlay;
     overlay.onAdd = function() {
-        var layer = d3.select(this.getPanes().overlayLayer)
+        var svg = d3.select(this.getPanes().overlayLayer)
                 .append("svg")
-                .attr("class", "foobar")
+                .attr("class", "mapsvg")
+                ;
+        var linelayer = svg.append("g")
+                .attr("class", "map-line-layer")
+                ;
+        var nodelayer = svg.append("g")
+                .attr("class", "map-node-layer")
+                ;
+        var linefunction = d3.svg.line()
+                .x(function(d) { return d.map_projection_x + 1000 })
+                .y(function(d) { return d.map_projection_y + 1000 })
+                .interpolate("linear")
                 ;
 
         // if it is panned over 1000 pixels in a direction, we are out of drawable area of this svg...
         overlay.draw = function() {
-            layer.style("margin-left", "-1000px")
+            svg.style("margin-left", "-1000px")
                     .style("margin-top", "-1000px")
                     .attr("width", "3000px")
                     .attr("height", "3000px")
                     ;
 
             var projection = this.getProjection();
-            var padding = 10;
-            var marker = layer.selectAll("circle")
-                    .data(fakedata)
-                    .each(transform)
-                .enter()
+            Hiski.map_projection = projection;
+            var nodes = nodelayer.selectAll("circle")
+                    .data(Hiski.nodes)
+                    .each(map_node_transform)
+                    ;
+            nodes.enter()
                     .append("svg:circle")
                     .attr("r", 4.5)
-                    .each(transform)
                     .attr("class", "marker")
+                    .each(map_node_transform)
                     ;
-            function transform(d) {
-                d = new google.maps.LatLng(d.xx, d.yy);
-                d = projection.fromLatLngToDivPixel(d);
-                return d3.select(this)
-                        .attr("cx", d.x + 1000)
-                        .attr("cy", d.y + 1000)
+            nodes
+                    .style("fill", function(d) {
+                        return d == Hiski.selected ? "#ffffff" : "#000088";
+                    })
+                    .style("stroke", "#000000")
+
+            var newlinedata = [];
+            if(Hiski.selected !== null) {
+                for(var i = 0; i < Hiski.selected.parents.length; i++) {
+                    newlinedata.push({
+                        p: Hiski.selected.parents[i],
+                        c: Hiski.selected,
+                    });
+                }
+                for(var i = 0; i < Hiski.selected.children.length; i++) {
+                    newlinedata.push({
+                        p: Hiski.selected.children[i],
+                        c: Hiski.selected,
+                    });
+                }
+            }
+            var lines = linelayer.selectAll("path")
+                    .data(newlinedata)
+                    ;
+            lines.exit().remove();
+            if(Hiski.selected !== null) {
+                lines.enter().append("svg:path")
+                        .attr("d", function(d) { return linefunction([d.p, d.c]) })
+                        .style("stroke", "#000000")
+                        .style("stroke-width", 2)
+                        ;
+                lines
+                        .attr("d", function(d) { return linefunction([d.p, d.c]) })
                         ;
             }
         };
     };
     overlay.setMap(Hiski.map);
+}
+
+function update_map() {
+    if(Hiski.map === null)
+        return;
+    Hiski.map_overlay.draw();
 }
 

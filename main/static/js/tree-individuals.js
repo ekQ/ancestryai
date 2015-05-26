@@ -57,6 +57,12 @@ function Node(data) {
     this.color_by_sex = color_sex(this.data.sex);
     this.last_open_descendant_year = this.year;
 
+    // map related
+    this.mapx = _.random(0, 400000) / 1000.0;
+    this.mapy = _.random(0, 160000) / 1000.0 - 80.0;
+    this.map_projection_x = null;
+    this.map_projection_y = null;
+
 
     this.get_x = function() {
         return this.x;
