@@ -340,6 +340,9 @@ var Hiski = {
         this.color_mode = (this.color_mode + 1) % 3;
     },
     node_color_function: function(d) {
+/*        if(d == Hiski.selected) {
+            return "#ffffff";
+        } else*/
         if(Hiski.color_mode == 0) {
             return d.color_by_name;
         } else if(Hiski.color_mode == 1) {
@@ -357,5 +360,6 @@ var Hiski = {
 
 
     selected: null,
+    lastselected: null,
 };
 

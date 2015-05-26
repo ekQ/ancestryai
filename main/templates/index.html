@@ -8,17 +8,17 @@
             <div class="close-column" ng-click="multi_view.close_column($index)">
                 -
             </div>
-            <div id="{{menu.item.html_id}}" class="mvitem"
+            <div id="{{menu.html_id}}" class="mvitem"
                         ng-repeat="item in column.items track by $index"
                         ng-controller="ItemViewMenuController as menu">
-                <ul class="itemheader" style="background: {{menu.color}}">
+                <ul class="itemheader">
                     <li ng-click="menu.set_tab('tree')" translate>Tree</li>
                     <li ng-click="menu.set_tab('info')" translate>Info</li>
                     <li ng-click="menu.set_tab('search')" translate>Search</li>
                     <li ng-click="menu.set_tab('map')" translate>Map</li>
                     <li ng-click="multi_view.close_item($parent.$parent.$index, $index)" translate>Close</li>
                 </ul>
-                <svg id="{{menu.item.tree_id}}" class="tree viewtab" ng-show="menu.item.mode == 'tree'">
+                <svg id="{{menu.tree_id}}" class="tree viewtab" ng-show="menu.mode == 'tree'">
                     <filter id="dropshadow" height="130%">
                         <feGaussianBlur in="SourceAlpha" stdDeviation="1"/> <!-- how much to blur -->
                         <feColorMatrix
@@ -34,7 +34,7 @@
                         </feMerge>
                     </filter>
                 </svg>
-                <div class="info viewtab" ng-show="menu.item.mode == 'info'">
+                <div class="info viewtab" ng-show="menu.mode == 'info'">
                     <dl>
                         <dt>xref</dt>
                             <dd>{{ menu.selected_node.xref }}</dd>
@@ -50,10 +50,10 @@
                             <dd ng-if="menu.selected_node.data.sex == '?'" translate>Unknown</dd>
                     </dl>
                 </div>
-                <div id="{{ menu.item.map_id }}" class="map viewtab" ng-show="menu.item.mode == 'map'">
+                <div id="{{ menu.map_id }}" class="map viewtab" ng-show="menu.mode == 'map'">
                     <!-- #map will be moved here, as only one such can exist at a time -->
                 </div>
-                <div id="{{ menu.item.search_id }}" ng-show="menu.item.mode == 'search'">
+                <div id="{{ menu.search_id }}" ng-show="menu.mode == 'search'">
                     <label><span translate>Search by</span>
                         <select class="search-by" ng-model="menu.search_by">
                             <option value="firstname" translate>First name</option>
