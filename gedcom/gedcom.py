@@ -162,10 +162,35 @@ class Entry:
                     return None
         return tag
 
+    def create_child(self, xref, tag, value):
+        child = Entry(self.level + 1, xref, tag, value)
+        self.add_child(child)
+    def edit_chain(self, chain, value):
+        key = chain.split(".")[0]
+        rest = ".".join(chain.split(".")[1:])
+        if key in ["level", "xref", "tag", "value", "children", "parent"]:
+            setattr(self, key, value)
+        elif key == key.lower():
+            self.additional[key] = value
+        else:
+            nexttag = self.first_tag(key)
+            if not nexttag:
+                self.create_child(None, key, None)
+                nexttag = self.first_tag(key)
+            return nexttag.edit_chain(rest, value)
+        return True
+
+
 def read_file(filename):
     f = open(filename)
     lines = f.readlines()
     f.close()
+    return read_lines(lines)
+
+def read_string(s):
+    return read_lines(s.split("\n"))
+
+def read_lines(lines):
     tagstack = [Entry(-1, None, "ROOT", None)]
     lasttag = None
     for i_, line in enumerate(lines):
@@ -185,10 +210,16 @@ def read_file(filename):
             if entry.level != tagstack[-1].level + 1:
                 raise Exception("expected level {}, got {} on line {}".format(tagstack[-1].level+1, entry.level, i))
             if entry.tag == "CONC":
-                lasttag.value += entry.value
+                if lasttag.value and entry.value:
+                    lasttag.value += entry.value
+                elif entry.value:
+                    lasttag.value = entry.value
                 continue
             if entry.tag == "CONT":
-                lasttag.value += "\n" + entry.value
+                if lasttag.value and entry.value:
+                    lasttag.value += "\n" + entry.value
+                else:
+                    lasttag.value = "\n" + entry.value
                 continue
             if lasttag:
                 specials.check(lasttag)
@@ -201,25 +232,31 @@ def read_file(filename):
         specials.check(lasttag)
     return tagstack[0]
 
-def reprint(root):
+
+def reform(root):
+    s = ""
     for entry in root.traverse():
         if entry.tag == "ROOT":
             continue
         value = entry.value if entry.value else ""
         parts = value.split("\n")
-        print "{}{} {} {}".format(
+        s += "{}{} {} {}\n".format(
                 entry.level,
                 " "+entry.xref if entry.xref else "",
                 entry.tag,
                 parts[0],
                 )
         for p in parts[1:]:
-            print "{}{} {} {}".format(
+            s += "{}{} {} {}\n".format(
                     entry.level + 1,
                     "",
                     "CONT",
                     p,
                     )
+    return s
+
+def reprint(root):
+    print reform(root)
 
 if __name__ == "__main__":
     import sys

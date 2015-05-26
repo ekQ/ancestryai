@@ -24,7 +24,7 @@ def get_chain(root, chain):
                 return None
     return ensure_unicode(tag)
 
-def populate_from_gedcom(fname):
+def populate_from_gedcom(fname, store_gedcom=False):
     t0 = time.time()
     root = gedcom.read_file(fname)
     t1 = time.time()
@@ -40,6 +40,7 @@ def populate_from_gedcom(fname):
             fam = Family(
                     xref = ensure_unicode(entry.xref),
                     tag = u"FAM",
+                    loaded_gedcom = ensure_unicode(gedcom.reform(entry)) if store_gedcom else None,
                     )
             session.add(fam)
     session.flush()
@@ -69,10 +70,13 @@ def populate_from_gedcom(fname):
                     death_date_string = get_chain(entry, "DEAT.DATE.value"),
                     death_date_year = get_chain(entry, "DEAT.DATE.year"),
                     # death_date
+                    # soundex encodings
                     soundex6first = ensure_unicode(soundex.soundex(name_first, 6)),
                     soundex6family = ensure_unicode(soundex.soundex(name_family, 6)),
                     soundex3first = ensure_unicode(soundex.soundex(name_first, 3)),
                     soundex3family = ensure_unicode(soundex.soundex(name_family, 3)),
+                    # loaded gedcom
+                    loaded_gedcom = ensure_unicode(gedcom.reform(entry)) if store_gedcom else None,
                     )
             for tag in entry.by_tag("FAMC"):
                 fam = Family.query.filter_by(xref = ensure_unicode(tag.value)).first()
@@ -90,4 +94,30 @@ def populate_from_gedcom(fname):
     session.commit()
     t3 = time.time()
     print "individuals added {}ms".format(str(int((t3 - t2)*1000)).rjust(8))
+
+def reform_gedcom():
+    def update(entry, chain, value):
+        if value == None:
+            return
+        entry.edit_chain(chain, value)
+    for ind in Individual.query.all():
+        nextid = 123
+        if ind.loaded_gedcom:
+            entry = gedcom.read_string(ind.loaded_gedcom)
+        else:
+            entry = gedcom.Entry(0, "@I{}@".format(nextid), "INDI", None)
+        update(entry, "NAME.value", ind.name)
+        update(entry, "SEX.value", ind.sex)
+        update(entry, "BIRT.DATE.value", ind.birth_date_string)
+        update(entry, "DEAT.DATE.value", ind.death_date_string)
+        for fam in ind.sub_families:
+            print fam
+        ind.loaded_gedcom = gedcom.reform(entry)
+    for fam in Family.query.all():
+        nextid = 123
+        if fam.loaded_gedcom:
+            entry = gedcom.read_string(fam.loaded_gedcom)
+        else:
+            entry = gedcom.Entry(0, "@F{}@".format(nextid), "FAM", None)
+
 

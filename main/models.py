@@ -49,6 +49,8 @@ class Individual(Base):
     soundex6family = Column(Unicode(6))
     soundex3first = Column(Unicode(3))
     soundex3family = Column(Unicode(3))
+
+    loaded_gedcom = Column(UnicodeText)
     def as_dict(self):
         return {
             "xref": self.xref,
@@ -70,6 +72,8 @@ class Family(Base):
     id = Column(Integer, primary_key=True)
     xref = Column(Unicode(16), index=True, unique=True)
     tag = Column(Unicode(4))
+
+    loaded_gedcom = Column(UnicodeText)
 
     parents = relationship("Individual",
             secondary = family_parent_link,
