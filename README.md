@@ -13,8 +13,8 @@ python manage.py run
 then access the address mentioned from browser.
 
 
-Changing data
--------------
+Changing data (also needed when models change)
+----------------------------------------------
 
 python manage.py db delete create
 python manage.py populate gedcom <gedcom-file>

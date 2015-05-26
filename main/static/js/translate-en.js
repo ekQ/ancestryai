@@ -19,6 +19,9 @@ translations.en = {
     "Male": "Male",
     "Search by": "Search by",
     "Search term": "Search term",
+    "First name": "First name",
+    "Family name": "Family name",
+    "For search:": "For search:",
 
     // language selection
     "Finnish": "Suomi",

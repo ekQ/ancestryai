@@ -35,6 +35,8 @@ class Individual(Base):
     xref = Column(Unicode(16), index=True, unique=True)
     tag = Column(Unicode(4))
     name = Column(Unicode(256))
+    name_first = Column(Unicode(128))
+    name_family = Column(Unicode(128))
     sex = Column(Unicode(1))
     birth_date_string = Column(Unicode(64))
     birth_date_year = Column(Integer)
@@ -42,6 +44,11 @@ class Individual(Base):
     death_date_string = Column(Unicode(64))
     death_date_year = Column(Integer)
     death_date = Column(Date)
+
+    soundex6first = Column(Unicode(6))
+    soundex6family = Column(Unicode(6))
+    soundex3first = Column(Unicode(3))
+    soundex3family = Column(Unicode(3))
     def as_dict(self):
         return {
             "xref": self.xref,

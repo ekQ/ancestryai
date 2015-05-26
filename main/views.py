@@ -10,6 +10,7 @@ from flask import (
     jsonify,
 )
 from flask.ext.babel import refresh
+from soundexpy import soundex
 from . import app
 from gedcom import gedcom
 from .models import *
@@ -61,3 +62,41 @@ def language(lang):
     refresh()
     return redirect(url_for("index"))
 
+
+@app.route("/json/search/firstname/<term>/")
+def json_search_firstname(term):
+    soundex6term = soundex.soundex(term, 6)
+    soundex3term = soundex.soundex(term, 3)
+    inds = None
+    if not inds:
+        inds = Individual.query.filter_by(soundex6first = soundex6term).all()
+    if not inds:
+        inds = Individual.query.filter_by(soundex3first = soundex3term).all()
+    if not inds:
+        return jsonify({
+            "result": False,
+        })
+    return jsonify({
+        "result": True,
+        "count": len(inds),
+        "inds": [x.as_dict() for x in inds],
+    })
+
+@app.route("/json/search/familyname/<term>/")
+def json_search_familyname(term):
+    soundex6term = soundex.soundex(term, 6)
+    soundex3term = soundex.soundex(term, 3)
+    inds = None
+    if not inds:
+        inds = Individual.query.filter_by(soundex6family = soundex6term).all()
+    if not inds:
+        inds = Individual.query.filter_by(soundex3family = soundex3term).all()
+    if not inds:
+        return jsonify({
+            "result": False,
+        })
+    return jsonify({
+        "result": True,
+        "count": len(inds),
+        "inds": [x.as_dict() for x in inds],
+    })

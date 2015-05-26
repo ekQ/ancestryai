@@ -1,6 +1,7 @@
 
 import time
 from gedcom import gedcom
+from soundexpy import soundex
 from .models import *
 from .database import session
 
@@ -52,9 +53,14 @@ def populate_from_gedcom(fname):
             if candidate:
                 print "Individual '{}' already exists".format(entry.xref)
                 continue
+            names = get_chain(entry, "NAME.value").split("/")
+            name_first = names[0].strip()
+            name_family = names[1].strip()
             ind = Individual(
                     xref = ensure_unicode(entry.xref),
                     name = get_chain(entry, "NAME.value"),
+                    name_first = name_first,
+                    name_family = name_family,
                     tag = u"INDI",
                     sex = get_chain(entry, "SEX.value"),
                     birth_date_string = get_chain(entry, "BIRT.DATE.value"),
@@ -63,6 +69,10 @@ def populate_from_gedcom(fname):
                     death_date_string = get_chain(entry, "DEAT.DATE.value"),
                     death_date_year = get_chain(entry, "DEAT.DATE.year"),
                     # death_date
+                    soundex6first = ensure_unicode(soundex.soundex(name_first, 6)),
+                    soundex6family = ensure_unicode(soundex.soundex(name_family, 6)),
+                    soundex3first = ensure_unicode(soundex.soundex(name_first, 3)),
+                    soundex3family = ensure_unicode(soundex.soundex(name_family, 3)),
                     )
             for tag in entry.by_tag("FAMC"):
                 fam = Family.query.filter_by(xref = ensure_unicode(tag.value)).first()

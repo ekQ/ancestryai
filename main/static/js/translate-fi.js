@@ -19,6 +19,9 @@ translations.fi = {
     "Male": "Mies",
     "Search by": "Hakutyyppi",
     "Search term": "Hakutermi",
+    "First name": "Etunimi",
+    "Family name": "Sukunimi",
+    "For search:": "Haulle:",
 
     // language selection
     "Finnish": "Suomi",

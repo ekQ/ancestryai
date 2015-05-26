@@ -124,8 +124,10 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.item = new ItemView(next_id(), this);
         menu.color = "#ffffff";
         menu.selected_node = Hiski.selected;
-        menu.search_by = "name";
+        menu.search_by = "firstname";
         menu.search_term = "";
+        menu.search_result_term = "";
+        menu.search_result_list = [];
         menu.set_color = function(color) {
             menu.color = color;
         };
@@ -139,10 +141,35 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.redraw = function() {
             $scope.$apply();
         };
+        menu.load = function(xref) {
+            Hiski.load(xref, null);
+        };
         menu.do_search = function() {
+            var term = menu.search_term;
             if(menu.search_by == "xref") {
-                Hiski.load(menu.search_term, null);
-            } else if(menu.search_by == "name") {
+                Hiski.load(term, null);
+            } else if(menu.search_by == "firstname") {
+                var addr = Hiski.url_root + "json/search/firstname/"+term+"/";
+                d3.json(addr, function(json) {
+                    if(json) {
+                        menu.search_result_list = json["inds"];
+                        menu.search_result_term = term;
+                        menu.redraw();
+                    } else {
+                        throw new Error("Loading firstname search '"+term+"' failed");
+                    }
+                });
+            } else if(menu.search_by == "familyname") {
+                var addr = Hiski.url_root + "json/search/familyname/"+term+"/";
+                d3.json(addr, function(json) {
+                    if(json) {
+                        menu.search_result_list = json["inds"];
+                        menu.search_result_term = term;
+                        menu.redraw();
+                    } else {
+                        throw new Error("Loading familyname search '"+term+"' failed");
+                    }
+                });
             }
         };
     });
@@ -550,6 +577,7 @@ var Hiski = {
     // nodes / people
     nodes: [],
     node_dict: {},
+    preloaded_nodes: {},
     add_node: function(node_data, reference) {
         if(node_data.xref in this.node_dict) {
             // update existing?
@@ -701,6 +729,11 @@ var Hiski = {
             return;
         if(xref in this.relation_dict)
             return;
+        if(xref in this.preloaded_nodes) {
+            Hiski.add_entry(this.preloaded_nodes[xref], reference);
+            Hiski.delayed_render();
+            return;
+        }
         var addr = this.url_root + "json/load/"+xref+"/";
         if(xref === null)
             addr = this.url_root + "json/load-any/";
