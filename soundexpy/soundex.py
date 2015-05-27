@@ -69,6 +69,7 @@ def debug_test(s, code=None, length=0):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
+        print "python {} test".format(sys.argv[0])
         print "python {} <name>".format(sys.argv[0])
         sys.exit()
     if sys.argv[1] == "test":

@@ -217,11 +217,13 @@ function render(view) {
             .attr("d", function(d) {
                     return line_function(d.get_path_points())
                 })
+            ;
+    view.linksvg
             .style("stroke", function(d) {
                     return d.node == Hiski.selected ? "#ffffff" : d.get_color();
                 })
             .style("stroke-width", function(d) {
-                    return d.node == Hiski.selected ? 5 : 2;
+                    return d.node == Hiski.selected ? 4 : 2;
                 })
             ;
     var move_to_front = function(elem) {
@@ -238,8 +240,8 @@ function render(view) {
             .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
             ;
     view.nodesvg.selectAll("circle")
-            .transition()
-            .duration(short_duration)
+//            .transition()
+//            .duration(short_duration)
             .style("fill", Hiski.node_color_function)
             .style("stroke", function(d) { return d == Hiski.selected ? "#ffffff" : "#000000" })
             .style("stroke-width", function(d) { return d == Hiski.selected ? 3 : 1 })
@@ -267,11 +269,13 @@ function render(view) {
             .duration(duration)
             .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
             .selectAll("circle")
-            .transition()
-            .duration(short_duration)
+//            .transition()
+//            .duration(short_duration)
+            ;
+    view.relationsvg.selectAll("circle")
             .style("fill", function(d) { return next_to_selected(d) ? "#ffffff" : "#000000" })
             .style("stroke", function(d) { return next_to_selected(d) ? "#000000" : "#ffffff" })
-            .attr("r", function(d) { return next_to_selected(d) ? 8 : 5 })
+//            .attr("r", function(d) { return next_to_selected(d) ? 8 : 5 })
             ;
 }
 

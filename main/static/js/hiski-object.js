@@ -53,16 +53,7 @@ var Hiski = {
                 }
             }
             // write the node's fuzzy index and store the node into node_order
-            if(this.node_order.length == 0) {
-                node.order_fuzzy_index = 0.0;
-            } else if(order_i == 0) {
-                node.order_fuzzy_index = this.node_order[0].order_fuzzy_index - 1.0;
-            } else if(order_i == this.node_order.length) {
-                node.order_fuzzy_index = _.last(this.node_order).order_fuzzy_index + 1.0;
-            } else {
-                node.order_fuzzy_index = (this.node_order[order_i - 1].order_fuzzy_index +
-                        this.node_order[order_i].order_fuzzy_index) / 2.0;
-            }
+            node.order_fuzzy_index = this.new_fuzzy_index_for_position(order_i);
             this.node_order.splice(order_i, 0, node);
             // update layout related summarised data
             update_descendant_year(node, null);
@@ -74,6 +65,52 @@ var Hiski = {
             // queue for expanding if the feature is on
             if(this.node_auto_expand_delay != -1) {
                 this.queue_for_expand(node);
+            }
+        }
+    },
+    new_fuzzy_index_for_position: function(order_i) {
+        if(this.node_order.length == 0) {
+            return 0.0;
+        } else if(order_i == 0) {
+            return this.node_order[0].order_fuzzy_index - 1.0;
+        } else if(order_i == this.node_order.length) {
+            return _.last(this.node_order).order_fuzzy_index + 1.0;
+        } else {
+            return (this.node_order[order_i - 1].order_fuzzy_index +
+                    this.node_order[order_i].order_fuzzy_index) / 2.0;
+        }
+    },
+    reposition_node: function(node) {
+        this.reset_node_visited();
+        this._reposition_node(node);
+    },
+    _reposition_node: function(node) {
+        if(node.visited) {
+            console.warn("The data has a timetraveller, cutting node repositioning");
+            node.timetraveller = true;
+            return;
+        }
+        node.visited = true;
+        if(node.rightmost_parent != null) {
+            if(node.order_fuzzy_index < node.rightmost_parent.order_fuzzy_index) {
+                // child left of parent and need to be moved
+                var current_i = this.node_order.indexOf(node);
+                this.node_order.splice(current_i, 1);
+                var order_i = this.node_order.indexOf(node.rightmost_parent) + 1;
+                node.order_reason = "repositioned to right of parent " + node.rightmost_parent.xref;
+                node.order_fuzzy_index = this.new_fuzzy_index_for_position(order_i);
+                this.node_order.splice(order_i, 0, node);
+                // update pointers
+                update_rightmost_subnode(node);
+                for(var i = 0; i < node.children.length; i++) {
+                    update_leftmost_parent(node.children[i]);
+                    update_rightmost_parent(node.children[i]);
+                }
+                // recurse
+                for(var i = 0; i < node.children.length; i++) {
+                    // todo: cut the search if we have time traveller
+                    this._reposition_node(node.children[i]);
+                }
             }
         }
     },
@@ -165,7 +202,7 @@ var Hiski = {
         if(xref === null)
             addr = this.url_root + "json/load-any/";
         d3.json(addr, function(json) {
-            if(json) {
+            if(json && json.result == true) {
                 if(json.entry.xref in Hiski.node_dict || json.entry.xref in Hiski.relation_dict) {
                     console.warn("The node already existed, doing nothing.");
                     return;
@@ -202,6 +239,11 @@ var Hiski = {
         Hiski.calc_layout();
 //        render(Hiski);
         render_all();
+    },
+    reset_node_visited: function() {
+        for(var i = 0; i < this.nodes.length; i++) {
+            this.nodes[i].visited = false;
+        }
     },
     calc_layout: function() {
         var guess_node_year = function(node) {
@@ -286,10 +328,8 @@ var Hiski = {
         for(var i = 0; i < 3000; i++) {
             years_x.push(x);
         }
+        this.reset_node_visited();
         var arr = this.node_order;
-        for(var i = 0; i < arr.length; i++) {
-            arr[i].visited = false;
-        }
         for(var i = 0; i < arr.length; i++) {
             var node = arr[i];
             var pos = node_preferred_position(node);
@@ -308,12 +348,11 @@ var Hiski = {
             }
             if(Hiski.layout_mode == 1)
                 node.x = i*60+60;
-            if(node.parents.length > 0 && !node.leftmost_parent.visited) {
-                // This really happens at some point when I have hundreds of nodes opened.
-                // Might be related to cycles? maybe? not entirely sure.
-                // Need some fake data with simpler cycles.
-                // Another weirdness are the nodes that still are not getting x coordinate properly.
-                console.warn("The node order is not clean anymore. There is some child before its parent. This is a bug and related to cycles (cycle2.ged).");
+            if(node.parents.length > 0 && !node.rightmost_parent.visited && !node.timetraveller) {
+                // abort layout calculation and reposition nodes, when a child is left of its parents
+                Hiski.reposition_node(node);
+                Hiski.calc_layout();
+                return;
             }
             node.visited = true;
             if(node.x == 0 || node.x == undefined || node.x == NaN || node.x < 50) {
@@ -351,6 +390,18 @@ var Hiski = {
             return d.expandable() ? "#ccffcc" : "#dddddd";
         }
         return "#ff0000";
+    },
+    reorder: function() {
+        var neworder = [];
+        for(var i = 0; i < this.nodes.length; i++) {
+            neworder.push(this.nodes[i]);
+        }
+        this.node_order = neworder;
+        for(var i = 0; i < this.node_order.length; i++) {
+            this.node_order[i].order_fuzzy_index = i;
+        }
+        this.calc_layout();
+        render_all();
     },
 
 
