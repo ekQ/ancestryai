@@ -35,6 +35,10 @@ app.controller("TopMenuController", function($scope, $translate) {
         menu.toggle_layout = function() {
             Hiski.toggle_layout();
         };
+        menu.toggle_autoexpand = function() {
+            Hiski.node_auto_expand_delay = Hiski.node_auto_expand_delay == -1 ? 3000 : -1;
+            Hiski.start_node_autoexpansion();
+        };
     });
 app.config(function($translateProvider) {
     for(key in translations) {

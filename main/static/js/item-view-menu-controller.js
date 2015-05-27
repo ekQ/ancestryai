@@ -61,6 +61,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.search_term = "";
         menu.search_result_term = "";
         menu.search_result_list = [];
+        menu.testnote = Hiski.testnote;
 
         menu.set_tab = function(tabname) {
             menu.set_mode(tabname);

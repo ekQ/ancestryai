@@ -5,7 +5,9 @@
 2 VERS 5.5
 1 CHAR UTF-8
 1 LANG English
-0 @I01@ INDI
+1 ROLE test
+2 NOTE Testing that a marriage with high age separation does not become a single vertical line, as that is not easy to read and does not look good. Open in marked order.
+0 @first@ INDI
 1 NAME Vertical marriage test [1] /Foos/
 1 SEX M
 1 BIRT
@@ -31,7 +33,7 @@
 1 FAMC @F01@
 
 0 @F01@ FAM
-1 HUSB @I01@
+1 HUSB @first@
 1 WIFE @I02@
 1 CHIL @I03@
 1 CHIL @I04@

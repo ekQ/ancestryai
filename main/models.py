@@ -90,3 +90,8 @@ class Family(Base):
             "children": [x.xref for x in self.children],
         }
 
+class Setting(Base):
+    __tablename__ = "setting"
+    id = Column(Integer, primary_key=True)
+    key = Column(String(32), index=True, unique=True)
+    value = Column(UnicodeText)

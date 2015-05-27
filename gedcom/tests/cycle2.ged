@@ -5,7 +5,9 @@
 2 VERS 5.5
 1 CHAR UTF-8
 1 LANG English
-0 @I01@ INDI
+1 ROLE test
+2 NOTE Testing graph with a cycle due to cousins marrying. The nodes will need reordering due to the cycle to maintain having children right of their parent in the ordered array. Open in marked order, if the conditions realise. "Gen3 Bar" should be reordered after "Second" when they are connected.
+0 @first@ INDI
 1 NAME Cycle test [1] /Foos/
 1 SEX M
 1 BIRT
@@ -64,7 +66,7 @@
 1 FAMC @F04@
 
 0 @F01@ FAM
-1 HUSB @I01@
+1 HUSB @first@
 1 WIFE @I02@
 1 CHIL @I03@
 1 CHIL @I04@

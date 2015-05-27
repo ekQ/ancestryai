@@ -1,0 +1,42 @@
+0 HEAD
+1 SOUR Text editor
+1 DATE 27 MAY 2015
+1 GEDC
+2 VERS 5.5
+1 CHAR UTF-8
+1 LANG English
+1 ROLE test
+2 NOTE Tests child positioning, if a family is already loaded and a child from another marriage appears without having the other parent in data. Open in marked order, if conditions apply. "The other child" should go to the right of the existing family to not distance the family by going between the rightmost parent and children. If "The other child" would then get the other parent, that would go immediately to the left of "The other child".
+0 @first@ INDI
+1 NAME Doubly Family test [1] /Bars/
+1 SEX M
+1 BIRT
+2 DATE 1900
+1 FAMC @F01@
+0 @I02@ INDI
+1 NAME Single M Parent /Bars/
+1 SEX F
+1 BIRT
+2 DATE 1880
+1 FAMS @F01@
+0 @I03@ INDI
+1 NAME Double M Parent [2 if on right] /Foos/
+1 SEX M
+1 BIRT
+2 DATE 1878
+1 FAMS @F01@
+1 FAMS @F02@
+0 @I04@ INDI
+1 NAME The other child /Foos/
+1 SEX F
+1 BIRT
+2 DATE 1902
+1 FAMC @F02@
+
+0 @F01@ FAM
+1 WIFE @I02@
+1 CHIL @first@
+1 HUSB @I03@
+0 @F02@ FAM
+1 HUSB @I03@
+1 CHIL @I04@

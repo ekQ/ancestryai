@@ -91,9 +91,19 @@ def populate_from_gedcom(fname, store_gedcom=False):
                     continue
                 fam.parents.append(ind)
             session.add(ind)
-    session.commit()
     t3 = time.time()
     print "individuals added {}ms".format(str(int((t3 - t2)*1000)).rjust(8))
+    if root.get_chain("HEAD.ROLE.value") == "test":
+        testnote = ensure_unicode(root.get_chain("HEAD.ROLE.NOTE.value"))
+        if testnote:
+            testnotesetting = Setting.query.filter_by(key = "testnote").first()
+            if testnotesetting:
+                testnotesetting.value = testnote
+            else:
+                testnotesetting = Setting(key = "testnote", value = testnote)
+                session.add(testnotesetting)
+        print "testnote set"
+    session.commit()
 
 def reform_gedcom():
     def update(entry, chain, value):

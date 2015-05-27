@@ -22,6 +22,8 @@ translations.fi = {
     "First name": "Etunimi",
     "Family name": "Sukunimi",
     "For search:": "Haulle:",
+    "Toggle autoexpansion": "Automaattinen laajennus",
+    "Testnote": "Testiviesti",
 
     // language selection
     "Finnish": "Suomi",

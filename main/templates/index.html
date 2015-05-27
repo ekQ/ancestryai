@@ -16,6 +16,7 @@
                     <li ng-click="menu.set_tab('info')" translate>Info</li>
                     <li ng-click="menu.set_tab('search')" translate>Search</li>
                     <li ng-click="menu.set_tab('map')" translate>Map</li>
+                    <li ng-click="menu.set_tab('testnote')" ng-show="menu.testnote !== null" translate>Testnote</li>
                     <li ng-click="multi_view.close_item($parent.$parent.$index, $index)" translate>Close</li>
                 </ul>
                 <svg id="{{menu.tree_id}}" class="tree viewtab" ng-show="menu.mode == 'tree'">
@@ -49,6 +50,9 @@
                             <dd ng-if="menu.selected_node.data.sex == 'F'" translate>Female</dd>
                             <dd ng-if="menu.selected_node.data.sex == '?'" translate>Unknown</dd>
                     </dl>
+                </div>
+                <div class="testnote viewtab" ng-show="menu.mode == 'testnote'">
+                    {{ menu.testnote }}
                 </div>
                 <div id="{{ menu.map_id }}" class="map viewtab" ng-show="menu.mode == 'map'">
                     <!-- #map will be moved here, as only one such can exist at a time -->

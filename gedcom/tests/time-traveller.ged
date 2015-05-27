@@ -5,6 +5,8 @@
 2 VERS 5.5
 1 CHAR UTF-8
 1 LANG English
+1 ROLE test
+2 NOTE Tests handling of time travellers. These could be possibly due to faulty data. They probably are not possible legitimately, but we can't be entirely sure. We should not cause infinite loops and we should not break recursion limits. So, the program should survive, but the layout might not look too great after time travelling.
 0 @I07@ INDI
 1 NAME Timetraveller [2] /Foos/
 1 SEX M
@@ -19,7 +21,7 @@
 2 DATE 1902
 1 FAMS @F01@
 0 @I03@ INDI
-1 NAME Gen one child /Foos/
+1 NAME Gen one child [3] /Foos/
 1 SEX F
 1 BIRT
 2 DATE 1922
@@ -32,7 +34,7 @@
 2 DATE 1924
 1 FAMS @F02@
 0 @I10@ INDI
-1 NAME Gen two child /Foos/
+1 NAME Gen two child [4] /Foos/
 1 SEX M
 1 BIRT
 2 DATE 1946
@@ -44,7 +46,7 @@
 1 BIRT
 2 DATE 1948
 1 FAMS @F03@
-0 @I01@ INDI
+0 @first@ INDI
 1 NAME Gen three child [1] /Timetraveller test/
 1 SEX F
 1 BIRT
@@ -70,8 +72,8 @@
 0 @F03@ FAM
 1 HUSB @I10@
 1 WIFE @I06@
-1 CHIL @I01@
+1 CHIL @first@
 0 @F04@ FAM
-1 HUSB @I01@
+1 HUSB @first@
 1 WIFE @I09@
 1 CHIL @I07@

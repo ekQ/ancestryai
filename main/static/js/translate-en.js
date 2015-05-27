@@ -22,6 +22,8 @@ translations.en = {
     "First name": "First name",
     "Family name": "Family name",
     "For search:": "For search:",
+    "Toggle autoexpansion": "Toggle autoexpansion",
+    "Testnote": "Testnote",
 
     // language selection
     "Finnish": "Suomi",

@@ -53,6 +53,7 @@ function Node(data) {
     this.x = _.random(0, 400) + 200;
     this.y = 0;
     this.year = data.birth_date_year;
+    this.guessed_year = null;
     this.color_by_name = color_hash(this.family_name);
     this.color_by_sex = color_sex(this.data.sex);
     this.last_open_descendant_year = this.year;
@@ -171,3 +172,79 @@ function update_descendant_year(node, newyear) {
     }
 }
 
+
+function guess_node_year(node, field) {
+    field = (typeof field === "undefined") ? "year" : field;
+    // guess some year for node in order to know where to display it
+    var year = null;
+    if(node[field] !== null) {
+        year = node[field];
+    } else {
+        if(node.spouses.length > 0) {
+            // same as spouse's
+            for(var i = 0; i < node.spouses.length; i++) {
+                if(node.spouses[i][field] !== null) {
+                    year = node.spouses[i][field];
+                    break;
+                }
+            }
+        }
+        if(year === null && node.siblings.length > 0) {
+            // same as sibling's
+            for(var i = 0; i < node.siblings.length; i++) {
+                if(node.siblings[i][field] !== null) {
+                    year = node.siblings[i][field];
+                    break;
+                }
+            }
+        }
+        if(year === null) {
+            // between parents' and children's or 30 before after either if
+            // both don't exist yet.
+            var parent_max = null;
+            if(node.parents.length > 0) {
+                for(var i = 0; i < node.parents.length; i++) {
+                    if(parent_max === null) {
+                        parent_max = node.parents[i][field];
+                    } else if(node.parents[i][field] !== null) {
+                        parent_max = Math.max(parent_max, node.parents[i][field]);
+                    }
+                }
+            }
+            var child_min = null;
+            if(node.children.length > 0) {
+                for(var i = 0; i < node.children.length; i++) {
+                    if(child_min === null) {
+                        child_min = node.children[i][field];
+                    } else if(node.children[i][field] !== null) {
+                        child_min = Math.min(child_min, node.children[i][field]);
+                    }
+                }
+            }
+            if(parent_max !== null) {
+                if(child_min !== null) {
+                    year = (parent_max + child_min) / 2;
+                } else {
+                    // guessing the parents were about 30 on birth
+                    year = parent_max + 20;
+                }
+            } else {
+                if(child_min !== null) {
+                    // guessing the parents were about 30 on birth
+                    year = child_min - 20;
+                }
+            }
+        }
+    }
+    if(year === null) {
+        if(field == "year") {
+            year = guess_node_year(node, "guessed_year");
+        } else {
+            console.warn("Still unable to guess year for '"+node.xref+"' after looking at family members.");
+            year = 0;
+        }
+    } else {
+        node.guessed_year = year;
+    }
+    return year;
+}

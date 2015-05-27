@@ -248,6 +248,8 @@ function render(view) {
             ;
 
     var next_to_selected = function(d) {
+        if(Hiski.selected === null)
+            return false;
         for(var i = 0; i < Hiski.selected.relations.length; i++) {
             if(Hiski.selected.relations[i] == d)
                 return true;

@@ -32,6 +32,10 @@ def json_individual(xref):
 @app.route("/json/load/<xref>/")
 @app.route("/json/load-any/")
 def json_load(xref = None):
+    if xref and xref == "@first@":
+        ind = Individual.query.filter_by(xref = xref).first()
+        if not ind:
+            xref = None
     if xref:
         ind = Individual.query.filter_by(xref = xref).first()
     else:
@@ -100,3 +104,12 @@ def json_search_familyname(term):
         "count": len(inds),
         "inds": [x.as_dict() for x in inds],
     })
+
+@app.route("/json/setting/<key>/")
+def json_setting(key):
+    setting = Setting.query.filter_by(key = key).first()
+    return jsonify({
+        "result": setting != None,
+        key: setting.value if setting else None,
+    })
+

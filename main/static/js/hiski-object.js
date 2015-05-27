@@ -37,7 +37,10 @@ var Hiski = {
                         order_i = this.node_order.indexOf(_.last(node.siblings).rightmost_subnode) + 1;
                         node.order_reason = "right of siblings " + _.last(node.siblings).xref +
                                 " -> " + _.last(node.siblings).rightmost_subnode.xref;
-                    } else if(node.parents.length > 0) {
+                    } else if(node.parents.length == 1) {
+                        order_i = this.node_order.indexOf(node.rightmost_parent.rightmost_subnode) + 1;
+                        node.order_reason = "right of the only parent's other subfamilies " + node.rightmost_parent.xref + " -> " + node.rightmost_parent.rightmost_subnode.xref;
+                    } else if(node.parents.length > 1) {
                         order_i = this.node_order.indexOf(node.rightmost_parent) + 1;
                         node.order_reason = "right of parents " + node.rightmost_parent.xref;
                     }
@@ -63,9 +66,7 @@ var Hiski = {
                 update_rightmost_parent(node.children[i]);
             }
             // queue for expanding if the feature is on
-            if(this.node_auto_expand_delay != -1) {
-                this.queue_for_expand(node);
-            }
+            this.queue_for_expand(node);
         }
     },
     new_fuzzy_index_for_position: function(order_i) {
@@ -117,17 +118,22 @@ var Hiski = {
     node_auto_expand_delay: -1, // -1 to disable
     node_auto_expand_queue: [],
     queue_for_expand: function(node) {
+        if(!node.expandable())
+            return;
+        Hiski.node_auto_expand_queue.push(node);
+        Hiski.start_node_autoexpansion();
+    },
+    start_node_autoexpansion: function() {
         var expander = function() {
+            if(Hiski.node_auto_expand_delay == -1)
+                return;
             var node2 = Hiski.node_auto_expand_queue.pop();
             node2.expand_surroundings();
             if(Hiski.node_auto_expand_queue.length > 0) {
                 setTimeout(expander, Hiski.node_auto_expand_delay);
             }
         };
-        if(!node.expandable())
-            return;
-        Hiski.node_auto_expand_queue.push(node);
-        if(Hiski.node_auto_expand_queue.length == 1) {
+        if(Hiski.node_auto_expand_queue.length == 1 && Hiski.node_auto_expand_delay != -1) {
             setTimeout(expander, Hiski.node_auto_expand_delay);
         }
     },
@@ -246,70 +252,6 @@ var Hiski = {
         }
     },
     calc_layout: function() {
-        var guess_node_year = function(node) {
-            // guess some year for node in order to know where to display it
-            var year = null;
-            if(node.year !== null) {
-                year = node.year;
-            } else {
-                if(node.spouses.length > 0) {
-                    for(var i = 0; i < node.spouses.length; i++) {
-                        if(node.spouses[i].year !== null) {
-                            year = node.spouses[i].year;
-                            break;
-                        }
-                    }
-                }
-                if(year === null && node.siblings.length > 0) {
-                    for(var i = 0; i < node.siblings.length; i++) {
-                        if(node.siblings[i].year !== null) {
-                            year = node.siblings[i].year;
-                            break;
-                        }
-                    }
-                }
-                if(year === null) {
-                    var parent_max = null;
-                    if(node.parents.length > 0) {
-                        for(var i = 0; i < node.parents.length; i++) {
-                            if(parent_max === null) {
-                                parent_max = node.parents[i].year;
-                            } else if(node.parents[i].year !== null) {
-                                parent_max = Math.max(parent_max, node.parents[i].year);
-                            }
-                        }
-                    }
-                    var child_min = null;
-                    if(node.children.length > 0) {
-                        for(var i = 0; i < node.children.length; i++) {
-                            if(child_min === null) {
-                                child_min = node.children[i].year;
-                            } else if(node.children[i].year !== null) {
-                                child_min = Math.min(child_min, node.children[i].year);
-                            }
-                        }
-                    }
-                    if(parent_max !== null) {
-                        if(child_min !== null) {
-                            year = (parent_max + child_min) / 2;
-                        } else {
-                            // guessing the parents were about 30 on birth
-                            year = parent_max + 20;
-                        }
-                    } else {
-                        if(child_min !== null) {
-                            // guessing the parents were about 30 on birth
-                            year = child_min - 20;
-                        }
-                    }
-                }
-            }
-            if(year === null) {
-                console.warn("Still unable to guess year for '"+node.xref+"' after looking at family members.");
-                year = 0;
-            }
-            return year;
-        };
         var node_preferred_position = function(node) {
             var x = node.x;
             var year = guess_node_year(node);
@@ -412,5 +354,7 @@ var Hiski = {
 
     selected: null,
     lastselected: null,
+
+    testnote: null,
 };
 
