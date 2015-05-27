@@ -32,9 +32,6 @@ app.controller("TopMenuController", function($scope, $translate) {
                         node.order_reason);
             }
         };
-        menu.reorder = function() {
-            Hiski.reorder();
-        };
         menu.toggle_layout = function() {
             Hiski.toggle_layout();
         };

@@ -18,7 +18,7 @@
 2 DATE 1901
 1 FAMS @F01@
 0 @I03@ INDI
-1 NAME First [2] /Foos/
+1 NAME First [2 if leftmost] /Foos/
 1 SEX M
 1 BIRT
 2 DATE 1920

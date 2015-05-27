@@ -340,6 +340,16 @@ var Hiski = {
             for(var j = Math.max(0, year - pad_years); j < endyear && j < years_x.length; j++) {
                 maxx = Math.max(maxx, years_x[j]);
             }
+            for(var j = 0; j < node.spouses.length; j++) {
+                if(!node.spouses[j].visited)
+                    continue;
+                maxx = Math.max(maxx, node.spouses[j].x);
+            }
+            for(var j = 0; j < node.siblings.length; j++) {
+                if(!node.siblings[j].visited)
+                    continue;
+                maxx = Math.max(maxx, node.siblings[j].x);
+            }
             node.x = maxx + pad;
             if(node.parents.length > 0 && node.leftmost_parent.visited)
                 node.x = Math.max(node.x, node.leftmost_parent.x);
@@ -391,19 +401,6 @@ var Hiski = {
         }
         return "#ff0000";
     },
-    reorder: function() {
-        var neworder = [];
-        for(var i = 0; i < this.nodes.length; i++) {
-            neworder.push(this.nodes[i]);
-        }
-        this.node_order = neworder;
-        for(var i = 0; i < this.node_order.length; i++) {
-            this.node_order[i].order_fuzzy_index = i;
-        }
-        this.calc_layout();
-        render_all();
-    },
-
 
     // map related
     map: null,
