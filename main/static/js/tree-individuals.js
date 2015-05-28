@@ -46,8 +46,9 @@ function Node(data) {
     this.rightmost_subnode = null;
     this.leftmost_parent = null;
     this.rightmost_parent = null;
+    this.rightmost_spouse = null;
     this.order_reason = "None";
-    this.order_fuzzy_index = 0.0;
+    this.order_fuzzy_index = null;
 
     // layout
     this.x = _.random(0, 400) + 200;
@@ -122,6 +123,17 @@ function update_rightmost_parent(node) {
         }
     }
     node.rightmost_parent = rightmost;
+}
+function update_rightmost_spouse(node) {
+    var rightmost = node.order_fuzzy_index !== null ? node : null;
+    var rightmost_fuzzy = node.order_fuzzy_index;
+    for(var i = 0; i < node.spouses.length; i++) {
+        if(rightmost == null || node.spouses[i].order_fuzzy_index > rightmost_fuzzy) {
+            rightmost = node.spouses[i];
+            rightmost_fuzzy = node.spouses[i].order_fuzzy_index;
+        }
+    }
+    node.rightmost_spouse = rightmost;
 }
 function update_rightmost_subnode(node) {
     var rightmost = node.rightmost_subnode;

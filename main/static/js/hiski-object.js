@@ -28,6 +28,7 @@ var Hiski = {
             // update left and rightmost parent
             update_leftmost_parent(node);
             update_rightmost_parent(node);
+            update_rightmost_spouse(node);
             // find location in node_order for the new node
             var order_i = 0;
             if(reference) {
@@ -44,19 +45,21 @@ var Hiski = {
                         order_i = this.node_order.indexOf(node.rightmost_parent) + 1;
                         node.order_reason = "right of parents " + node.rightmost_parent.xref;
                     }
-                } else if(node.spouses.length > 0) {
-                    // todo: family swapper
-                    order_i = this.node_order.indexOf(node.spouses[0]) + 1;
-                    node.order_reason = "right of spouse " + node.spouses[0].xref;
                 } else if(node.children.length > 0) {
                     order_i = this.node_order.indexOf(node.children[0]);
                     node.order_reason = "left of children " + node.children[0].xref;
+                } else if(node.spouses.length > 0) {
+                    // todo: family swapper
+                    order_i = this.node_order.indexOf(node.rightmost_spouse.rightmost_subnode) + 1;
+//                    order_i = this.node_order.indexOf(node.spouses[0]) + 1;
+                    node.order_reason = "right of spouse's other subfamilies " + node.spouses[0].xref + " -> " + node.rightmost_spouse.rightmost_subnode.xref;
                 } else {
                     throw new Error("Eh?");
                 }
             }
             // write the node's fuzzy index and store the node into node_order
             node.order_fuzzy_index = this.new_fuzzy_index_for_position(order_i);
+            node.order_fuzzy_index = this.check_fuzzy_index_at(order_i, node.order_fuzzy_index);
             this.node_order.splice(order_i, 0, node);
             // update layout related summarised data
             update_descendant_year(node, null);
@@ -64,6 +67,10 @@ var Hiski = {
             for(var i = 0; i < node.children.length; i++) {
                 update_leftmost_parent(node.children[i]);
                 update_rightmost_parent(node.children[i]);
+            }
+            update_rightmost_spouse(node);
+            for(var i = 0; i < node.spouses.length; i++) {
+                update_rightmost_spouse(node.spouses[i]);
             }
             // queue for expanding if the feature is on
             this.queue_for_expand(node);
@@ -80,6 +87,21 @@ var Hiski = {
             return (this.node_order[order_i - 1].order_fuzzy_index +
                     this.node_order[order_i].order_fuzzy_index) / 2.0;
         }
+    },
+    regenerate_fuzzy_indices: function() {
+        for(var i = 0; i < this.node_order.length; i++) {
+            this.node_order[i].order_fuzzy_index = i * 1.0;
+        }
+        console.warn("fuzzy indices regenerated.");
+    },
+    check_fuzzy_index_at: function(order_i, fuzzy_index) {
+        for(var i = Math.max(order_i - 1, 0); i < order_i + 1 && i < this.node_order.length; i++) {
+            if(this.node_order[i].order_fuzzy_index == fuzzy_index) {
+                this.regenerate_fuzzy_indices();
+                return this.new_fuzzy_index_for_position(order_i);
+            }
+        }
+        return fuzzy_index;
     },
     reposition_node: function(node) {
         this.reset_node_visited();
@@ -117,6 +139,7 @@ var Hiski = {
     },
     node_auto_expand_delay: -1, // -1 to disable
     node_auto_expand_queue: [],
+    node_auto_expander_on: false,
     queue_for_expand: function(node) {
         if(!node.expandable())
             return;
@@ -125,15 +148,23 @@ var Hiski = {
     },
     start_node_autoexpansion: function() {
         var expander = function() {
-            if(Hiski.node_auto_expand_delay == -1)
+            if(Hiski.node_auto_expand_delay == -1) {
+                Hiski.node_auto_expander_on = false;
                 return;
+            }
             var node2 = Hiski.node_auto_expand_queue.pop();
+            zoom_all_to_node(node2);
             node2.expand_surroundings();
             if(Hiski.node_auto_expand_queue.length > 0) {
                 setTimeout(expander, Hiski.node_auto_expand_delay);
+            } else {
+                Hiski.node_auto_expander_on = false;
             }
         };
-        if(Hiski.node_auto_expand_queue.length == 1 && Hiski.node_auto_expand_delay != -1) {
+        if(Hiski.node_auto_expand_queue.length >= 1 &&
+                    Hiski.node_auto_expand_delay != -1 &&
+                    !Hiski.node_auto_expander_on) {
+            Hiski.node_auto_expander_on = true;
             setTimeout(expander, Hiski.node_auto_expand_delay);
         }
     },
@@ -165,6 +196,11 @@ var Hiski = {
             if(this.auto_expand_relations) {
                 relation.expand_surroundings();
             }
+            // todo: update node summarised data
+            // currently, if we link two existing nodes, there is a possibility
+            // of some value being null or wrong, which causes issues. I think
+            // updating relevant values here should be enough to keep them
+            // valid.
         }
     },
     // links between nodes and relations
@@ -255,7 +291,7 @@ var Hiski = {
         var node_preferred_position = function(node) {
             var x = node.x;
             var year = guess_node_year(node);
-            var y = (year - 1750) * 5 - 600;
+            var y = (year - 1750) * 6 - 600;
             return [x, y];
         };
         var relation_preferred_position = function(relation) {

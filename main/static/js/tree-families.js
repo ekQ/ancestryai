@@ -37,6 +37,8 @@ function Relation(data) {
             return sumchildren / numchildren;
         } else if(numchildren == 0) {
             return sumspouse / numspouse;
+//        } else if(numspouse > 1) {
+//            return sumspouse / numspouse;
         }
         return ((sumchildren / numchildren) + (sumspouse / numspouse)) / 2;
     };

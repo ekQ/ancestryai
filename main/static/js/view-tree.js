@@ -1,9 +1,4 @@
 
-var container = null;
-var zoom = null;
-function zoomed() {
-    container.attr("transform", "translate("+d3.event.translate+")scale("+d3.event.scale+")");
-}
 function dragstarted(d) {
     d3.event.sourceEvent.stopPropagation();
     d3.select(this).classed("dragging", true);
@@ -17,12 +12,32 @@ function dragended(d) {
     d3.select(this).classed("dragging", false);
 }
 
-function tree_init(item_view) {
-    var container = null;
-    var zoomfun = function() {
-        container.attr("transform", "translate("+d3.event.translate+")scale("+d3.event.scale+")");
+function zoom_all_to_node(node) {
+    for(var i = 0; i < item_views.length; i++) {
+        if(item_views[i].mode != "tree")
+            continue;
+        zoom_to_node(item_views[i], node);
     }
-    var zoom = d3.behavior.zoom()
+}
+function zoom_to_node(item_view, node) {
+    var elem = $("#"+item_view.tree_id);
+    var width = elem.width();
+    var height = elem.height();
+    var x = -node.x * item_view.zoom.scale() + width / 2;
+    var y = -node.y * item_view.zoom.scale() + height / 2;
+    item_view.zoom.translate([x, y]);
+    item_view.container
+            .transition()
+            .duration(1200)
+            .attr("transform", "translate("+item_view.zoom.translate()+")scale("+item_view.zoom.scale()+")");
+}
+function tree_init(item_view) {
+    item_view.container = null;
+    var zoomfun = function() {
+        item_view.container
+                .attr("transform", "translate("+item_view.zoom.translate()+")scale("+item_view.zoom.scale()+")");
+    }
+    item_view.zoom = d3.behavior.zoom()
             .scaleExtent([0.05, 10])
             .on("zoom", zoomfun)
             ;
@@ -35,7 +50,7 @@ function tree_init(item_view) {
     item_view.tree_drawable = d3.select("#"+item_view.tree_id)
             .append("g")
             .classed("zoomnpan", true)
-            .call(zoom)
+            .call(item_view.zoom)
             ;
     var background = item_view.tree_drawable.append("rect")
             .attr("width", "100%")
@@ -43,60 +58,22 @@ function tree_init(item_view) {
             .style("fill", "#ccddcc")
             .style("pointer-events", "all")
             ;
-    container = item_view.tree_drawable.append("g")
+    item_view.container = item_view.tree_drawable.append("g")
             .classed("container", true)
             ;
     var layers = ["debug", "links", "nodes", "relations"];
-    container.selectAll("g.layer")
+    item_view.container.selectAll("g.layer")
             .data(layers)
             .enter()
             .append("g")
             .attr("class", function(d) { return d; })
             .classed("layer", true)
             ;
-    item_view.linksvg = container.selectAll("g.layer.links").selectAll("path.link");
-    item_view.nodesvg = container.selectAll("g.layer.nodes").selectAll("g.node");
-    item_view.relationsvg = container.selectAll("g.layer.relations").selectAll("g.relation");
+    item_view.linksvg = item_view.container.selectAll("g.layer.links").selectAll("path.link");
+    item_view.nodesvg = item_view.container.selectAll("g.layer.nodes").selectAll("g.node");
+    item_view.relationsvg = item_view.container.selectAll("g.layer.relations").selectAll("g.relation");
 }
 
-function d3_init() {
-    zoom = d3.behavior.zoom()
-            .scaleExtent([0.05, 10])
-            .on("zoom", zoomed)
-            ;
-    var drag = d3.behavior.drag()
-            .origin(function(d) { return d; })
-            .on("dragstart", dragstarted)
-            .on("drag", dragged)
-            .on("dragend", dragended)
-            ;
-
-    svg = d3.select("svg#tree")
-            .append("g")
-            .classed("zoomnpan", true)
-            .call(zoom)
-            ;
-    var background = svg.append("rect")
-            .attr("width", "100%")
-            .attr("height", "100%")
-            .style("fill", "none")
-            .style("pointer-events", "all")
-            ;
-    container = svg.append("g")
-            .classed("container", true)
-            ;
-    var layers = ["debug", "links", "nodes", "relations"];
-    container.selectAll("g.layer")
-            .data(layers)
-            .enter()
-            .append("g")
-            .attr("class", function(d) { return d; })
-            .classed("layer", true)
-            ;
-    Hiski.linksvg = container.selectAll("g.layer.links").selectAll("path.link");
-    Hiski.nodesvg = container.selectAll("g.layer.nodes").selectAll("g.node");
-    Hiski.relationsvg = container.selectAll("g.layer.relations").selectAll("g.relation");
-}
 function enter_all() {
     for(var i = 0; i < item_views.length; i++) {
         if(item_views[i].mode != "tree")

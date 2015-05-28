@@ -16,6 +16,7 @@
                     <li ng-click="menu.set_tab('info')" translate>Info</li>
                     <li ng-click="menu.set_tab('search')" translate>Search</li>
                     <li ng-click="menu.set_tab('map')" translate>Map</li>
+                    <li ng-click="menu.testzoom()">locate</li>
                     <li ng-click="menu.set_tab('testnote')" ng-show="menu.testnote !== null" translate>Testnote</li>
                     <li ng-click="multi_view.close_item($parent.$parent.$index, $index)" translate>Close</li>
                 </ul>
@@ -49,6 +50,12 @@
                             <dd ng-if="menu.selected_node.data.sex == 'M'" translate>Male</dd>
                             <dd ng-if="menu.selected_node.data.sex == 'F'" translate>Female</dd>
                             <dd ng-if="menu.selected_node.data.sex == '?'" translate>Unknown</dd>
+                    </dl>
+                    <dl>
+                        <dt>fuzzy index</dt>
+                            <dd>{{ menu.selected_node.order_fuzzy_index }}</dd>
+                        <dt>order reason</dt>
+                            <dd>{{ menu.selected_node.order_reason }}</dd>
                     </dl>
                 </div>
                 <div class="testnote viewtab" ng-show="menu.mode == 'testnote'">

@@ -34,6 +34,8 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         };
         // for tree view
         this.tree_ready = false;
+        this.zoom = null;
+        this.container = null;
         var item_view = this;
         var timeout = 100;
         var poll_dom = function() {
@@ -103,5 +105,11 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                     }
                 });
             }
+        };
+        menu.testzoom = function() {
+            if(Hiski.selected === null)
+                zoom_to_node(menu, Hiski.nodes[0]);
+            else
+                zoom_to_node(menu, Hiski.selected);
         };
     });
