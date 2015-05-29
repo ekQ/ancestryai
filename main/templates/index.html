@@ -51,11 +51,23 @@
                             <dd ng-if="menu.selected_node.data.sex == 'F'" translate>Female</dd>
                             <dd ng-if="menu.selected_node.data.sex == '?'" translate>Unknown</dd>
                     </dl>
-                    <dl>
+                    <dl ng-if="menu.debug_mode">
                         <dt>fuzzy index</dt>
                             <dd>{{ menu.selected_node.order_fuzzy_index }}</dd>
                         <dt>order reason</dt>
                             <dd>{{ menu.selected_node.order_reason }}</dd>
+                        <dt>leftmost_parent</dt>
+                            <dd ng-click="menu.select_node(menu.selected_node.leftmost_parent)">
+                                    {{ menu.selected_node.leftmost_parent.xref }}</dd>
+                        <dt>rightmost_parent</dt>
+                            <dd ng-click="menu.select_node(menu.selected_node.rightmost_parent)">
+                                    {{ menu.selected_node.rightmost_parent.xref }}</dd>
+                        <dt>rightmost_spouse</dt>
+                            <dd ng-click="menu.select_node(menu.selected_node.rightmost_spouse)">
+                                    {{ menu.selected_node.rightmost_spouse.xref }}</dd>
+                        <dt>rightmost_subnode</dt>
+                            <dd ng-click="menu.select_node(menu.selected_node.rightmost_subnode)">
+                                    {{ menu.selected_node.rightmost_subnode.xref }}</dd>
                     </dl>
                 </div>
                 <div class="testnote viewtab" ng-show="menu.mode == 'testnote'">

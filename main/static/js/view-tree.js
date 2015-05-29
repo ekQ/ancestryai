@@ -82,17 +82,6 @@ function enter_all() {
             enter(item_views[i]);
     }
 }
-function select_node(d) {
-    Hiski.selected = d;
-    for(var i = 0; i < item_views.length; i++) {
-        item_views[i].selected_node = d;
-        if(item_views[i].mode == "info") {
-            item_views[i].redraw();
-            continue;
-        }
-    }
-    render_all();
-}
 function enter(view) {
     view.linksvg = view.linksvg
             .data(Hiski.links)
@@ -116,7 +105,7 @@ function enter(view) {
                 .classed("node", true)
                 .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
                 .on("click", function(d) {
-                    select_node(d);
+                    Hiski.select_node(d, true);
                     d.expand_surroundings();
                 })
             ;

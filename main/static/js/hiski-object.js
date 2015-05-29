@@ -196,11 +196,16 @@ var Hiski = {
             if(this.auto_expand_relations) {
                 relation.expand_surroundings();
             }
-            // todo: update node summarised data
-            // currently, if we link two existing nodes, there is a possibility
-            // of some value being null or wrong, which causes issues. I think
-            // updating relevant values here should be enough to keep them
-            // valid.
+            // update layout related summarised data for related nodes
+            for(var i = 0; i < relation.children.length; i++) {
+                update_leftmost_parent(relation.children[i]);
+                update_rightmost_parent(relation.children[i]);
+            }
+            for(var i = 0; i < relation.parents.length; i++) {
+                update_descendant_year(relation.parents[i], null);
+                update_rightmost_subnode(relation.parents[i]);
+                update_rightmost_spouse(relation.parents[i]);
+            }
         }
     },
     // links between nodes and relations
@@ -261,10 +266,9 @@ var Hiski = {
         // delayed rendering, which gives a bit time for other pending nodes to get loaded
         var timed = function() {
             Hiski.delay_running = false;
-//            enter(Hiski);
             enter_all();
             Hiski.calc_layout();
-//            render(Hiski);
+            redraw_views();
             render_all();
         };
         if(!Hiski.delay_running) {
@@ -387,10 +391,21 @@ var Hiski = {
     overlay_nodes: null,
     map_projection: null,
 
-
+    // selection
     selected: null,
     lastselected: null,
+    select_node: function(node, redraw) {
+        Hiski.selected = node;
+        for(var i = 0; i < item_views.length; i++) {
+            item_views[i].selected_node = node;
+        }
+        if(redraw) {
+            redraw_views();
+        }
+        render_all();
+    },
 
     testnote: null,
+    debug_mode: false,
 };
 

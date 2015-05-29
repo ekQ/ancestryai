@@ -72,7 +72,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             console.warn("closed item "+menu.id);
             menu.close();
         });
-        menu.redraw = function() {
+        menu._redraw = function() {
             $scope.$apply();
         };
         menu.load = function(xref) {
@@ -88,7 +88,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                     if(json) {
                         menu.search_result_list = json["inds"];
                         menu.search_result_term = term;
-                        menu.redraw();
+                        menu._redraw();
                     } else {
                         throw new Error("Loading firstname search '"+term+"' failed");
                     }
@@ -99,7 +99,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                     if(json) {
                         menu.search_result_list = json["inds"];
                         menu.search_result_term = term;
-                        menu.redraw();
+                        menu._redraw();
                     } else {
                         throw new Error("Loading familyname search '"+term+"' failed");
                     }
@@ -112,4 +112,15 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             else
                 zoom_to_node(menu, Hiski.selected);
         };
+        menu.select_node = function(node) {
+            if(node === null)
+                return;
+            Hiski.select_node(node, false);
+        };
+
+        menu.debug_mode = Hiski.debug_mode;
     });
+
+function redraw_views() {
+    item_views[0]._redraw();
+}
