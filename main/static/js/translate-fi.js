@@ -24,6 +24,7 @@ translations.fi = {
     "For search:": "Haulle:",
     "Toggle autoexpansion": "Automaattinen laajennus",
     "Testnote": "Testiviesti",
+    "Locate": "Paikanna",
 
     // language selection
     "Finnish": "Suomi",

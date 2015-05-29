@@ -16,7 +16,7 @@
                     <li ng-click="menu.set_tab('info')" translate>Info</li>
                     <li ng-click="menu.set_tab('search')" translate>Search</li>
                     <li ng-click="menu.set_tab('map')" translate>Map</li>
-                    <li ng-click="menu.testzoom()">locate</li>
+                    <li ng-click="menu.testzoom()" translate>Locate</li>
                     <li ng-click="menu.set_tab('testnote')" ng-show="menu.testnote !== null" translate>Testnote</li>
                     <li ng-click="multi_view.close_item($parent.$parent.$index, $index)" translate>Close</li>
                 </ul>
@@ -52,6 +52,8 @@
                             <dd ng-if="menu.selected_node.data.sex == '?'" translate>Unknown</dd>
                     </dl>
                     <dl ng-if="menu.debug_mode">
+                        <dt>soundex6family</dt>
+                            <dd>{{ menu.selected_node.data.soundex6family }}</dd>
                         <dt>fuzzy index</dt>
                             <dd>{{ menu.selected_node.order_fuzzy_index }}</dd>
                         <dt>order reason</dt>

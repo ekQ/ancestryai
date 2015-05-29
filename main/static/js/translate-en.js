@@ -24,6 +24,7 @@ translations.en = {
     "For search:": "For search:",
     "Toggle autoexpansion": "Toggle autoexpansion",
     "Testnote": "Testnote",
+    "Locate": "Locate",
 
     // language selection
     "Finnish": "Suomi",

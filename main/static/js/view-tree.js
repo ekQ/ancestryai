@@ -12,19 +12,25 @@ function dragended(d) {
     d3.select(this).classed("dragging", false);
 }
 
-function zoom_all_to_node(node) {
+function locate_node_on_all(node) {
     for(var i = 0; i < item_views.length; i++) {
         if(item_views[i].mode != "tree")
             continue;
-        zoom_to_node(item_views[i], node);
+        locate_node(item_views[i], node, true);
     }
 }
-function zoom_to_node(item_view, node) {
+function locate_node(item_view, node, check_offset) {
     var elem = $("#"+item_view.tree_id);
     var width = elem.width();
     var height = elem.height();
     var x = -node.x * item_view.zoom.scale() + width / 2;
     var y = -node.y * item_view.zoom.scale() + height / 2;
+    var pos = item_view.zoom.translate();
+    var offset = Math.max(Math.abs((x - pos[0])*2 / width), Math.abs((y - pos[1])*2 / height));
+    if(offset < 0.5 && check_offset) {
+        // the node is in the centermost 50% of the screen, do not change view
+        return;
+    }
     item_view.zoom.translate([x, y]);
     item_view.container
             .transition()

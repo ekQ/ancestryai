@@ -107,10 +107,10 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             }
         };
         menu.testzoom = function() {
-            if(Hiski.selected === null)
-                zoom_to_node(menu, Hiski.nodes[0]);
-            else
-                zoom_to_node(menu, Hiski.selected);
+            if(Hiski.selected !== null)
+                locate_node(menu, Hiski.selected, false);
+            else if(Hiski.nodes.length > 0)
+                locate_node(menu, Hiski.nodes[0], false);
         };
         menu.select_node = function(node) {
             if(node === null)

@@ -23,6 +23,11 @@ function color_sex(sex) {
 //    alert("unhandled sex: '"+sex+"'");
     return "#dddddd";
 }
+function endsWith(str, suffix) {
+    if(!str)
+        return false;
+    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
 
 
 function Node(data) {
@@ -47,6 +52,7 @@ function Node(data) {
     this.leftmost_parent = null;
     this.rightmost_parent = null;
     this.rightmost_spouse = null;
+    this.leftmost_child = null;
     this.order_reason = "None";
     this.order_fuzzy_index = null;
 
@@ -56,6 +62,12 @@ function Node(data) {
     this.year = data.birth_date_year;
     this.guessed_year = null;
     this.color_by_name = color_hash(this.family_name);
+    this.color_by_soundex = color_hash(
+            // because fooin and fooinen were mixed a lot in my sample data
+            endsWith(this.family_name, "nen") ?
+                this.data.soundex6family.replace(/5(0*)$/, "0$1") :
+                this.data.soundex6family
+            );
     this.color_by_sex = color_sex(this.data.sex);
     this.last_open_descendant_year = this.year;
     this.timetraveller = false;
@@ -112,6 +124,17 @@ function update_leftmost_parent(node) {
         }
     }
     node.leftmost_parent = leftmost;
+}
+function update_leftmost_child(node) {
+    var leftmost = null;
+    var leftmost_fuzzy = 0.0;
+    for(var i = 0; i < node.children.length; i++) {
+        if(leftmost == null || node.children[i].order_fuzzy_index < leftmost_fuzzy) {
+            leftmost = node.children[i];
+            leftmost_fuzzy = node.children[i].order_fuzzy_index;
+        }
+    }
+    node.leftmost_child = leftmost;
 }
 function update_rightmost_parent(node) {
     var rightmost = null;

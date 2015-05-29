@@ -27,6 +27,7 @@ var Hiski = {
             }
             // update left and rightmost parent
             update_leftmost_parent(node);
+            update_leftmost_child(node);
             update_rightmost_parent(node);
             update_rightmost_spouse(node);
             // find location in node_order for the new node
@@ -46,7 +47,8 @@ var Hiski = {
                         node.order_reason = "right of parents " + node.rightmost_parent.xref;
                     }
                 } else if(node.children.length > 0) {
-                    order_i = this.node_order.indexOf(node.children[0]);
+//                    order_i = this.node_order.indexOf(node.children[0]);
+                    order_i = this.node_order.indexOf(node.leftmost_child);
                     node.order_reason = "left of children " + node.children[0].xref;
                 } else if(node.spouses.length > 0) {
                     // todo: family swapper
@@ -67,6 +69,9 @@ var Hiski = {
             for(var i = 0; i < node.children.length; i++) {
                 update_leftmost_parent(node.children[i]);
                 update_rightmost_parent(node.children[i]);
+            }
+            for(var i = 0; i < node.parents.length; i++) {
+                update_leftmost_child(node.parents[i]);
             }
             update_rightmost_spouse(node);
             for(var i = 0; i < node.spouses.length; i++) {
@@ -129,6 +134,9 @@ var Hiski = {
                     update_leftmost_parent(node.children[i]);
                     update_rightmost_parent(node.children[i]);
                 }
+                for(var i = 0; i < node.parents.length; i++) {
+                    update_leftmost_child(node.parents[i]);
+                }
                 // recurse
                 for(var i = 0; i < node.children.length; i++) {
                     // todo: cut the search if we have time traveller
@@ -153,7 +161,7 @@ var Hiski = {
                 return;
             }
             var node2 = Hiski.node_auto_expand_queue.pop();
-            zoom_all_to_node(node2);
+            locate_node_on_all(node2);
             node2.expand_surroundings();
             if(Hiski.node_auto_expand_queue.length > 0) {
                 setTimeout(expander, Hiski.node_auto_expand_delay);
@@ -205,6 +213,7 @@ var Hiski = {
                 update_descendant_year(relation.parents[i], null);
                 update_rightmost_subnode(relation.parents[i]);
                 update_rightmost_spouse(relation.parents[i]);
+                update_leftmost_child(relation.parents[i]);
             }
         }
     },
@@ -263,7 +272,10 @@ var Hiski = {
     },
     delay_running: false,
     delayed_render: function() {
-        // delayed rendering, which gives a bit time for other pending nodes to get loaded
+        // delayed rendering, which gives a bit time for other pending nodes to
+        // get loaded
+        // XXX: could be better to just know which we are loading and wait
+        // until we have loaded those.
         var timed = function() {
             Hiski.delay_running = false;
             enter_all();
@@ -273,7 +285,7 @@ var Hiski = {
         };
         if(!Hiski.delay_running) {
             Hiski.delay_running = true;
-            setTimeout(timed, 300);
+            setTimeout(timed, 500);
         }
     },
 
@@ -368,7 +380,7 @@ var Hiski = {
     },
     color_mode: 0,
     next_color_mode: function() {
-        this.color_mode = (this.color_mode + 1) % 3;
+        this.color_mode = (this.color_mode + 1) % 4;
     },
     node_color_function: function(d) {
 /*        if(d == Hiski.selected) {
@@ -377,8 +389,10 @@ var Hiski = {
         if(Hiski.color_mode == 0) {
             return d.color_by_name;
         } else if(Hiski.color_mode == 1) {
-            return d.color_by_sex;
+            return d.color_by_soundex;
         } else if(Hiski.color_mode == 2) {
+            return d.color_by_sex;
+        } else if(Hiski.color_mode == 3) {
             return d.expandable() ? "#ccffcc" : "#dddddd";
         }
         return "#ff0000";

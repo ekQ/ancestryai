@@ -65,6 +65,7 @@ class Individual(Base):
             "death_date": self.death_date,
             "sub_families": [x.xref for x in self.sub_families],
             "sup_families": [x.xref for x in self.sup_families],
+            "soundex6family": self.soundex6family,
         }
 
 class Family(Base):
