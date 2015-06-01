@@ -12,6 +12,14 @@ function Relation(data) {
     this.wife = null;
     this.husband = null;
 
+    // layout
+    this.is_visible = function() {
+        for(var i = 0; i < this.nodes.length; i++)
+            if(this.nodes[i].is_visible())
+                return true;
+        return false;
+    }
+
     this.get_x = function() {
         return this.x;
     };

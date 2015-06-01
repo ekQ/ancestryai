@@ -2,6 +2,7 @@
 app = angular.module("HiskiVisualizer", ["pascalprecht.translate"]);
 app.controller("TopMenuController", function($scope, $translate) {
         var menu = this;
+        menu.Hiski = Hiski;
         menu.blue = function() {
             $(".main").css("background-color", "#ccccff");
         };

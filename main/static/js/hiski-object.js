@@ -8,6 +8,7 @@ var Hiski = {
     add_node: function(node_data, reference) {
         if(node_data.xref in this.node_dict) {
             // update existing?
+            return this.node_dict[node_data.xref];
         } else {
             var node = new Node(node_data);
             // take initial coordinates from the reference, which this was opened from
@@ -79,6 +80,7 @@ var Hiski = {
             }
             // queue for expanding if the feature is on
             this.queue_for_expand(node);
+            return node;
         }
     },
     new_fuzzy_index_for_position: function(order_i) {
@@ -183,6 +185,7 @@ var Hiski = {
     add_relation: function(relation_data, reference) {
         if(relation_data.xref in this.relation_dict) {
             // update existing?
+            return this.relation_dict[relation_data.xref];
         } else {
             var relation = new Relation(relation_data);
             // take initial coordinates from reference, from which this was opened
@@ -215,6 +218,7 @@ var Hiski = {
                 update_rightmost_spouse(relation.parents[i]);
                 update_leftmost_child(relation.parents[i]);
             }
+            return relation;
         }
     },
     // links between nodes and relations
@@ -237,9 +241,9 @@ var Hiski = {
     // other
     add_entry: function(entry, reference) {
         if(entry.tag == "FAM") {
-            this.add_relation(entry, reference);
+            return this.add_relation(entry, reference);
         } else if(entry.tag == "INDI") {
-            this.add_node(entry, reference);
+            return this.add_node(entry, reference);
         } else {
             throw new Error("Unhandled tag '"+entry.tag+"'");
         }
@@ -263,7 +267,11 @@ var Hiski = {
                     console.warn("The node already existed, doing nothing.");
                     return;
                 }
-                Hiski.add_entry(json.entry, reference);
+                Hiski.preloaded_nodes[json.entry.xref] = json.entry;
+                var entry = Hiski.add_entry(json.entry, reference);
+                if(reference === null) {
+                    Hiski.zoom_to = entry;
+                }
                 Hiski.delayed_render();
             } else {
                 throw new Error("Loading data '"+xref+"' failed");
@@ -307,7 +315,7 @@ var Hiski = {
         var node_preferred_position = function(node) {
             var x = node.x;
             var year = guess_node_year(node);
-            var y = (year - 1750) * 6 - 600;
+            var y = (year - 1750) * 5 - 600;
             return [x, y];
         };
         var relation_preferred_position = function(relation) {
@@ -326,6 +334,8 @@ var Hiski = {
         var arr = this.node_order;
         for(var i = 0; i < arr.length; i++) {
             var node = arr[i];
+            if(!node.is_visible())
+                continue;
             var pos = node_preferred_position(node);
             node.y = pos[1];
             var maxx = 0;
@@ -377,6 +387,10 @@ var Hiski = {
             relation.x = pos[0];
             relation.y = pos[1];
         }
+        if(this.zoom_to !== null) {
+            locate_node_on_all(this.zoom_to);
+            this.zoom_to = null;
+        }
     },
     color_mode: 0,
     next_color_mode: function() {
@@ -396,6 +410,15 @@ var Hiski = {
             return d.expandable() ? "#ccffcc" : "#dddddd";
         }
         return "#ff0000";
+    },
+    toggle_hide_selected: function() {
+        if(this.selected) {
+            if(this.selected.type == "node") {
+                this.selected.visible = !this.selected.visible;
+            }
+        }
+        this.calc_layout();
+        render_all();
     },
 
     // map related
@@ -418,6 +441,7 @@ var Hiski = {
         }
         render_all();
     },
+    zoom_to: null,
 
     testnote: null,
     debug_mode: false,

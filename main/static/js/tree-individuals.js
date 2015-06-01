@@ -71,6 +71,8 @@ function Node(data) {
     this.color_by_sex = color_sex(this.data.sex);
     this.last_open_descendant_year = this.year;
     this.timetraveller = false;
+    this.visible = true;
+    this.is_visible = function() { return this.visible; }
 
     // map related
     this.mapx = _.random(0, 400000) / 1000.0;

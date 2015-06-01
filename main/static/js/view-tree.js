@@ -27,8 +27,11 @@ function locate_node(item_view, node, check_offset) {
     var y = -node.y * item_view.zoom.scale() + height / 2;
     var pos = item_view.zoom.translate();
     var offset = Math.max(Math.abs((x - pos[0])*2 / width), Math.abs((y - pos[1])*2 / height));
-    if(offset < 0.5 && check_offset) {
-        // the node is in the centermost 50% of the screen, do not change view
+    // if the node is within this ratio from the center of the view, do not
+    // move the view. 0.0 means always move and 1.0 means move only if outside
+    // of the view.
+    var offset_limit = 0.0;
+    if(offset < offset_limit && check_offset) {
         return;
     }
     item_view.zoom.translate([x, y]);
@@ -41,7 +44,7 @@ function tree_init(item_view) {
     item_view.container = null;
     var zoomfun = function() {
         item_view.container
-                .attr("transform", "translate("+item_view.zoom.translate()+")scale("+item_view.zoom.scale()+")");
+                .attr("transform", "translate("+d3.event.translate+")scale("+d3.event.scale+")");
     }
     item_view.zoom = d3.behavior.zoom()
             .scaleExtent([0.05, 10])
@@ -189,6 +192,7 @@ function render(view) {
             .attr("d", function(d) {
                     return line_function(d.get_path_points())
                 })
+            .style("visibility", function(d) { return d.is_visible() ? "visible" : "hidden" })
             ;
     view.linksvg
             .style("stroke", function(d) {
@@ -210,6 +214,7 @@ function render(view) {
             .transition()
             .duration(duration)
             .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
+            .style("visibility", function(d) { return d.is_visible() ? "visible" : "hidden" })
             ;
     view.nodesvg.selectAll("circle")
 //            .transition()
@@ -242,6 +247,7 @@ function render(view) {
             // shorter duration here makes no sense, but the desync makes no sense either
             .duration(duration)
             .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+")"})
+            .style("visibility", function(d) { return d.is_visible() ? "visible" : "hidden" })
             .selectAll("circle")
 //            .transition()
 //            .duration(short_duration)

@@ -67,6 +67,12 @@ function Link(relation, node, type) {
 
     this.id = create_link_id(relation, node);
 
+    this.is_visible = function() {
+        if(this.node.is_visible() && this.relation.is_visible())
+            return true;
+        return false;
+    }
+
     this.get_path_points = function() {
         var points = [];
         var node_size = 20;
