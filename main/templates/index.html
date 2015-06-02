@@ -16,7 +16,7 @@
                     <li><button ng-click="menu.set_tab('info')" translate>Info</button></li>
                     <li><button ng-click="menu.set_tab('search')" translate>Search</button></li>
                     <li><button ng-click="menu.set_tab('map')" translate>Map</button></li>
-                    <li><button ng-click="menu.testzoom()" translate>Locate</button></li>
+                    <li><button ng-click="menu.testzoom()" ng-show="menu.mode == 'tree'" translate>Locate</button></li>
                     <li><button ng-click="menu.set_tab('testnote')" ng-show="menu.testnote !== null" translate>Testnote</button></li>
                     <li><button ng-click="multi_view.close_item($parent.$parent.$index, $index)" translate>Close</button></li>
                 </ul>

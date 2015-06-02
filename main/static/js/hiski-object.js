@@ -362,7 +362,7 @@ var Hiski = {
             }
             if(Hiski.layout_mode == 1)
                 node.x = i*60+60;
-            if(node.parents.length > 0 && !node.rightmost_parent.visited && !node.timetraveller) {
+            if(node.parents.length > 0 && node.rightmost_parent.visible && !node.rightmost_parent.visited && !node.timetraveller) {
                 // abort layout calculation and reposition nodes, when a child is left of its parents
                 Hiski.reposition_node(node);
                 Hiski.calc_layout();

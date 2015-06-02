@@ -1,0 +1,92 @@
+Node layouting algorithm
+------------------------
+
+The node layouting algorithm is based on keeping an array of nodes in an order
+that fulfills few simple constraints. The x-coordinate of the nodes could be
+taken directly from the array index, but for more compact visualisation, the
+layout reserves space for the nodes in the specified order, but is able to
+place nodes under other nodes.
+
+
+Sub and Sup families and subnode
+--------------------------------
+
+The term subfamily is used for the families where the individual is as a parent
+and the term supfamily is used for the families where the individual is as a
+child. The term subnode is used for a descendant. I'm not sure why a term
+descendant is not used for it, but I think I use descendant in this document.
+
+
+Order constraints
+-----------------
+
+The base constraints of the order are that children are after their parents and
+the first child of a family in the order is immediately after the second/last
+parent of the family. This assumes a family has two parents, which is not
+always true due to limited nature of data. At times, these constraints are not
+possible to fulfill and the resulting flaw in the order is ignored.
+
+When a new node is added, its positioning has few possible reasons, which are
+listed below. The conditions for the reasons are checked in the order they are
+listed here. These reasons aim to fulfill the constraints above.
+
+
+right of siblings
+- - - - - - - - -
+
+If some of the node's siblings are already positioned to the order, the node
+will be positioned to the right of the rightmost sibling's rightmost
+descendant.
+
+
+right of the only parent's other subfamilies
+- - - - - - - - - - - - - - - - - - - - - -
+
+If only one parent of a node is positioned, we expect there to be another
+parent to be loaded sooner or later. As the node also has no siblings, it will
+be positioned to the right of the existing parent's other descendants, which
+must be from other marriages.
+
+
+right of parents
+- - - - - - - -
+
+If the node has no siblings loaded, but does have both of its parents
+(hopefully it doesn't have three parents), it will be positioned to the right
+of the rightmost parent.
+
+
+left of children
+- - - - - - - -
+
+If the node does not have siblings or parents loaded, but does have children
+loaded, it will be positioned to the left of the leftmost child. This is a
+typical case when growing the tree upwards.
+
+
+right of spouse's other subfamilies
+- - - - - - - - - - - - - - - - - -
+
+If the node has no children or parents loaded, but is a spouse to a loaded
+node, it will be positioned to the right of the spouse's other descendants and
+spouses. This is to keep the node from breaking constraints of the other
+families.
+
+
+Repositioning nodes
+-------------------
+
+At times these constraints will still get broken. A common cause for that is
+when a cycle is formed and two nodes are connected, which are already
+positioned, but we didn't earlier know they'll be connected.
+
+If the case is having a child before its parent, the child will be repositioned
+to the right of its rightmost parent (why does this not follow the same logic
+with single parent cases as the initial positioning? I think it should).
+
+After repositioning a node, the process is continued to the repositioned node's
+children to see if they are still in the right position or if they need to be
+repositioned as well. If the data has a time traveller, the process is
+forcefully cut and a node is marked as a time traveller to ignore the
+constraint flaw on that node in the future.
+
