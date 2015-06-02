@@ -17,6 +17,12 @@ from .models import *
 
 @app.route("/")
 def index():
+    g.context["at_entrance"] = True
+    return render_template("index.html", **g.context)
+
+@app.route("/app/")
+def app_directly():
+    g.context["at_entrance"] = False
     return render_template("index.html", **g.context)
 
 @app.route("/json/load-old/<xref>/")

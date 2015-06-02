@@ -3,6 +3,7 @@ app = angular.module("HiskiVisualizer", ["pascalprecht.translate"]);
 app.controller("TopMenuController", function($scope, $translate) {
         var menu = this;
         menu.Hiski = Hiski;
+        menu.language = "en";
         menu.blue = function() {
             $(".main").css("background-color", "#ccccff");
         };
@@ -16,6 +17,7 @@ app.controller("TopMenuController", function($scope, $translate) {
         };
         menu.set_language = function(lang) {
             $translate.use(lang);
+            menu.language = lang;
         };
         menu.load_random = function() {
             Hiski.load(null, null);
@@ -39,6 +41,19 @@ app.controller("TopMenuController", function($scope, $translate) {
         menu.toggle_autoexpand = function() {
             Hiski.node_auto_expand_delay = Hiski.node_auto_expand_delay == -1 ? 5000 : -1;
             Hiski.start_node_autoexpansion();
+        };
+        menu.go_to_entrance = function() {
+            // stop anything automated
+            Hiski.node_auto_expand_delay = -1;
+            // switch to entrance
+            menu.Hiski.at_entrance = true;
+            history.pushState(null, null, Hiski.url_root);
+        };
+        menu.go_to_app = function() {
+            menu.Hiski.at_entrance = false;
+            if(Hiski.nodes.length == 0)
+                Hiski.load("@first@", null);
+            history.pushState(null, null, Hiski.url_root + "app/");
         };
     });
 app.config(function($translateProvider) {

@@ -445,5 +445,6 @@ var Hiski = {
 
     testnote: null,
     debug_mode: false,
+    at_entrance: true,
 };
 

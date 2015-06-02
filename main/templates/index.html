@@ -43,10 +43,13 @@
                             translate>
                             Testnote
                             </button></li>
-                    <li><button ng-click="multi_view.close_item($parent.$parent.$index, $index)"
-                            translate>
-                            Close
-                            </button></li>
+                    <ul class="right-end">
+                        <li><button ng-click="multi_view.close_item($parent.$parent.$index, $index)"
+                                class="closebutton"
+                                translate>
+                                Close
+                                </button></li>
+                    </ul>
                 </ul>
                 <svg id="{{menu.tree_id}}" class="tree viewtab" ng-show="menu.mode == 'tree'">
                     <filter id="dropshadow" height="130%">
@@ -144,3 +147,6 @@
     </div>
 </div>
 {% endblock %}
+
+
+

@@ -3,10 +3,14 @@
     font-family: Arial;
 }
 
-html {
+html,
+body,
+.everything,
+.app {
     height: 100%;
+    margin: 0px;
 }
-body {
+.app {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -36,17 +40,17 @@ body {
     padding: 8px;
 }
 
-.topmenu ul {
+ul.topmenu {
     display: flex;
     flex-direction: row;
     padding: 0px;
     margin: 0px;
 }
-.topmenu ul li {
+ul.topmenu li {
     display: inline-block;
     padding: 0px 0px;
 }
-.topmenu ul li button {
+ul.topmenu li button {
     padding: 4px 20px;
 }
 
@@ -88,28 +92,24 @@ div#map {
     display: flex;
     flex-direction: row;
     background: #ccffcc;
-    margin: 1px;
 }
 .columncontainer {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     background: #ffcccc;
-    margin: 1px;
 }
 .mvitem {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     background: #ffffff;
-    margin: 1px;
 }
 .add-row, .add-column, .close-column {
     position: relative;
     min-width: 20px;
     min-height: 20px;
     background: #cccccc;
-    margin: 1px;
     text-align: center;
 
     display: flex;
@@ -163,7 +163,7 @@ button:active {
     border: 2px inset black;
 }
 ul.itemheader,
-.topmenu ul {
+ul.topmenu {
     background: #fefefe;
     background-image: -webkit-linear-gradient(top, #fefefe, #d1d1d1);
     background-image: -moz-linear-gradient(top, #fefefe, #d1d1d1);
@@ -186,6 +186,11 @@ ul.itemheader,
 }
 
 
+.info.viewtab {
+    padding: 5px;
+}
+
+
 label {
     display: block;
 }
@@ -197,4 +202,40 @@ label span {
 .testnote {
     width: 100%;
     max-width: 40em;
+}
+
+
+
+
+.entrance {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100%;
+    width: 100%;
+}
+.entrance .banner {
+    height: 150px;
+    width: 800px;
+}
+.entrance .topmenu {
+    width: 800px;
+}
+.entrance .explanation {
+    flex-grow: 1;
+    width: 800px;
+    padding: 10px;
+    background: #eeeeee;
+    box-sizing: border-box;
+}
+
+
+ul.right-end {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+.closebutton {
+    margin-right: 20px;
 }
