@@ -20,6 +20,7 @@ app.controller("MultiViewController", function($scope, $translate) {
             multi_view.columns[column_i].items.push(create_item());
         };
         this.close_item = function(column_i, item_i) {
+            // must be called from close by id
             console.warn("close "+column_i+","+item_i);
             if(multi_view.columns[column_i].items.length == 1) {
                 multi_view.close_column(column_i);
@@ -28,6 +29,10 @@ app.controller("MultiViewController", function($scope, $translate) {
             multi_view.columns[column_i].items.splice(item_i, 1);
         };
         this.close_item_by_id = function(id) {
+            for(var i = 0; i < item_views.length; i++) {
+                if(item_views[i].id == id)
+                    item_views[i].preclose();
+            }
             for(var i = 0; i < this.columns.length; i++) {
                 for(var j = 0; j < this.columns[i].items.length; j++) {
                     if(this.columns[i].items[j].id == id) {
@@ -38,6 +43,7 @@ app.controller("MultiViewController", function($scope, $translate) {
             }
         };
         this.close_column = function(column_i) {
+            // must be called from close by id
             console.warn("close "+column_i+",*");
             multi_view.columns.splice(column_i, 1);
             if(multi_view.columns.length == 0) {
@@ -47,6 +53,18 @@ app.controller("MultiViewController", function($scope, $translate) {
         this.close_column_by_id = function(id) {
             for(var i = 0; i < this.columns.length; i++) {
                 if(this.columns[i].id == id) {
+                    var j = 0;
+                    for(var k = 0; k < item_views.length; k++) {
+                        while(j < this.columns[i].items.length &&
+                                item_views[k].id > this.columns[i].items[j].id) {
+                            j++;
+                        }
+                        if(j >= this.columns[i].items.length)
+                            break;
+                        if(this.columns[i].items[j].id == item_views[k].id) {
+                            item_views[k].preclose();
+                        }
+                    }
                     this.close_column(i);
                 }
             }
