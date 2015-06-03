@@ -4,13 +4,14 @@
 {% raw %}
 <div class="multiview" ng-controller="MultiViewController as multi_view">
     <div class="rowcontainer">
-        <div class="columncontainer" ng-repeat="column in multi_view.columns">
-            <div class="close-column" ng-click="multi_view.close_column($index)">
+        <div class="columncontainer" ng-repeat="column in multi_view.columns" ng-init="column_i = $index">
+            <div class="close-column" ng-click="multi_view.close_column_by_id(column.id)">
                 -
             </div>
             <div id="{{menu.html_id}}" class="mvitem"
-                        ng-repeat="item in column.items track by $index"
-                        ng-controller="ItemViewMenuController as menu">
+                        ng-repeat="item in column.items"
+                        ng-controller="ItemViewMenuController as menu"
+                        ng-init="row_i = $index">
                 <ul class="itemheader">
                     <li><button ng-click="menu.set_tab('tree')"
                             ng-class="{toggled: menu.mode == 'tree'}"
@@ -44,7 +45,8 @@
                             Testnote
                             </button></li>
                     <ul class="right-end">
-                        <li><button ng-click="multi_view.close_item($parent.$parent.$index, $index)"
+                        <li><button
+                                ng-click="multi_view.close_item_by_id(item.id)"
                                 class="closebutton"
                                 translate>
                                 Close

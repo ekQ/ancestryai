@@ -1,10 +1,13 @@
 
-this._next_id = 0;
-this.next_id = function() {
+var _next_id = 0;
+function next_id() {
     var id = this._next_id;
-    this._next_id += 1;
+    _next_id += 1;
     return id;
-};
+}
+function peek_next_id() {
+    return _next_id;
+}
 var item_views = [];
 
 app.controller("ItemViewMenuController", function($scope, $translate) {
