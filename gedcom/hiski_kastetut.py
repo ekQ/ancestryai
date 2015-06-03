@@ -28,11 +28,15 @@ if __name__ == "__main__":
     if sys.argv[1] == "edgelist":
         individuals = {}
         edges = []
+        # Add all individuals to the dict
         for entry in root.traverse():
             if entry.tag == "INDI":
                 individuals[entry.xref] = entry
+                # Family of this individual (not to be confused with
+                # entry.children and entry.parent)
                 entry.childs = []
                 entry.parents = []
+        # Read in family relations
         for entry in root.traverse():
             if entry.tag == "FAM":
                 parents = []

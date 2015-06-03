@@ -90,6 +90,9 @@ class Entry:
         child.parent = self
 
     def traverse(self):
+        """
+        DFS traversal of all descendants.
+        """
         buf = [self]
         while buf:
             cur = buf.pop()
@@ -133,6 +136,7 @@ class Entry:
         lst = self.by_tag(tag)
         return lst[0] if lst else None
     def get_multi_chain(self, chain):
+        # TODO Describe chain argument
         if not chain:
             return [self]
         tag = self
