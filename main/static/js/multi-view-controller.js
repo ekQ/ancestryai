@@ -29,10 +29,12 @@ app.controller("MultiViewController", function($scope, $translate) {
             multi_view.columns[column_i].items.splice(item_i, 1);
         };
         this.close_item_by_id = function(id) {
+            // preclose the item
             for(var i = 0; i < item_views.length; i++) {
                 if(item_views[i].id == id)
                     item_views[i].preclose();
             }
+            // close the item
             for(var i = 0; i < this.columns.length; i++) {
                 for(var j = 0; j < this.columns[i].items.length; j++) {
                     if(this.columns[i].items[j].id == id) {
@@ -53,6 +55,7 @@ app.controller("MultiViewController", function($scope, $translate) {
         this.close_column_by_id = function(id) {
             for(var i = 0; i < this.columns.length; i++) {
                 if(this.columns[i].id == id) {
+                    // call preclose for items in the column (to preserve map)
                     var j = 0;
                     for(var k = 0; k < item_views.length; k++) {
                         while(j < this.columns[i].items.length &&
@@ -65,6 +68,7 @@ app.controller("MultiViewController", function($scope, $translate) {
                             item_views[k].preclose();
                         }
                     }
+                    // close the column
                     this.close_column(i);
                 }
             }

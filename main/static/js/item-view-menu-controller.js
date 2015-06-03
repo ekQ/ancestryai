@@ -18,6 +18,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         this.map_id = this.html_id + "Map";
         this.search_id = this.html_id + "Search";
         this.mode = "tree";
+        this.new_mode = "tree";
         this.preclose = function() {
             if(this.mode == "map") {
                 $("#map-storage").append($("#map"));
@@ -27,6 +28,9 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             var i = item_views.indexOf(this);
             if(i != -1)
                 item_views.splice(i, 1);
+        };
+        this.set_new_mode = function() {
+            this.set_mode(this.new_mode);
         };
         this.set_mode = function(mode) {
             if(this.mode == "map" && mode != "map") {
