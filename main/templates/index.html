@@ -13,36 +13,19 @@
                         ng-controller="ItemViewMenuController as menu"
                         ng-init="row_i = $index">
                 <ul class="itemheader">
-                    <li><button ng-click="menu.set_tab('tree')"
-                            ng-class="{toggled: menu.mode == 'tree'}"
-                            translate>
-                            Tree
-                            </button></li>
-                    <li><button ng-click="menu.set_tab('info')"
-                            ng-class="{toggled: menu.mode == 'info'}"
-                            translate>
-                            Info
-                            </button></li>
-                    <li><button ng-click="menu.set_tab('search')"
-                            ng-class="{toggled: menu.mode == 'search'}"
-                            translate>
-                            Search
-                            </button></li>
-                    <li><button ng-click="menu.set_tab('map')"
-                            ng-class="{toggled: menu.mode == 'map'}"
-                            translate>
-                            Map
-                            </button></li>
+                    <li>
+                        <select ng-change="menu.set_new_mode()" ng-model="menu.new_mode">
+                            <option value="tree" translate>Tree</option>
+                            <option value="info" translate>Info</option>
+                            <option value="search" translate>Search</option>
+                            <option value="map" translate>Map</option>
+                            <option value="testnote" ng-show="menu.testnote !== null" translate>Testnote</option>
+                        </select>
+                    </li>
                     <li><button ng-click="menu.testzoom()"
                             ng-show="menu.mode == 'tree'"
                             translate>
                             Locate
-                            </button></li>
-                    <li><button ng-click="menu.set_tab('testnote')"
-                            ng-class="{toggled: menu.mode == 'info'}"
-                            ng-show="menu.testnote !== null"
-                            translate>
-                            Testnote
                             </button></li>
                     <ul class="right-end">
                         <li><button

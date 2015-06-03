@@ -306,6 +306,10 @@ var Hiski = {
 //        render(Hiski);
         render_all();
     },
+    calc_and_render_layout: function() {
+        Hiski.calc_layout();
+        render_all();
+    },
     reset_node_visited: function() {
         for(var i = 0; i < this.nodes.length; i++) {
             this.nodes[i].visited = false;

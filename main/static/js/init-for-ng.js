@@ -1,6 +1,7 @@
 
 app = angular.module("HiskiVisualizer", ["pascalprecht.translate"]);
 app.controller("TopMenuController", function($scope, $translate) {
+        $scope.render_all = render_all;
         var menu = this;
         menu.Hiski = Hiski;
         menu.language = "en";
