@@ -40,21 +40,21 @@ body,
     padding: 8px;
 }
 
-ul.topmenu {
+.topmenu {
     display: flex;
     flex-direction: row;
+    align-items: stretch;
+    flex-wrap: wrap;
     padding: 0px;
     margin: 0px;
     box-sizing: border-box;
 }
-ul.topmenu li {
-    display: inline-block;
-    padding: 0px 0px;
-}
-ul.topmenu li select {
+.topmenu select {
+    display: block;
     padding: 4px 10px 4px 20px;
 }
-ul.topmenu li button {
+.topmenu button {
+    display: block;
     padding: 4px 20px;
 }
 
@@ -113,9 +113,11 @@ div#map {
     border: 1px solid black;
 }
 .add-row, .add-column, .close-column {
-    position: relative;
     min-width: 20px;
     min-height: 20px;
+}
+.add-row, .add-column, .close-column, .resizer {
+    position: relative;
     background: #cccccc;
     text-align: center;
 
@@ -126,22 +128,25 @@ div#map {
     box-sizing: border-box;
     border: 1px solid black;
 }
+.resizer {
+    height: 8px;
+    vertical-align: text-bottom;
+}
 
-ul.itemheader {
+.itemheader {
     display: flex;
     flex-direction: row;
+    align-items: stretch;
     padding: 0px;
     margin: 0px;
     box-sizing: border-box;
 }
-ul.itemheader li {
-    display: inline-block;
-    padding: 0px 0px;
-}
-ul.itemheader li select {
+.itemheader select {
+    display: block;
     padding: 2px 5px 2px 10px;
 }
-ul.itemheader li button {
+.itemheader button {
+    display: block;
     padding: 2px 10px;
 }
 select,
@@ -155,6 +160,7 @@ button {
     background-image: -o-linear-gradient(top, #fefefe, #d1d1d1);
     background-image: linear-gradient(to bottom, #fefefe, #d1d1d1);
     text-decoration: none;
+    box-sizing: border-box;
 }
 select:hover,
 button.toggled,
@@ -181,8 +187,8 @@ button.toggled,
 button:active {
     border: 2px inset #888888;
 }
-ul.itemheader,
-ul.topmenu {
+.itemheader,
+.topmenu {
     background: #fefefe;
     background-image: -webkit-linear-gradient(top, #fefefe, #d1d1d1);
     background-image: -moz-linear-gradient(top, #fefefe, #d1d1d1);
@@ -192,8 +198,9 @@ ul.topmenu {
 }
 
 .viewtab {
-    width: 100%;
+/*    width: 100%;*/
     flex-grow: 1;
+    flex-shrink: 1;
 }
 .map.viewtab, #map {
     max-width: 640px;
@@ -249,7 +256,7 @@ label span {
 }
 
 
-ul.right-end {
+.right-end {
     flex-grow: 1;
     display: flex;
     flex-direction: row;
