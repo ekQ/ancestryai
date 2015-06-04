@@ -12,8 +12,10 @@
                         ng-repeat="item in column.items"
                         ng-controller="ItemViewMenuController as menu"
                         ng-init="row_i = $index">
-                <ul class="itemheader">
-                    <li>
+                <div class="resizer horizontal" ng-if="item.id != column.items[0].id" ng-mousedown="multi_view.resize_vertical(item)">
+                    &bull;&bull;&bull;
+                </div>
+                <div class="itemheader">
                         <select ng-change="menu.set_new_mode()" ng-model="menu.new_mode">
                             <option value="tree" translate>Tree</option>
                             <option value="info" translate>Info</option>
@@ -21,21 +23,20 @@
                             <option value="map" translate>Map</option>
                             <option value="testnote" ng-show="menu.testnote !== null" translate>Testnote</option>
                         </select>
-                    </li>
-                    <li><button ng-click="menu.testzoom()"
+                    <button ng-click="menu.testzoom()"
                             ng-show="menu.mode == 'tree'"
                             translate>
                             Locate
-                            </button></li>
-                    <ul class="right-end">
-                        <li><button
+                            </button>
+                    <div class="right-end">
+                        <button
                                 ng-click="multi_view.close_item_by_id(item.id)"
                                 class="closebutton"
                                 translate>
                                 Close
-                                </button></li>
-                    </ul>
-                </ul>
+                                </button>
+                    </div>
+                </div>
                 <svg id="{{menu.tree_id}}" class="tree viewtab" ng-show="menu.mode == 'tree'">
                     <filter id="dropshadow" height="130%">
                         <feGaussianBlur in="SourceAlpha" stdDeviation="1"/> <!-- how much to blur -->
