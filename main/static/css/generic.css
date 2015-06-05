@@ -163,6 +163,7 @@ div#map {
     display: flex;
     flex-direction: row;
     align-items: stretch;
+    flex-wrap: wrap;
     padding: 0px;
     margin: 0px;
     box-sizing: border-box;

@@ -25,7 +25,7 @@ function resize_mousemove(event) {
         var diff = event.pageY - bary;
         height1 += diff;
         height2 -= diff;
-        var minimum = 50;
+        var minimum = 120;
         if(height1 + height2 < minimum) {
             height1 = minimum / 2;
             height2 = minimum / 2;
@@ -48,7 +48,7 @@ function resize_mousemove(event) {
         var diff = event.pageX - barx;
         width1 += diff;
         width2 -= diff;
-        var minimum = 280;
+        var minimum = 120;
         if(width1 + width2 < minimum) {
             width1 = minimum / 2;
             width2 = minimum / 2;
