@@ -15,21 +15,24 @@ function start_resize(item, against, mode) {
 function resize_mousemove(event) {
     var against_hid = "#" + resizing.against.html_id;
     var item_hid = "#" + resizing.item.html_id;
+    var resizer_hid = "#" + resizing.item.html_id + " > .resizer";
     if(resizing.mode == "vertical") {
         // resize in vertical direction
         var height1 = $(against_hid).height();
         var height2 = $(item_hid).height();
-        var heightsum = Math.max(1, height1+height2);
-        var bary = $(item_hid).offset().top;
+        var barheight = $(item_hid + " .itemheader").offset().top - $(resizer_hid).offset().top;
+        var bary = $(resizer_hid).offset().top + barheight / 2;
         var diff = event.pageY - bary;
         height1 += diff;
         height2 -= diff;
         var minimum = 50;
-        if(height1 < minimum) {
+        if(height1 + height2 < minimum) {
+            height1 = minimum / 2;
+            height2 = minimum / 2;
+        } else if(height1 < minimum) {
             height2 += height1 - minimum;
             height1 = minimum;
-        }
-        if(height2 < minimum) {
+        } else if(height2 < minimum) {
             height1 += height2 - minimum;
             height2 = minimum;
         }
@@ -37,6 +40,27 @@ function resize_mousemove(event) {
         $(item_hid).height(height2);
     } else {
         // resize in horizontal direction
+        var width1 = $(against_hid).width();
+        var width2 = $(item_hid).width();
+//        var barwidth = $(resizer_hid).width();
+        var barwidth = $(item_hid + " .inner-column-container").offset().left - $(resizer_hid).offset().left;
+        var barx = $(item_hid).offset().left + barwidth / 2;
+        var diff = event.pageX - barx;
+        width1 += diff;
+        width2 -= diff;
+        var minimum = 280;
+        if(width1 + width2 < minimum) {
+            width1 = minimum / 2;
+            width2 = minimum / 2;
+        } else if(width1 < minimum) {
+            width2 += width1 - minimum;
+            width1 = minimum;
+        } else if(width2 < minimum) {
+            width1 += width2 - minimum;
+            width2 = minimum;
+        }
+        $(against_hid).width(width1);
+        $(item_hid).width(width2);
     }
 }
 function resize_mouseup(event) {
@@ -64,6 +88,7 @@ app.controller("MultiViewController", function($scope, $translate) {
                         create_item()
                     ],
                     id: item.id,
+                    html_id: "Column" + item.id,
                 });
         };
         this.add_item = function(column_i) {
@@ -84,6 +109,11 @@ app.controller("MultiViewController", function($scope, $translate) {
                 throw Exception("trying to resize top subview");
             var against = this.columns[pos[0]].items[pos[1]-1];
             start_resize(item, against, "vertical");
+        };
+        this.resize_horizontal = function(column) {
+            var index = this.columns.indexOf(column);
+            var against = this.columns[index - 1];
+            start_resize(column, against, "horizontal");
         };
         this.close_item = function(column_i, item_i) {
             // must be called from close by id

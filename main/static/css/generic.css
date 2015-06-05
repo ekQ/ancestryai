@@ -100,8 +100,14 @@ div#map {
 .columncontainer {
     flex-grow: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     background: #ffcccc;
+}
+.inner-column-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 .mvitem {
     flex-grow: 1;
@@ -128,9 +134,29 @@ div#map {
     box-sizing: border-box;
     border: 1px solid black;
 }
-.resizer {
+.resizer:active {
+    border: 1px solid white;
+}
+.resizer.horizontal {
     height: 8px;
-    vertical-align: text-bottom;
+    vertical-align: middle;
+    padding: 3px;
+}
+.resizer.vertical {
+    width: 8px;
+    padding: 3px;
+}
+.resizer.horizontal .wrap {
+    display: inline-block;
+    margin-top: -10px;
+}
+.resizer.vertical .wrap {
+    display: inline-block;
+    margin-left: -3px;
+    line-height: 0.4em;
+}
+.resizer:focus {
+    text-decoration: none;
 }
 
 .itemheader {
