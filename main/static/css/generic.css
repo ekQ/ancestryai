@@ -78,7 +78,7 @@ svg text {
     bottom: 0px;
 }
 div#map {
-    min-height: 100px;
+    min-height: 10px;
 }
 
 
