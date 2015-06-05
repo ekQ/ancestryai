@@ -42,7 +42,6 @@ function resize_mousemove(event) {
         // resize in horizontal direction
         var width1 = $(against_hid).width();
         var width2 = $(item_hid).width();
-//        var barwidth = $(resizer_hid).width();
         var barwidth = $(item_hid + " .inner-column-container").offset().left - $(resizer_hid).offset().left;
         var barx = $(item_hid).offset().left + barwidth / 2;
         var diff = event.pageX - barx;
