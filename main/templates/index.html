@@ -102,7 +102,7 @@
                     <div id="{{ menu.map_id }}" class="map viewtab" ng-show="menu.mode == 'map'">
                         <!-- #map will be moved here, as only one such can exist at a time -->
                     </div>
-                    <div id="{{ menu.search_id }}" ng-show="menu.mode == 'search'">
+                    <div id="{{ menu.search_id }}" class="search viewtab" ng-show="menu.mode == 'search'">
                         <form ng-submit="menu.do_search()">
                             <label><span translate>Search by</span>
                                 <select class="search-by" ng-model="menu.search_by">
@@ -116,8 +116,8 @@
                             </label>
                             <button type="submit" translate>Search</button>
                             <div class="searchresults">
-                                <div><span translate>For search:</span> {{ menu.search_result_term }}</div>
-                                <div ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
+                                <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex6 }})</div>
+                                <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
                                     {{ ind.name }}
                                 </div>
                             </div>

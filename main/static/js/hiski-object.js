@@ -248,6 +248,13 @@ var Hiski = {
             throw new Error("Unhandled tag '"+entry.tag+"'");
         }
     },
+    load_or_focus: function(xref, reference) {
+        this.load(xref, reference);
+        if(xref in this.node_dict) {
+            this.zoom_to = this.node_dict[xref];
+            this.delayed_render();
+        }
+    },
     load: function(xref, reference) {
         if(xref in this.node_dict)
             return;

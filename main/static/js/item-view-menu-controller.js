@@ -76,6 +76,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         var menu = this;
         menu.search_by = "firstname";
         menu.search_term = "";
+        menu.search_soundex6 = "";
         menu.search_result_term = "";
         menu.search_result_list = [];
         menu.testnote = Hiski.testnote;
@@ -92,7 +93,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             $scope.$apply();
         };
         menu.load = function(xref) {
-            Hiski.load(xref, null);
+            Hiski.load_or_focus(xref, null);
         };
         menu.do_search = function() {
             var term = menu.search_term;
@@ -104,6 +105,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                     if(json) {
                         menu.search_result_list = json["inds"];
                         menu.search_result_term = term;
+                        menu.search_soundex6 = json["soundex6"];
                         menu._redraw();
                     } else {
                         throw new Error("Loading firstname search '"+term+"' failed");
@@ -115,6 +117,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                     if(json) {
                         menu.search_result_list = json["inds"];
                         menu.search_result_term = term;
+                        menu.search_soundex6 = json["soundex6"];
                         menu._redraw();
                     } else {
                         throw new Error("Loading familyname search '"+term+"' failed");

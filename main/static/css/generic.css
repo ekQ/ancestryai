@@ -247,7 +247,8 @@ button:active {
 }
 
 
-.info.viewtab {
+.info.viewtab,
+.search.viewtab {
     padding: 5px;
 }
 
@@ -299,4 +300,17 @@ label span {
 }
 .closebutton {
     margin-right: 20px;
+}
+
+
+
+.search-result {
+    color: #000044;
+    cursor: pointer;
+}
+.search-result:hover {
+    color: #444488;
+}
+.search-result:active {
+    color: #8888cc;
 }

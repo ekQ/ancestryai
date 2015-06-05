@@ -84,9 +84,11 @@ def json_search_firstname(term):
         inds = Individual.query.filter_by(soundex3first = soundex3term).all()
     if not inds:
         return jsonify({
+            "soundex6": soundex6term,
             "result": False,
         })
     return jsonify({
+        "soundex6": soundex6term,
         "result": True,
         "count": len(inds),
         "inds": [x.as_dict() for x in inds],
@@ -103,9 +105,11 @@ def json_search_familyname(term):
         inds = Individual.query.filter_by(soundex3family = soundex3term).all()
     if not inds:
         return jsonify({
+            "soundex6": soundex6term,
             "result": False,
         })
     return jsonify({
+        "soundex6": soundex6term,
         "result": True,
         "count": len(inds),
         "inds": [x.as_dict() for x in inds],
