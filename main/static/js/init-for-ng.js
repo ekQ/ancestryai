@@ -1,4 +1,6 @@
-
+/*
+Angular app, top menu controller and translation handling.
+*/
 
 app = angular.module("HiskiVisualizer", ["pascalprecht.translate"]);
 app.controller("TopMenuController", function($scope, $translate) {

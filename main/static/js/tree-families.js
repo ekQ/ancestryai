@@ -1,24 +1,31 @@
+/*
+"class" and some related functions for families
+*/
 
 function Relation(data) {
-    // identifying and source data
+    /*
+    "class" for a family
+    */
+    /* identifying and source data */
     this.type = "relation";
     this.data = data;
     this.xref = data.xref;
 
-    // graph relations
+    /* graph relations */
     this.nodes = [];
     this.children = [];
     this.parents = [];
     this.wife = null;
     this.husband = null;
 
-    // layout
+    /* layout */
     this.is_visible = function() {
         for(var i = 0; i < this.nodes.length; i++)
             if(this.nodes[i].is_visible())
                 return true;
         return false;
     }
+
 
     this.get_x = function() {
         return this.x;
@@ -27,6 +34,10 @@ function Relation(data) {
         return this.y;
     };
     this.get_preferred_x = function() {
+        /*
+        Gets the preferred x position for this relation in the normal layout.
+        This is based on the parents' and children's positions.
+        */
         var sumspouse = 0.0;
         var numspouse = 0;
         var sumchildren = 0.0;
@@ -45,12 +56,14 @@ function Relation(data) {
             return sumchildren / numchildren;
         } else if(numchildren == 0) {
             return sumspouse / numspouse;
-//        } else if(numspouse > 1) {
-//            return sumspouse / numspouse;
         }
         return ((sumchildren / numchildren) + (sumspouse / numspouse)) / 2;
     };
     this.get_preferred_y = function() {
+        /*
+        Gets the preferred y position for this relation in the normal layout.
+        This is based on the parents' and children's positions.
+        */
         var minchild = null;
         var maxspouse = null;
         for(var i = 0; i < this.children.length; i++) {
@@ -73,6 +86,9 @@ function Relation(data) {
     };
 
     this.get_node_xrefs = function() {
+        /*
+        Get all the nodes connected to this relation.
+        */
         var res = [];
         for(var i = 0; i < this.data.children.length; i++) {
             res.push([this.data.children[i], "child"]);
@@ -83,12 +99,16 @@ function Relation(data) {
         return res;
     };
     this.expand_surroundings = function() {
+        /*
+        Load and add all the nodes connected to this relation.
+        */
         var arr = this.get_node_xrefs();
         for(var i = 0; i < arr.length; i++) {
             var value = arr[i][0];
             Hiski.load(value, this);
         }
     };
+
     this.x = this.get_preferred_x();
     this.y = this.get_preferred_y();
     this.y_space = 40;

@@ -1,18 +1,30 @@
+/*
+Angular controller for the multiview, which contains and controls all the
+subviews.
+*/
 
+/* Handling the resizing bars */
 var resizing = {
     item: null,
     against: null,
     mode: "vertical",
 };
 function start_resize(item, against, mode) {
+    /*
+    Set the information for resize and bind events.
+    */
     resizing.item = item;
     resizing.against = against;
     resizing.mode = mode;
-    console.warn(item.id + ", " + against.id + ", " + mode);
+//    console.warn(item.id + ", " + against.id + ", " + mode);
     $(document).on("mousemove", resize_mousemove);
     $(document).on("mouseup", resize_mouseup);
 }
 function resize_mousemove(event) {
+    /*
+    Handle dragging the resizing bar. Gives width or height from the subview on
+    one side to the subview on the other side.
+    */
     var against_hid = "#" + resizing.against.html_id;
     var item_hid = "#" + resizing.item.html_id;
     var resizer_hid = "#" + resizing.item.html_id + " > .resizer";
@@ -63,17 +75,28 @@ function resize_mousemove(event) {
     }
 }
 function resize_mouseup(event) {
+    /*
+    Unbind events when ending the drag.
+    */
     $(document).unbind("mousemove", resize_mousemove);
     $(document).unbind("mouseup", resize_mouseup);
     resizing.item = null;
 }
 
+/* the controller */
 app.controller("MultiViewController", function($scope, $translate) {
+        /*
+        Controller for multiview, which contains and controls the subviews
+        */
         var multi_view = this;
+        // Row of columns containing subview ids
         this.columns = [
             ];
-        var next_item_id = 0;
         var create_item = function() {
+            /*
+            Create a new item and give it the id that the corresponding subview
+            will get when angular creates the subview controller.
+            */
             var id = peek_next_id();
             return {
                 id: id,
@@ -81,19 +104,29 @@ app.controller("MultiViewController", function($scope, $translate) {
             };
         }
         this.add_column = function() {
+            /*
+            Adds a new column of subviews with initially a single item. Column
+            id is the id of its initial item.
+            */
             var item = create_item();
             multi_view.columns.push({
                     items: [
-                        create_item()
+                        item
                     ],
                     id: item.id,
                     html_id: "Column" + item.id,
                 });
         };
         this.add_item = function(column_i) {
+            /*
+            Adds a new item to an existing column
+            */
             multi_view.columns[column_i].items.push(create_item());
         };
         this.find_item_position = function(item) {
+            /*
+            Finds a position of an item.
+            */
             for(var i = 0; i < this.columns.length; i++)
                 for(var j = 0; j < this.columns[i].items.length; j++)
                     if(this.columns[i].items[j].id == item.id)
@@ -101,6 +134,10 @@ app.controller("MultiViewController", function($scope, $translate) {
             return null;
         };
         this.resize_vertical = function(item) {
+            /*
+            Starts the vertical resize, in which case the affected subviews are
+            on top of each other.
+            */
             var pos = this.find_item_position(item);
             if(pos === null)
                 throw Exception("trying to resize non-existent subview");
@@ -110,20 +147,28 @@ app.controller("MultiViewController", function($scope, $translate) {
             start_resize(item, against, "vertical");
         };
         this.resize_horizontal = function(column) {
+            /*
+            Starts the horizontal resize, where we resize column widths.
+            */
             var index = this.columns.indexOf(column);
             var against = this.columns[index - 1];
             start_resize(column, against, "horizontal");
         };
-        this.close_item = function(column_i, item_i) {
-            // must be called from close by id
+        this._close_item = function(column_i, item_i) {
+            /*
+            must be called from close by id
+            */
             console.warn("close "+column_i+","+item_i);
             if(multi_view.columns[column_i].items.length == 1) {
-                multi_view.close_column(column_i);
+                multi_view._close_column(column_i);
                 return;
             }
             multi_view.columns[column_i].items.splice(item_i, 1);
         };
         this.close_item_by_id = function(id) {
+            /*
+            Closes the item with the given id.
+            */
             // preclose the item
             for(var i = 0; i < item_views.length; i++) {
                 if(item_views[i].id == id)
@@ -133,14 +178,16 @@ app.controller("MultiViewController", function($scope, $translate) {
             for(var i = 0; i < this.columns.length; i++) {
                 for(var j = 0; j < this.columns[i].items.length; j++) {
                     if(this.columns[i].items[j].id == id) {
-                        this.close_item(i, j);
+                        this._close_item(i, j);
                         return;
                     }
                 }
             }
         };
-        this.close_column = function(column_i) {
-            // must be called from close by id
+        this._close_column = function(column_i) {
+            /*
+            must be called from close by id or _close_item
+            */
             console.warn("close "+column_i+",*");
             multi_view.columns.splice(column_i, 1);
             if(multi_view.columns.length == 0) {
@@ -148,6 +195,9 @@ app.controller("MultiViewController", function($scope, $translate) {
             }
         };
         this.close_column_by_id = function(id) {
+            /*
+            Closes a whole column of items.
+            */
             for(var i = 0; i < this.columns.length; i++) {
                 if(this.columns[i].id == id) {
                     // call preclose for items in the column (to preserve map)
@@ -164,11 +214,13 @@ app.controller("MultiViewController", function($scope, $translate) {
                         }
                     }
                     // close the column
-                    this.close_column(i);
+                    this._close_column(i);
                 }
             }
         };
 
+
+        // adds an initial column to the multiview
         this.add_column();
     });
 

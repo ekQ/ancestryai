@@ -1,4 +1,12 @@
+/*
+Angular controller for a single subview.
+*/
 
+
+/*
+Generate unique ids for the subviews and an array to store the subviews for
+external access.
+*/
 var _next_id = 0;
 function next_id() {
     var id = this._next_id;
@@ -11,7 +19,13 @@ function peek_next_id() {
 var item_views = [];
 
 app.controller("ItemViewMenuController", function($scope, $translate) {
+        /*
+        Controller for a single subview.
+        */
+        // todo: refactor / cleanup
         item_views.push(this);
+        // XXX: maybe we could retrieve this id somehow from the multiview?
+        // possibly through dom? Not sure if worth the trouble.
         this.id = next_id();
         this.html_id = "ItemView"+this.id;
         this.tree_id = this.html_id + "Tree";
@@ -140,6 +154,10 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.debug_mode = Hiski.debug_mode;
     });
 
+
+/*
+Redraw all the subviews to update their data.
+*/
 function redraw_views() {
     item_views[0]._redraw();
 }
