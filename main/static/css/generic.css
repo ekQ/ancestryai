@@ -41,6 +41,7 @@ body,
 }
 
 .topmenu {
+    flex-shrink: 0;
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -162,6 +163,7 @@ div#map {
 }
 
 .itemheader {
+    flex-shrink: 0;
     display: flex;
     flex-direction: row;
     align-items: stretch;
