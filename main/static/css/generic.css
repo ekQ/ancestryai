@@ -114,12 +114,13 @@ div#map {
 .mvitem {
     flex-grow: 1;
     flex-shrink: 1;
+    min-height: 10px;
     display: flex;
     flex-direction: column;
     background: #ffffff;
 
     box-sizing: border-box;
-    border: 1px solid black;
+    /*border: 1px solid black;*/
 }
 .add-row, .add-column, .close-column {
     min-width: 20px;

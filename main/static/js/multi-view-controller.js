@@ -33,7 +33,7 @@ function resize_mousemove(event) {
         var height1 = $(against_hid).height();
         var height2 = $(item_hid).height();
         var barheight = $(item_hid + " .itemheader").offset().top - $(resizer_hid).offset().top;
-        var bary = $(resizer_hid).offset().top + barheight / 2;
+        var bary = Math.round($(resizer_hid).offset().top + barheight / 2);
         var diff = event.pageY - bary;
         height1 += diff;
         height2 -= diff;
@@ -48,6 +48,7 @@ function resize_mousemove(event) {
             height1 += height2 - minimum;
             height2 = minimum;
         }
+//        console.warn($(against_hid).height() + ","+$(item_hid).height() + " -> " + height1 + ","+height2 + "("+(height1+height2)+")  diff:"+diff+" (" + event.pageY + "-" + bary + ")");
         $(against_hid).height(height1);
         $(item_hid).height(height2);
     } else {
@@ -55,7 +56,7 @@ function resize_mousemove(event) {
         var width1 = $(against_hid).width();
         var width2 = $(item_hid).width();
         var barwidth = $(item_hid + " .inner-column-container").offset().left - $(resizer_hid).offset().left;
-        var barx = $(item_hid).offset().left + barwidth / 2;
+        var barx = Math.round($(item_hid).offset().left + barwidth / 2);
         var diff = event.pageX - barx;
         width1 += diff;
         width2 -= diff;
