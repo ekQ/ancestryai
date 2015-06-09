@@ -26,6 +26,15 @@ translations.fi = {
     "Testnote": "Testiviesti",
     "Locate": "Paikanna",
 
+    "Colour by family name": "Väritä sukunimen mukaan",
+    "Colour by Soundex": "Väritä Soundex koodin mukaan",
+    "Colour by sex": "Väritä sukupuolen mukaan",
+    "Colour by expendability": "Väritä laajennettavuuden mukaan",
+
+    "Compact layout": "Kompakti asettelu",
+    "Node order layout": "Noodijärjestys asettelu",
+    "Load order layout": "Latausjärjestysasettelu",
+
     // language selection
     "Finnish": "Suomi",
     "English": "English",

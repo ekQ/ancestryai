@@ -150,8 +150,6 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                 return;
             Hiski.select_node(node, false);
         };
-
-        menu.debug_mode = Hiski.debug_mode;
     });
 
 
