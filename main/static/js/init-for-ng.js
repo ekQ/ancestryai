@@ -8,17 +8,7 @@ app.controller("TopMenuController", function($scope, $translate) {
         var menu = this;
         menu.Hiski = Hiski;
         menu.language = "en";
-        menu.blue = function() {
-            $(".main").css("background-color", "#ccccff");
-        };
-        menu.set_color = function(color) {
-            $(".topmenu").css("background-color", color);
-        };
-        menu.toggle_color_mode = function() {
-            Hiski.next_color_mode();
-//            render(Hiski);
-            render_all();
-        };
+
         menu.set_language = function(lang) {
             $translate.use(lang);
             menu.language = lang;

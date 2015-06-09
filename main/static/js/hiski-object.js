@@ -376,13 +376,7 @@ var Hiski = {
     },
 
     /* custom layout stuff */
-    layout_mode: 0,
-    toggle_layout: function() {
-        // todo: update to use text based layout name keys
-        Hiski.layout_mode = (Hiski.layout_mode + 1) % 3;
-        Hiski.calc_layout();
-        render_all();
-    },
+    layout_mode: "compact",
     calc_and_render_layout: function() {
         /*
         Calculates node positions and renders all subviews showing the tree view.
@@ -448,7 +442,7 @@ var Hiski = {
             for(var j = Math.max(0, year - pad_years); j < year + pad_years; j++) {
                 years_x[j] = node.x;
             }
-            if(Hiski.layout_mode == 1)
+            if(Hiski.layout_mode == "node-order")
                 node.x = i*60+60;
             if(node.parents.length > 0 && node.rightmost_parent.visible && !node.rightmost_parent.visited && !node.timetraveller) {
                 // abort layout calculation and reposition nodes, when a child is left of its parents
@@ -460,11 +454,11 @@ var Hiski = {
             if(node.x == 0 || node.x == undefined || node.x == NaN || node.x < 50) {
                 console.warn("Node has x coordinate '"+node.x+"', which seems to be a bug, but I don't know what it is related to.");
             }
-            if(node.x < 90 && Hiski.layout_mode == 0) {
+            if(node.x < 90 && Hiski.layout_mode == "compact") {
                 console.warn("Node has invalid x coordinate " + node.x + ", " + maxx + ", " + year + ", " + endyear);
             }
         }
-        if(Hiski.layout_mode == 2) {
+        if(Hiski.layout_mode == "load-order") {
             for(var i = 0; i < this.nodes.length; i++) {
                 this.nodes[i].x = i*60 + 60;
             }
@@ -480,7 +474,7 @@ var Hiski = {
             this.zoom_to = null;
         }
     },
-    color_mode: 0,
+    color_mode: "family-name",
     next_color_mode: function() {
         // todo: use text based colouring keys
         this.color_mode = (this.color_mode + 1) % 4;
@@ -489,13 +483,13 @@ var Hiski = {
         /*
         Returns the node colour depending on the corresponding setting.
         */
-        if(Hiski.color_mode == 0) {
+        if(Hiski.color_mode == "family-name") {
             return d.color_by_name;
-        } else if(Hiski.color_mode == 1) {
+        } else if(Hiski.color_mode == "soundex") {
             return d.color_by_soundex;
-        } else if(Hiski.color_mode == 2) {
+        } else if(Hiski.color_mode == "sex") {
             return d.color_by_sex;
-        } else if(Hiski.color_mode == 3) {
+        } else if(Hiski.color_mode == "expendability") {
             return d.expandable() ? "#ccffcc" : "#dddddd";
         }
         return "#ff0000";
