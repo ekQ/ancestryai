@@ -109,6 +109,7 @@
                                     <option value="firstname" translate>First name</option>
                                     <option value="familyname" translate>Family name</option>
                                     <option value="xref">xref</option>
+                                    <option value="ppfamily" ng-if="menu.Hiski.debug_mode">PPFamily</option>
                                 </select>
                             </label>
                             <label><span translate>Search term</span>
@@ -116,6 +117,7 @@
                             </label>
                             <button type="submit" translate>Search</button>
                             <div class="searchresults">
+                                <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
                                 <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex6 }})</div>
                                 <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
                                     {{ ind.name }}

@@ -93,6 +93,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.search_soundex6 = "";
         menu.search_result_term = "";
         menu.search_result_list = [];
+        menu.search_time = "-";
         menu.testnote = Hiski.testnote;
         menu.Hiski = Hiski;
 
@@ -109,6 +110,13 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.load = function(xref) {
             Hiski.load_or_focus(xref, null);
         };
+        menu.show_search = function(json, term) {
+            menu.search_result_list = json["inds"];
+            menu.search_result_term = term;
+            menu.search_soundex6 = json["soundex6"];
+            menu.search_time = json["time"];
+            menu._redraw();
+        };
         menu.do_search = function() {
             var term = menu.search_term;
             if(menu.search_by == "xref") {
@@ -117,10 +125,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                 var addr = Hiski.url_root + "json/search/firstname/"+term+"/";
                 d3.json(addr, function(json) {
                     if(json) {
-                        menu.search_result_list = json["inds"];
-                        menu.search_result_term = term;
-                        menu.search_soundex6 = json["soundex6"];
-                        menu._redraw();
+                        menu.show_search(json, term);
                     } else {
                         throw new Error("Loading firstname search '"+term+"' failed");
                     }
@@ -129,12 +134,18 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                 var addr = Hiski.url_root + "json/search/familyname/"+term+"/";
                 d3.json(addr, function(json) {
                     if(json) {
-                        menu.search_result_list = json["inds"];
-                        menu.search_result_term = term;
-                        menu.search_soundex6 = json["soundex6"];
-                        menu._redraw();
+                        menu.show_search(json, term);
                     } else {
                         throw new Error("Loading familyname search '"+term+"' failed");
+                    }
+                });
+            } else if(menu.search_by == "ppfamily") {
+                var addr = Hiski.url_root + "json/search/pure-python-family/"+term+"/";
+                d3.json(addr, function(json) {
+                    if(json) {
+                        menu.show_search(json, term);
+                    } else {
+                        throw new Error("Loading ppfamily search '"+term+"' failed");
                     }
                 });
             }
