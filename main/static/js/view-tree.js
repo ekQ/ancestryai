@@ -81,6 +81,15 @@ function tree_init(item_view) {
     item_view.linksvg = item_view.container.selectAll("g.layer.links").selectAll("path.link");
     item_view.nodesvg = item_view.container.selectAll("g.layer.nodes").selectAll("g.node");
     item_view.relationsvg = item_view.container.selectAll("g.layer.relations").selectAll("g.relation");
+
+    var maxyear = 2020;
+    item_view.axis = d3.svg.axis()
+            .scale(d3.scale.linear()
+                    .domain([0, maxyear])
+                    .range([0, maxyear * Hiski.year_pixel_ratio]))
+                    .ticks(maxyear / 10)
+            .orient("left");
+    item_view.axis_group = item_view.container.append("g").call(item_view.axis);
 }
 
 function enter_all() {

@@ -377,6 +377,7 @@ var Hiski = {
 
     /* custom layout stuff */
     layout_mode: "compact",
+    year_pixel_ratio: 5,
     calc_and_render_layout: function() {
         /*
         Calculates node positions and renders all subviews showing the tree view.
@@ -397,7 +398,7 @@ var Hiski = {
         var node_preferred_position = function(node) {
             var x = node.x;
             var year = guess_node_year(node);
-            var y = (year - 1750) * 5 - 600;
+            var y = year * Hiski.year_pixel_ratio;
             return [x, y];
         };
         var relation_preferred_position = function(relation) {
@@ -443,7 +444,7 @@ var Hiski = {
                 years_x[j] = node.x;
             }
             if(Hiski.layout_mode == "node-order")
-                node.x = i*60+60;
+                node.x = i*60+80;
             if(node.parents.length > 0 && node.rightmost_parent.visible && !node.rightmost_parent.visited && !node.timetraveller) {
                 // abort layout calculation and reposition nodes, when a child is left of its parents
                 Hiski.reposition_node(node);
@@ -460,7 +461,7 @@ var Hiski = {
         }
         if(Hiski.layout_mode == "load-order") {
             for(var i = 0; i < this.nodes.length; i++) {
-                this.nodes[i].x = i*60 + 60;
+                this.nodes[i].x = i*60 + 80;
             }
         }
         for(var i = 0; i < this.relations.length; i++) {
