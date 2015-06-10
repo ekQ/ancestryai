@@ -128,15 +128,15 @@ function enter(view) {
                 })
             ;
     newnodes.append("circle")
-            .attr("r", 20)
+            .attr("r", 25)
             .style("fill", Hiski.node_color_function)
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", -10)
+            .attr("y", -18)
             .attr("dominant-baseline", "central")
             .text(function(d) {
-                return d.name;
+                return d.first_name;
             })
             .style("filter", "url(#dropshadow)")
             .style("font-weight", "bold")
@@ -144,7 +144,18 @@ function enter(view) {
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", 5)
+            .attr("y", -5)
+            .attr("dominant-baseline", "central")
+            .text(function(d) {
+                return d.family_name;
+            })
+            .style("filter", "url(#dropshadow)")
+            .style("font-weight", "bold")
+            .style("font-size", "60%")
+            ;
+    newnodes.append("svg:text")
+            .attr("text-anchor", "middle")
+            .attr("y", 10)
             .attr("dominant-baseline", "central")
             .text(function(d) {
                 return d.data.birth_date_string;
@@ -155,7 +166,7 @@ function enter(view) {
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", 15)
+            .attr("y", 20)
             .attr("dominant-baseline", "central")
             .text(function(d) {
                 return d.data.death_date_string;
