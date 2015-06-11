@@ -243,6 +243,10 @@ function render(view) {
             .style("stroke", function(d) { return d == Hiski.selected ? "#ffffff" : "#000000" })
             .style("stroke-width", function(d) { return d == Hiski.selected ? 3 : 1 })
             ;
+    view.nodesvg.each(function(d) {
+        if(d == Hiski.selected)
+            move_to_front(this);
+    })
 
     var next_to_selected = function(d) {
         if(Hiski.selected === null)
