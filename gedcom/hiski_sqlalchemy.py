@@ -53,19 +53,22 @@ class Person(Entity):
         last_name = self.dad_last_name.split('\K')[0].lower().strip()
         self.clean_name = first_name + ' ' + last_name
         
-    def clean_name(self, first_name, last_name):
+    def clean_name(self, first_name, last_name, patronymic=None):
         first_name = first_name.split('\K')[0].lower().strip()
         #if len(first_name) > 0:
         #    first_name = first_name.split()[0]
         last_name = last_name.split('\K')[0].lower().strip()
-        #patronymic = patronymic.split('\K')[0].lower().strip()
-        return first_name + ' ' + last_name
+        if patronymic is None:
+            return first_name + ' ' + last_name
+        else:
+            patronymic = patronymic.split('\K')[0].lower().strip()
+            return first_name + ' ' + patronymic + ' ' + last_name
         
     def get_clean_name(self):
         return self.clean_name(self.name, self.dad_last_name)
 
     def get_clean_dad_name(self):
-        return self.clean_name(self.dad_first_name, self.dad_last_name)
+        return self.clean_name(self.dad_first_name, self.dad_last_name, self.dad_patronymic)
         
     def get_clean_mom_name(self):
         return self.clean_name(self.mom_first_name, self.mom_last_name)

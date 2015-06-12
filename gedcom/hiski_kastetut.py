@@ -66,7 +66,6 @@ def parse_hiski_caus():
                         fullid += ":{}{}".format(hiskitype, hiskiid)
             fullids[ind.xref] = fullid
 
-        graph = []
         for ind in individuals.values():
             if not ind.get_chain("EVEN.CAUS.hiski"):
                 continue
@@ -126,6 +125,7 @@ def parse_hiski_sour():
     if sys.argv[1] == "edgelist":
         individuals = {}
         edges = []
+        edges2 = [] # Edges where only the child has an HisKI ID
         sources = {}
         # Add all individuals to the dict
         for entry in root.traverse():
@@ -161,7 +161,7 @@ def parse_hiski_sour():
                         sources[entry.xref] = bap_id
         print "%d sources available" % len(sources)
 
-        hiski_ids = {}
+        hiski_infos = {}
         for ind in individuals.values():
             source_id = ind.get_chain("NAME.SOUR.value")
             if source_id in sources:
@@ -172,21 +172,36 @@ def parse_hiski_sour():
                 # Get name in the Hiski DB
                 person = db.Person.query.filter(db.Person.id==hiski_id).first()
                 hiski_name = person.name.encode('utf-8')
-                hiski_ids[ind.xref] = (firstname, hiski_name, hiski_id)
-        print "%d individual hiski ids available" % len(hiski_ids)
+                dad_full_name = person.get_clean_dad_name().encode('utf-8')
+                hiski_infos[ind.xref] = (firstname, hiski_name, hiski_id, dad_full_name)
+        print "%d individual hiski ids available" % len(hiski_infos)
 
-        graph = []
+        # Parent-child edges where both have an HisKi ID
         for ind in individuals.values():
-            if ind.xref not in hiski_ids:
+            if ind.xref not in hiski_infos:
                 continue
-            parent_id = hiski_ids[ind.xref]
+            parent_id = hiski_infos[ind.xref]
             for other in ind.childs:
-                if other.xref not in hiski_ids:
+                if other.xref not in hiski_infos:
                     continue
-                child_id = hiski_ids[other.xref]
+                child_id = hiski_infos[other.xref]
                 if parent_id[2] != child_id[2] and parent_id[0].startswith(parent_id[1]) and child_id[0].startswith(child_id[1]):
                     edges.append((parent_id, child_id))
 
+        # Parent-child edges where only the child has an HisKi ID
+        sibling_groups = {}
+        for ind in individuals.values():
+            parent_id = ind.xref
+            for other in ind.childs:
+                if other.xref not in hiski_infos:
+                    continue
+                sibling_groups[parent_id] = sibling_groups.get(parent_id, 0) + 1
+                child_id = hiski_infos[other.xref]
+                edges2.append((parent_id, child_id))
+
+        n_groups = sum(1 for sg in sibling_groups.itervalues() if sg > 1)
+        print "%d sibling groups in total" % n_groups
+        """
         for a,b in edges:
             try:
                 a_str = "{} (H:{}) {}".format(a[0], a[1], a[2])
@@ -195,6 +210,20 @@ def parse_hiski_sour():
                 import extras
                 extras.keyboard()
             print a_str + "\t" + b_str
+        """
+
+        prev_par = None
+        for par,child in edges2:
+            if prev_par != par:
+                print "-----------------------------------------"
+                prev_par = par
+            try:
+                par_str = par
+                child_str = "{} (H:{}) {}\t{}".format(child[0], child[1], child[2], child[3])
+            except:
+                import extras
+                extras.keyboard()
+            print par_str + "\t" + child_str
 
 if __name__ == "__main__":
     #parse_hiski_caus()
