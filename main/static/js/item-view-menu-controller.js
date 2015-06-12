@@ -88,12 +88,16 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
 
         // angular controller stuff
         var menu = this;
+
         menu.search_by = "firstname";
         menu.search_term = "";
         menu.search_soundex6 = "";
         menu.search_result_term = "";
         menu.search_result_list = [];
         menu.search_time = "-";
+
+        menu.comment_body = "";
+
         menu.testnote = Hiski.testnote;
         menu.Hiski = Hiski;
 
@@ -160,6 +164,14 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             if(node === null)
                 return;
             Hiski.select_node(node, false);
+        };
+        menu.leave_comment = function() {
+            $.post(Hiski.url_root + "json/leave/comment/"+Hiski.selected.xref+"/", {
+                    content: menu.comment_body,
+                    })
+                    .done(function(data) {
+                        console.warn(data);
+                    });
         };
     });
 

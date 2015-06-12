@@ -317,3 +317,36 @@ label span {
 .search-result:active {
     color: #8888cc;
 }
+
+
+
+.comments.viewtab {
+    padding: 5px;
+}
+.comments header h1 {
+    font-size: 120%;
+    margin: 0px;
+}
+.comments header .subheader {
+    font-size: 90%;
+    margin: 0px;
+    color: #444;
+}
+.comments header {
+    border-bottom: 1px solid black;
+    margin-bottom: 10px;
+}
+.comments form {
+    border-top: 1px solid black;
+    margin-top: 10px;
+}
+.comments form textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+.comments form button {
+    display: block;
+    min-width: 50%;
+
+}

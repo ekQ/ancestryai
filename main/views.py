@@ -10,6 +10,7 @@ from flask import (
     flash,
     abort,
     jsonify,
+    request,
 )
 from flask.ext.babel import refresh
 from soundexpy import soundex
@@ -151,3 +152,18 @@ def json_setting(key):
         "time": t1 - t0,
     })
 
+
+
+###########################################
+# Commenting
+###########################################
+@app.route("/json/leave/comment/<xref>/", methods=["POST"])
+def json_leave_comment(xref):
+    content = request.form.get("content", None)
+    if not content:
+        return jsonify({
+            "result": False,
+        })
+    return jsonify({
+        "result": True,
+    })

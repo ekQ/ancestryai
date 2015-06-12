@@ -26,6 +26,7 @@
                                 <option value="search" translate>Search</option>
                                 <option value="map" translate>Map</option>
                                 <option value="testnote" ng-show="menu.testnote !== null" translate>Testnote</option>
+                                <option value="comments" translate>Comments</option>
                             </select>
                         <button ng-click="menu.testzoom()"
                                 ng-show="menu.mode == 'tree'"
@@ -124,6 +125,27 @@
                                 </div>
                             </div>
                         </form>
+                    </div>
+                    <div id="{{ menu.comments_id }}" class="comments viewtab" ng-show="menu.mode == 'comments'">
+                        <section ng-if="menu.Hiski.selected != null">
+                            <header>
+                                <h1>{{ menu.Hiski.selected.name }}</h1>
+                                <p class="subheader">Comments about data quality</p>
+                            </header>
+                            <div>
+                                List of comments, todo
+                            </div>
+                            <form ng-submit="menu.leave_comment()">
+                                <label>
+                                    <span translate>Comment:</span>
+                                    <textarea ng-model="menu.comment_body"></textarea>
+                                </label>
+                                <button type="submit" translate>Submit</button>
+                            </form>
+                        </section>
+                        <section ng-if="menu.Hiski.selected == null">
+                            <span translate>Select a node</span>
+                        </section>
                     </div>
                 </div>
                 <div class="add-row" ng-click="multi_view.add_item($index)">
