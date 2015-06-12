@@ -1,5 +1,7 @@
 
 import random
+import jellyfish
+import time
 from flask import (
     g,
     render_template,
@@ -8,6 +10,7 @@ from flask import (
     flash,
     abort,
     jsonify,
+    request,
 )
 from flask.ext.babel import refresh
 from soundexpy import soundex
@@ -75,6 +78,7 @@ def language(lang):
 
 @app.route("/json/search/firstname/<term>/")
 def json_search_firstname(term):
+    t0 = time.time()
     soundex6term = soundex.soundex(term, 6)
     soundex3term = soundex.soundex(term, 3)
     inds = None
@@ -84,16 +88,22 @@ def json_search_firstname(term):
         inds = Individual.query.filter_by(soundex3first = soundex3term).all()
     if not inds:
         return jsonify({
+            "soundex6": soundex6term,
             "result": False,
         })
+    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
+    t1 = time.time()
     return jsonify({
+        "soundex6": soundex6term,
         "result": True,
         "count": len(inds),
         "inds": [x.as_dict() for x in inds],
+        "time": t1 - t0,
     })
 
 @app.route("/json/search/familyname/<term>/")
 def json_search_familyname(term):
+    t0 = time.time()
     soundex6term = soundex.soundex(term, 6)
     soundex3term = soundex.soundex(term, 3)
     inds = None
@@ -103,19 +113,57 @@ def json_search_familyname(term):
         inds = Individual.query.filter_by(soundex3family = soundex3term).all()
     if not inds:
         return jsonify({
+            "soundex6": soundex6term,
             "result": False,
         })
+    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_family, term), reverse=True)
+    t1 = time.time()
     return jsonify({
+        "soundex6": soundex6term,
         "result": True,
         "count": len(inds),
         "inds": [x.as_dict() for x in inds],
+        "time": t1 - t0,
+    })
+
+@app.route("/json/search/pure-python-family/<term>/")
+def json_search_pure_python_family(term):
+    t0 = time.time()
+    inds = Individual.query.all()
+    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_family, term), reverse=True)
+    inds = inds[:25]
+    t1 = time.time()
+    return jsonify({
+        "soundex6": "-",
+        "result": True,
+        "count": len(inds),
+        "inds": [x.as_dict() for x in inds],
+        "time": t1 - t0,
     })
 
 @app.route("/json/setting/<key>/")
 def json_setting(key):
+    t0 = time.time()
     setting = Setting.query.filter_by(key = key).first()
+    t1 = time.time()
     return jsonify({
         "result": setting != None,
         key: setting.value if setting else None,
+        "time": t1 - t0,
     })
 
+
+
+###########################################
+# Commenting
+###########################################
+@app.route("/json/leave/comment/<xref>/", methods=["POST"])
+def json_leave_comment(xref):
+    content = request.form.get("content", None)
+    if not content:
+        return jsonify({
+            "result": False,
+        })
+    return jsonify({
+        "result": True,
+    })

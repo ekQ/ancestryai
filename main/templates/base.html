@@ -43,17 +43,17 @@
                 <button ng-click="menu.go_to_entrance()" translate>Entry</button>
                 
                     <!--<button ng-click="menu.toggle_color_mode()" translate>Toggle colouring</button>-->
-                    <select ng-model="menu.Hiski.color_mode" ng-change="render_all()" convert-to-number>
-                        <option value="0">Colour by family name</option>
-                        <option value="1">Colour by Soundex</option>
-                        <option value="2">Colour by sex</option>
-                        <option value="3">Colour by expendability</option>
+                    <select ng-model="menu.Hiski.color_mode" ng-change="render_all()">
+                        <option value="family-name" translate>Colour by family name</option>
+                        <option value="soundex" translate>Colour by Soundex</option>
+                        <option value="sex" translate>Colour by sex</option>
+                        <option value="expendability" translate>Colour by expendability</option>
                     </select>
                     <!--<button ng-click="menu.toggle_layout()" translate>Toggle layout</button>-->
-                    <select ng-model="menu.Hiski.layout_mode" ng-change="menu.Hiski.calc_and_render_layout()" convert-to-number>
-                        <option value="0">Compact layout</option>
-                        <option value="1">Node order layout</option>
-                        <option value="2">Load order layout</option>
+                    <select ng-model="menu.Hiski.layout_mode" ng-change="menu.Hiski.calc_and_render_layout()">
+                        <option value="compact" translate>Compact layout</option>
+                        <option value="node-order" translate>Node order layout</option>
+                        <option value="load-order" translate ng-if="menu.Hiski.debug_mode">Load order layout</option>
                     </select>
                 <button ng-click="menu.load_random()" translate>Load random</button>
                 <button ng-click="menu.toggle_autoexpand()" ng-class="{toggled: menu.Hiski.node_auto_expand_delay != -1}" translate>Toggle autoexpansion</button>

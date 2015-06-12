@@ -81,6 +81,15 @@ function tree_init(item_view) {
     item_view.linksvg = item_view.container.selectAll("g.layer.links").selectAll("path.link");
     item_view.nodesvg = item_view.container.selectAll("g.layer.nodes").selectAll("g.node");
     item_view.relationsvg = item_view.container.selectAll("g.layer.relations").selectAll("g.relation");
+
+    var maxyear = 2020;
+    item_view.axis = d3.svg.axis()
+            .scale(d3.scale.linear()
+                    .domain([0, maxyear])
+                    .range([0, maxyear * Hiski.year_pixel_ratio]))
+                    .ticks(maxyear / 10)
+            .orient("left");
+    item_view.axis_group = item_view.container.append("g").call(item_view.axis);
 }
 
 function enter_all() {
@@ -119,15 +128,15 @@ function enter(view) {
                 })
             ;
     newnodes.append("circle")
-            .attr("r", 20)
+            .attr("r", 25)
             .style("fill", Hiski.node_color_function)
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", -10)
+            .attr("y", -18)
             .attr("dominant-baseline", "central")
             .text(function(d) {
-                return d.name;
+                return d.first_name;
             })
             .style("filter", "url(#dropshadow)")
             .style("font-weight", "bold")
@@ -135,7 +144,18 @@ function enter(view) {
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", 5)
+            .attr("y", -5)
+            .attr("dominant-baseline", "central")
+            .text(function(d) {
+                return d.family_name;
+            })
+            .style("filter", "url(#dropshadow)")
+            .style("font-weight", "bold")
+            .style("font-size", "60%")
+            ;
+    newnodes.append("svg:text")
+            .attr("text-anchor", "middle")
+            .attr("y", 10)
             .attr("dominant-baseline", "central")
             .text(function(d) {
                 return d.data.birth_date_string;
@@ -146,7 +166,7 @@ function enter(view) {
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", 15)
+            .attr("y", 20)
             .attr("dominant-baseline", "central")
             .text(function(d) {
                 return d.data.death_date_string;
@@ -223,6 +243,10 @@ function render(view) {
             .style("stroke", function(d) { return d == Hiski.selected ? "#ffffff" : "#000000" })
             .style("stroke-width", function(d) { return d == Hiski.selected ? 3 : 1 })
             ;
+    view.nodesvg.each(function(d) {
+        if(d == Hiski.selected)
+            move_to_front(this);
+    })
 
     var next_to_selected = function(d) {
         if(Hiski.selected === null)

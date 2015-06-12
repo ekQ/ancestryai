@@ -4,122 +4,153 @@
 {% raw %}
 <div class="multiview" ng-controller="MultiViewController as multi_view">
     <div class="rowcontainer">
-        <div class="columncontainer" ng-repeat="column in multi_view.columns" ng-init="column_i = $index">
-            <div class="close-column" ng-click="multi_view.close_column_by_id(column.id)">
-                -
-            </div>
-            <div id="{{menu.html_id}}" class="mvitem"
-                        ng-repeat="item in column.items"
-                        ng-controller="ItemViewMenuController as menu"
-                        ng-init="row_i = $index">
-                <div class="resizer horizontal" ng-if="item.id != column.items[0].id" ng-mousedown="multi_view.resize_vertical(item)">
-                    &bull;&bull;&bull;
+        <div id="{{ column.html_id }}" class="columncontainer" ng-repeat="column in multi_view.columns" ng-init="column_i = $index">
+            <button class="resizer vertical" ng-if="column.id != multi_view.columns[0].id" ng-mousedown="multi_view.resize_horizontal(column)">
+                    <span class="wrap">&bull; &bull; &bull;</span>
+            </button>
+            <div class="inner-column-container">
+                <div class="close-column" ng-click="multi_view.close_column_by_id(column.id)">
+                    -
                 </div>
-                <div class="itemheader">
-                        <select ng-change="menu.set_new_mode()" ng-model="menu.new_mode">
-                            <option value="tree" translate>Tree</option>
-                            <option value="info" translate>Info</option>
-                            <option value="search" translate>Search</option>
-                            <option value="map" translate>Map</option>
-                            <option value="testnote" ng-show="menu.testnote !== null" translate>Testnote</option>
-                        </select>
-                    <button ng-click="menu.testzoom()"
-                            ng-show="menu.mode == 'tree'"
-                            translate>
-                            Locate
-                            </button>
-                    <div class="right-end">
-                        <button
-                                ng-click="multi_view.close_item_by_id(item.id)"
-                                class="closebutton"
-                                translate>
-                                Close
-                                </button>
-                    </div>
-                </div>
-                <svg id="{{menu.tree_id}}" class="tree viewtab" ng-show="menu.mode == 'tree'">
-                    <filter id="dropshadow" height="130%">
-                        <feGaussianBlur in="SourceAlpha" stdDeviation="1"/> <!-- how much to blur -->
-                        <feColorMatrix
-                            type="matrix"
-                            values="0.0  0.0  0.0  0.0  1.0
-                                    0.0  0.0  0.0  0.0  1.0
-                                    0.0  0.0  0.0  0.0  1.0
-                                    0.0  0.0  0.0 10.0  0.0" />
-                        <feOffset dx="0" dy="0" result="offsetblur"/> <!-- how much to offset -->
-                        <feMerge> 
-                            <feMergeNode/> <!-- the offset blurred image -->
-                            <feMergeNode in="SourceGraphic"/> <!-- the element that the filter is applied to -->
-                        </feMerge>
-                    </filter>
-                </svg>
-                <div class="info viewtab" ng-show="menu.mode == 'info'">
-                    <dl>
-                        <dt>xref</dt>
-                            <dd>{{ menu.Hiski.selected.xref }}</dd>
-                        <dt translate>Name</dt>
-                            <dd>{{ menu.Hiski.selected.name }}</dd>
-                        <dt translate>Birth date</dt>
-                            <dd>{{ menu.Hiski.selected.data.birth_date_string || "--" }}</dd>
-                        <dt translate>Death date</dt>
-                            <dd>{{ menu.Hiski.selected.data.death_date_string || "--" }}</dd>
-                        <dt translate>Gender</dt>
-                            <dd ng-if="menu.Hiski.selected.data.sex == 'M'" translate>Male</dd>
-                            <dd ng-if="menu.Hiski.selected.data.sex == 'F'" translate>Female</dd>
-                            <dd ng-if="menu.Hiski.selected.data.sex == '?'" translate>Unknown</dd>
-                    </dl>
-                    <button ng-click="menu.Hiski.toggle_hide_selected()" ng-if="menu.Hiski.selected !== null" translate>
-                        Hide
+                <div id="{{menu.html_id}}" class="mvitem"
+                            ng-repeat="item in column.items"
+                            ng-controller="ItemViewMenuController as menu"
+                            ng-init="row_i = $index">
+                    <button class="resizer horizontal" ng-if="item.id != column.items[0].id" ng-mousedown="multi_view.resize_vertical(item)">
+                        <span class="wrap">&bull;&bull;&bull;</span>
                     </button>
-                    <dl ng-if="menu.debug_mode">
-                        <dt>soundex6family</dt>
-                            <dd>{{ menu.Hiski.selected.data.soundex6family }}</dd>
-                        <dt>fuzzy index</dt>
-                            <dd>{{ menu.Hiski.selected.order_fuzzy_index }}</dd>
-                        <dt>order reason</dt>
-                            <dd>{{ menu.Hiski.selected.order_reason }}</dd>
-                        <dt>leftmost_parent</dt>
-                            <dd ng-click="menu.select_node(menu.Hiski.selected.leftmost_parent)">
-                                    {{ menu.Hiski.selected.leftmost_parent.xref }}</dd>
-                        <dt>rightmost_parent</dt>
-                            <dd ng-click="menu.select_node(menu.Hiski.selected.rightmost_parent)">
-                                    {{ menu.Hiski.selected.rightmost_parent.xref }}</dd>
-                        <dt>rightmost_spouse</dt>
-                            <dd ng-click="menu.select_node(menu.Hiski.selected.rightmost_spouse)">
-                                    {{ menu.Hiski.selected.rightmost_spouse.xref }}</dd>
-                        <dt>rightmost_subnode</dt>
-                            <dd ng-click="menu.select_node(menu.Hiski.selected.rightmost_subnode)">
-                                    {{ menu.Hiski.selected.rightmost_subnode.xref }}</dd>
-                    </dl>
-                </div>
-                <div class="testnote viewtab" ng-show="menu.mode == 'testnote'">
-                    {{ menu.testnote }}
-                </div>
-                <div id="{{ menu.map_id }}" class="map viewtab" ng-show="menu.mode == 'map'">
-                    <!-- #map will be moved here, as only one such can exist at a time -->
-                </div>
-                <div id="{{ menu.search_id }}" ng-show="menu.mode == 'search'">
-                    <label><span translate>Search by</span>
-                        <select class="search-by" ng-model="menu.search_by">
-                            <option value="firstname" translate>First name</option>
-                            <option value="familyname" translate>Family name</option>
-                            <option value="xref">xref</option>
-                        </select>
-                    </label>
-                    <label><span translate>Search term</span>
-                        <input class="search-term" type="text" ng-model="menu.search_term"></input>
-                    </label>
-                    <button ng-click="menu.do_search()" translate>Search</button>
-                    <div class="searchresults">
-                        <div><span translate>For search:</span> {{ menu.search_result_term }}</div>
-                        <div ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
-                            {{ ind.name }}
+                    <div class="itemheader">
+                            <select ng-change="menu.set_new_mode()" ng-model="menu.new_mode">
+                                <option value="tree" translate>Tree</option>
+                                <option value="info" translate>Info</option>
+                                <option value="search" translate>Search</option>
+                                <option value="map" translate>Map</option>
+                                <option value="testnote" ng-show="menu.testnote !== null" translate>Testnote</option>
+                                <option value="comments" translate>Comments</option>
+                            </select>
+                        <button ng-click="menu.testzoom()"
+                                ng-show="menu.mode == 'tree'"
+                                translate>
+                                Locate
+                                </button>
+                        <div class="right-end">
+                            <button
+                                    ng-click="multi_view.close_item_by_id(item.id)"
+                                    class="closebutton"
+                                    translate>
+                                    Close
+                                    </button>
                         </div>
                     </div>
+                    <svg id="{{menu.tree_id}}" class="tree viewtab" ng-show="menu.mode == 'tree'">
+                        <filter id="dropshadow" height="130%">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="1"/> <!-- how much to blur -->
+                            <feColorMatrix
+                                type="matrix"
+                                values="0.0  0.0  0.0  0.0  1.0
+                                        0.0  0.0  0.0  0.0  1.0
+                                        0.0  0.0  0.0  0.0  1.0
+                                        0.0  0.0  0.0 10.0  0.0" />
+                            <feOffset dx="0" dy="0" result="offsetblur"/> <!-- how much to offset -->
+                            <feMerge> 
+                                <feMergeNode/> <!-- the offset blurred image -->
+                                <feMergeNode in="SourceGraphic"/> <!-- the element that the filter is applied to -->
+                            </feMerge>
+                        </filter>
+                    </svg>
+                    <div class="info viewtab" ng-show="menu.mode == 'info'">
+                        <dl>
+                            <dt>xref</dt>
+                                <dd>{{ menu.Hiski.selected.xref }}</dd>
+                            <dt translate>Name</dt>
+                                <dd>{{ menu.Hiski.selected.name }}</dd>
+                            <dt translate>Birth date</dt>
+                                <dd>{{ menu.Hiski.selected.data.birth_date_string || "--" }}</dd>
+                            <dt translate>Death date</dt>
+                                <dd>{{ menu.Hiski.selected.data.death_date_string || "--" }}</dd>
+                            <dt translate>Gender</dt>
+                                <dd ng-if="menu.Hiski.selected.data.sex == 'M'" translate>Male</dd>
+                                <dd ng-if="menu.Hiski.selected.data.sex == 'F'" translate>Female</dd>
+                                <dd ng-if="menu.Hiski.selected.data.sex == '?'" translate>Unknown</dd>
+                        </dl>
+                        <button ng-click="menu.Hiski.toggle_hide_selected()" ng-if="menu.Hiski.selected !== null" translate>
+                            Hide
+                        </button>
+                        <dl ng-if="menu.Hiski.debug_mode">
+                            <dt>soundex6family</dt>
+                                <dd>{{ menu.Hiski.selected.data.soundex6family }}</dd>
+                            <dt>fuzzy index</dt>
+                                <dd>{{ menu.Hiski.selected.order_fuzzy_index }}</dd>
+                            <dt>order reason</dt>
+                                <dd>{{ menu.Hiski.selected.order_reason }}</dd>
+                            <dt>leftmost_parent</dt>
+                                <dd ng-click="menu.select_node(menu.Hiski.selected.leftmost_parent)">
+                                        {{ menu.Hiski.selected.leftmost_parent.xref }}</dd>
+                            <dt>rightmost_parent</dt>
+                                <dd ng-click="menu.select_node(menu.Hiski.selected.rightmost_parent)">
+                                        {{ menu.Hiski.selected.rightmost_parent.xref }}</dd>
+                            <dt>rightmost_spouse</dt>
+                                <dd ng-click="menu.select_node(menu.Hiski.selected.rightmost_spouse)">
+                                        {{ menu.Hiski.selected.rightmost_spouse.xref }}</dd>
+                            <dt>rightmost_subnode</dt>
+                                <dd ng-click="menu.select_node(menu.Hiski.selected.rightmost_subnode)">
+                                        {{ menu.Hiski.selected.rightmost_subnode.xref }}</dd>
+                        </dl>
+                    </div>
+                    <div class="testnote viewtab" ng-show="menu.mode == 'testnote'">
+                        {{ menu.testnote }}
+                    </div>
+                    <div id="{{ menu.map_id }}" class="map viewtab" ng-show="menu.mode == 'map'">
+                        <!-- #map will be moved here, as only one such can exist at a time -->
+                    </div>
+                    <div id="{{ menu.search_id }}" class="search viewtab" ng-show="menu.mode == 'search'">
+                        <form ng-submit="menu.do_search()">
+                            <label><span translate>Search by</span>
+                                <select class="search-by" ng-model="menu.search_by">
+                                    <option value="firstname" translate>First name</option>
+                                    <option value="familyname" translate>Family name</option>
+                                    <option value="xref">xref</option>
+                                    <option value="ppfamily" ng-if="menu.Hiski.debug_mode">PPFamily</option>
+                                </select>
+                            </label>
+                            <label><span translate>Search term</span>
+                                <input class="search-term" type="text" ng-model="menu.search_term"></input>
+                            </label>
+                            <button type="submit" translate>Search</button>
+                            <div class="searchresults">
+                                <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
+                                <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex6 }})</div>
+                                <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
+                                    {{ ind.name }}
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="{{ menu.comments_id }}" class="comments viewtab" ng-show="menu.mode == 'comments'">
+                        <section ng-if="menu.Hiski.selected != null">
+                            <header>
+                                <h1>{{ menu.Hiski.selected.name }}</h1>
+                                <p class="subheader">Comments about data quality</p>
+                            </header>
+                            <div>
+                                List of comments, todo
+                            </div>
+                            <form ng-submit="menu.leave_comment()">
+                                <label>
+                                    <span translate>Comment:</span>
+                                    <textarea ng-model="menu.comment_body"></textarea>
+                                </label>
+                                <button type="submit" translate>Submit</button>
+                            </form>
+                        </section>
+                        <section ng-if="menu.Hiski.selected == null">
+                            <span translate>Select a node</span>
+                        </section>
+                    </div>
                 </div>
-            </div>
-            <div class="add-row" ng-click="multi_view.add_item($index)">
-                +
+                <div class="add-row" ng-click="multi_view.add_item($index)">
+                    +
+                </div>
             </div>
         </div>
         <div class="add-column" ng-click="multi_view.add_column()">

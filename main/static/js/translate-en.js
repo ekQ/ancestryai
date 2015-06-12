@@ -25,6 +25,13 @@ translations.en = {
     "Toggle autoexpansion": "Toggle autoexpansion",
     "Testnote": "Testnote",
     "Locate": "Locate",
+    "Colour by family name": "Colour by family name",
+    "Colour by Soundex": "Colour by Soundex",
+    "Colour by sex": "Colour by sex",
+    "Colour by expendability": "Colour by expendability",
+    "Compact layout": "Compact layout",
+    "Node order layout": "Node order layout",
+    "Load order layout": "Load order layout",
 
     // language selection
     "Finnish": "Suomi",

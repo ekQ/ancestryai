@@ -96,3 +96,13 @@ class Setting(Base):
     id = Column(Integer, primary_key=True)
     key = Column(String(32), index=True, unique=True)
     value = Column(UnicodeText)
+
+
+
+class Comment(Base):
+    __tablename__ = "comment"
+    id = Column(Integer, primary_key=True)
+    xref = Column(Unicode(16))
+    content = Column(UnicodeText)
+    ip_address = Column(String(48))
+

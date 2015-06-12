@@ -1,4 +1,12 @@
+/*
+Angular controller for a single subview.
+*/
 
+
+/*
+Generate unique ids for the subviews and an array to store the subviews for
+external access.
+*/
 var _next_id = 0;
 function next_id() {
     var id = this._next_id;
@@ -11,7 +19,13 @@ function peek_next_id() {
 var item_views = [];
 
 app.controller("ItemViewMenuController", function($scope, $translate) {
+        /*
+        Controller for a single subview.
+        */
+        // todo: refactor / cleanup
         item_views.push(this);
+        // XXX: maybe we could retrieve this id somehow from the multiview?
+        // possibly through dom? Not sure if worth the trouble.
         this.id = next_id();
         this.html_id = "ItemView"+this.id;
         this.tree_id = this.html_id + "Tree";
@@ -74,10 +88,16 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
 
         // angular controller stuff
         var menu = this;
+
         menu.search_by = "firstname";
         menu.search_term = "";
+        menu.search_soundex6 = "";
         menu.search_result_term = "";
         menu.search_result_list = [];
+        menu.search_time = "-";
+
+        menu.comment_body = "";
+
         menu.testnote = Hiski.testnote;
         menu.Hiski = Hiski;
 
@@ -92,7 +112,14 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             $scope.$apply();
         };
         menu.load = function(xref) {
-            Hiski.load(xref, null);
+            Hiski.load_or_focus(xref, null);
+        };
+        menu.show_search = function(json, term) {
+            menu.search_result_list = json["inds"];
+            menu.search_result_term = term;
+            menu.search_soundex6 = json["soundex6"];
+            menu.search_time = json["time"];
+            menu._redraw();
         };
         menu.do_search = function() {
             var term = menu.search_term;
@@ -102,9 +129,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                 var addr = Hiski.url_root + "json/search/firstname/"+term+"/";
                 d3.json(addr, function(json) {
                     if(json) {
-                        menu.search_result_list = json["inds"];
-                        menu.search_result_term = term;
-                        menu._redraw();
+                        menu.show_search(json, term);
                     } else {
                         throw new Error("Loading firstname search '"+term+"' failed");
                     }
@@ -113,11 +138,18 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                 var addr = Hiski.url_root + "json/search/familyname/"+term+"/";
                 d3.json(addr, function(json) {
                     if(json) {
-                        menu.search_result_list = json["inds"];
-                        menu.search_result_term = term;
-                        menu._redraw();
+                        menu.show_search(json, term);
                     } else {
                         throw new Error("Loading familyname search '"+term+"' failed");
+                    }
+                });
+            } else if(menu.search_by == "ppfamily") {
+                var addr = Hiski.url_root + "json/search/pure-python-family/"+term+"/";
+                d3.json(addr, function(json) {
+                    if(json) {
+                        menu.show_search(json, term);
+                    } else {
+                        throw new Error("Loading ppfamily search '"+term+"' failed");
                     }
                 });
             }
@@ -133,10 +165,20 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                 return;
             Hiski.select_node(node, false);
         };
-
-        menu.debug_mode = Hiski.debug_mode;
+        menu.leave_comment = function() {
+            $.post(Hiski.url_root + "json/leave/comment/"+Hiski.selected.xref+"/", {
+                    content: menu.comment_body,
+                    })
+                    .done(function(data) {
+                        console.warn(data);
+                    });
+        };
     });
 
+
+/*
+Redraw all the subviews to update their data.
+*/
 function redraw_views() {
     item_views[0]._redraw();
 }

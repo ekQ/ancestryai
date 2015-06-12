@@ -9,9 +9,6 @@ function add_debug_toggle() {
                     buffer = buffer.slice(buffer.length - 5);
                 if(buffer == "debug" && !Hiski.debug_mode) {
                     Hiski.debug_mode = true;
-                    for(var i = 0; i < item_views.length; i++) {
-                        item_views[i].debug_mode = true;
-                    }
                     redraw_views();
                 }
             })

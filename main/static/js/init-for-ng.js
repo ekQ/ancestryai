@@ -1,48 +1,6 @@
-
-angular.module('mc.resizer', []).directive('resizer', function($document) {
-    return function($scope, $element, $attrs) {
-        $element.on('mousedown', function(event) {
-            event.preventDefault();
-            $document.on('mousemove', mousemove);
-            $document.on('mouseup', mouseup);
-        });
-        function mousemove(event) {
-            if ($attrs.resizer == 'vertical') {
-                // Handle vertical resizer
-                var x = event.pageX;
-                if ($attrs.resizerMax && x > $attrs.resizerMax) {
-                    x = parseInt($attrs.resizerMax);
-                }
-                $element.css({
-                        left: x + 'px'
-                        });
-                $($attrs.resizerLeft).css({
-                        width: x + 'px'
-                        });
-                $($attrs.resizerRight).css({
-                        left: (x + parseInt($attrs.resizerWidth)) + 'px'
-                        });
-            } else {
-                // Handle horizontal resizer
-                var y = window.innerHeight - event.pageY;
-                $element.css({
-                        bottom: y + 'px'
-                        });
-
-                $($attrs.resizerTop).css({
-                        bottom: (y + parseInt($attrs.resizerHeight)) + 'px'
-                        });
-                $($attrs.resizerBottom).css({
-                        height: y + 'px'
-                        });
-            }
-        }
-        function mouseup() {
-            $document.unbind('mousemove', mousemove);
-            $document.unbind('mouseup', mouseup);
-        }
-    };
-});
+/*
+Angular app, top menu controller and translation handling.
+*/
 
 app = angular.module("HiskiVisualizer", ["pascalprecht.translate"]);
 app.controller("TopMenuController", function($scope, $translate) {
@@ -50,17 +8,7 @@ app.controller("TopMenuController", function($scope, $translate) {
         var menu = this;
         menu.Hiski = Hiski;
         menu.language = "en";
-        menu.blue = function() {
-            $(".main").css("background-color", "#ccccff");
-        };
-        menu.set_color = function(color) {
-            $(".topmenu").css("background-color", color);
-        };
-        menu.toggle_color_mode = function() {
-            Hiski.next_color_mode();
-//            render(Hiski);
-            render_all();
-        };
+
         menu.set_language = function(lang) {
             $translate.use(lang);
             menu.language = lang;

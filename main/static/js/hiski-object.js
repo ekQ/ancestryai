@@ -1,11 +1,25 @@
 
 var Hiski = {
+    /*
+    Main object of the program. Contains state, data and layout calculation, as
+    well as functions related to those.
+    */
     url_root: "/",
-    // nodes / people
+    /* nodes / people */
+    // nodes in the order of adding them
     nodes: [],
+    // xref to node dictionary
     node_dict: {},
+    // nodes in the order of the layout constraints
+    node_order: [],
+    // nodes that were loaded during search, but not yet added
     preloaded_nodes: {},
     add_node: function(node_data, reference) {
+        /*
+        Adds a node based on given json data. Places the node initially to the
+        coordinates of the reference from where it will be animated to its
+        correct position. Returns the node in question.
+        */
         if(node_data.xref in this.node_dict) {
             // update existing?
             return this.node_dict[node_data.xref];
@@ -26,7 +40,7 @@ var Hiski = {
                 var type = n[1];
                 this.add_link(this.relation_dict[nxref], node, type);
             }
-            // update left and rightmost parent
+            // update order pointers required in the next step
             update_leftmost_parent(node);
             update_leftmost_child(node);
             update_rightmost_parent(node);
@@ -48,13 +62,11 @@ var Hiski = {
                         node.order_reason = "right of parents " + node.rightmost_parent.xref;
                     }
                 } else if(node.children.length > 0) {
-//                    order_i = this.node_order.indexOf(node.children[0]);
                     order_i = this.node_order.indexOf(node.leftmost_child);
                     node.order_reason = "left of children " + node.children[0].xref;
                 } else if(node.spouses.length > 0) {
                     // todo: family swapper
                     order_i = this.node_order.indexOf(node.rightmost_spouse.rightmost_subnode) + 1;
-//                    order_i = this.node_order.indexOf(node.spouses[0]) + 1;
                     node.order_reason = "right of spouse's other subfamilies " + node.spouses[0].xref + " -> " + node.rightmost_spouse.rightmost_subnode.xref;
                 } else {
                     throw new Error("Eh?");
@@ -64,7 +76,8 @@ var Hiski = {
             node.order_fuzzy_index = this.new_fuzzy_index_for_position(order_i);
             node.order_fuzzy_index = this.check_fuzzy_index_at(order_i, node.order_fuzzy_index);
             this.node_order.splice(order_i, 0, node);
-            // update layout related summarised data
+            // update the rest of the order pointers from this nodes and those
+            // around that need to be updated.
             update_descendant_year(node, null);
             update_rightmost_subnode(node);
             for(var i = 0; i < node.children.length; i++) {
@@ -84,6 +97,9 @@ var Hiski = {
         }
     },
     new_fuzzy_index_for_position: function(order_i) {
+        /*
+        Returns the fuzzy index for a node to be added in order_i position.
+        */
         if(this.node_order.length == 0) {
             return 0.0;
         } else if(order_i == 0) {
@@ -96,12 +112,21 @@ var Hiski = {
         }
     },
     regenerate_fuzzy_indices: function() {
+        /*
+        Regenerates fuzzy indices. Needs to be called when we are out of float
+        precision.
+        */
         for(var i = 0; i < this.node_order.length; i++) {
             this.node_order[i].order_fuzzy_index = i * 1.0;
         }
         console.warn("fuzzy indices regenerated.");
     },
     check_fuzzy_index_at: function(order_i, fuzzy_index) {
+        /*
+        Checks that we won't have duplicate fuzzy_indices if we have the given
+        index to the given position. Regenerates the indices if there would be
+        duplicate (which would be due to running out of precision).
+        */
         for(var i = Math.max(order_i - 1, 0); i < order_i + 1 && i < this.node_order.length; i++) {
             if(this.node_order[i].order_fuzzy_index == fuzzy_index) {
                 this.regenerate_fuzzy_indices();
@@ -111,10 +136,18 @@ var Hiski = {
         return fuzzy_index;
     },
     reposition_node: function(node) {
+        /*
+        Reposition node, if it breaks the constraint of children being to the
+        right of parents. Recurses to the nodes that needs further checking due
+        to changes.
+        */
         this.reset_node_visited();
         this._reposition_node(node);
     },
     _reposition_node: function(node) {
+        /*
+        Recursive function for the reposition_node only. Do not call from elsewhere.
+        */
         if(node.visited) {
             console.warn("The data has a timetraveller, cutting node repositioning");
             node.timetraveller = true;
@@ -130,7 +163,7 @@ var Hiski = {
                 node.order_reason = "repositioned to right of parent " + node.rightmost_parent.xref;
                 node.order_fuzzy_index = this.new_fuzzy_index_for_position(order_i);
                 this.node_order.splice(order_i, 0, node);
-                // update pointers
+                // update order pointers
                 update_rightmost_subnode(node);
                 for(var i = 0; i < node.children.length; i++) {
                     update_leftmost_parent(node.children[i]);
@@ -141,23 +174,34 @@ var Hiski = {
                 }
                 // recurse
                 for(var i = 0; i < node.children.length; i++) {
-                    // todo: cut the search if we have time traveller
                     this._reposition_node(node.children[i]);
                 }
             }
         }
     },
-    node_auto_expand_delay: -1, // -1 to disable
+    /* autoexpansion variables and functions */
+    // delay in ms, -1 to disable
+    node_auto_expand_delay: -1,
     node_auto_expand_queue: [],
     node_auto_expander_on: false,
     queue_for_expand: function(node) {
+        /*
+        Adds node to queue, if it can be expanded
+        */
         if(!node.expandable())
             return;
         Hiski.node_auto_expand_queue.push(node);
         Hiski.start_node_autoexpansion();
     },
     start_node_autoexpansion: function() {
+        /*
+        Start autoexpander, if it weren't already running and we have a delay
+        set for it.
+        */
         var expander = function() {
+            /*
+            Expands nodes automatically with set delay in between.
+            */
             if(Hiski.node_auto_expand_delay == -1) {
                 Hiski.node_auto_expander_on = false;
                 return;
@@ -178,11 +222,18 @@ var Hiski = {
             setTimeout(expander, Hiski.node_auto_expand_delay);
         }
     },
-    // relations / families
+    /* relations / families */
+    // expand relations immediately when they are added
     auto_expand_relations: true,
+    // relations in the order of adding them
     relations: [],
+    // xref to relation dictionary
     relation_dict: {},
     add_relation: function(relation_data, reference) {
+        /*
+        Add a relation based on given json data. Returns the relation in
+        question.
+        */
         if(relation_data.xref in this.relation_dict) {
             // update existing?
             return this.relation_dict[relation_data.xref];
@@ -203,11 +254,7 @@ var Hiski = {
                 var type = n[1];
                 this.add_link(relation, this.node_dict[nxref], type);
             }
-            // expand and surrounding nodes immediately
-            if(this.auto_expand_relations) {
-                relation.expand_surroundings();
-            }
-            // update layout related summarised data for related nodes
+            // update order pointers for related nodes
             for(var i = 0; i < relation.children.length; i++) {
                 update_leftmost_parent(relation.children[i]);
                 update_rightmost_parent(relation.children[i]);
@@ -218,13 +265,22 @@ var Hiski = {
                 update_rightmost_spouse(relation.parents[i]);
                 update_leftmost_child(relation.parents[i]);
             }
+            // expand surrounding nodes immediately
+            if(this.auto_expand_relations) {
+                relation.expand_surroundings();
+            }
             return relation;
         }
     },
-    // links between nodes and relations
+    /* links between nodes and relations */
+    // links in the order of adding them
     links: [],
+    // identifier to link dictionary
     link_dict: {},
     add_link: function(relation, node, type) {
+        /*
+        Add a link between relation and node.
+        */
         // if relation or node didn't exist, do nothing
         if(!relation || !node)
             return;
@@ -236,10 +292,15 @@ var Hiski = {
             linkobj = new Link(relation, node, type);
             this.links.push(linkobj);
             this.link_dict[linkobj.id] = linkobj;
+            // XXX: updating order pointers here could be possible, but would
+            // require refactoring add_node
         }
     },
-    // other
+    /* other */
     add_entry: function(entry, reference) {
+        /*
+        Adds a relation or node depending on which kind of json is given.
+        */
         if(entry.tag == "FAM") {
             return this.add_relation(entry, reference);
         } else if(entry.tag == "INDI") {
@@ -248,7 +309,22 @@ var Hiski = {
             throw new Error("Unhandled tag '"+entry.tag+"'");
         }
     },
+    load_or_focus: function(xref, reference) {
+        /*
+        Focus the node of given xref, if it exists, otherwise locate it.
+        */
+        this.load(xref, reference);
+        if(xref in this.node_dict) {
+            this.zoom_to = this.node_dict[xref];
+            this.delayed_render();
+        }
+    },
     load: function(xref, reference) {
+        /*
+        Loads the node of given xref, if it didn't exist yet. Takes the data
+        from preloaded_nodes and adds that, if it was preloaded on for example
+        a search.
+        */
         if(xref in this.node_dict)
             return;
         if(xref in this.relation_dict)
@@ -280,8 +356,10 @@ var Hiski = {
     },
     delay_running: false,
     delayed_render: function() {
-        // delayed rendering, which gives a bit time for other pending nodes to
-        // get loaded
+        /*
+        delayed rendering, which gives a bit time for other pending nodes to
+        get loaded
+        */
         // XXX: could be better to just know which we are loading and wait
         // until we have loaded those.
         var timed = function() {
@@ -297,29 +375,30 @@ var Hiski = {
         }
     },
 
-    // custom layout stuff
-    node_order: [],
-    layout_mode: 0,
-    toggle_layout: function() {
-        Hiski.layout_mode = (Hiski.layout_mode + 1) % 3;
-        Hiski.calc_layout();
-//        render(Hiski);
-        render_all();
-    },
+    /* custom layout stuff */
+    layout_mode: "compact",
+    year_pixel_ratio: 5,
     calc_and_render_layout: function() {
+        /*
+        Calculates node positions and renders all subviews showing the tree view.
+        */
         Hiski.calc_layout();
         render_all();
     },
     reset_node_visited: function() {
+        /*
+        Resets node visited flag for traversal algorithms.
+        */
         for(var i = 0; i < this.nodes.length; i++) {
             this.nodes[i].visited = false;
         }
     },
     calc_layout: function() {
+        // todo: refactor
         var node_preferred_position = function(node) {
             var x = node.x;
             var year = guess_node_year(node);
-            var y = (year - 1750) * 5 - 600;
+            var y = year * Hiski.year_pixel_ratio;
             return [x, y];
         };
         var relation_preferred_position = function(relation) {
@@ -364,8 +443,8 @@ var Hiski = {
             for(var j = Math.max(0, year - pad_years); j < year + pad_years; j++) {
                 years_x[j] = node.x;
             }
-            if(Hiski.layout_mode == 1)
-                node.x = i*60+60;
+            if(Hiski.layout_mode == "node-order")
+                node.x = i*60+80;
             if(node.parents.length > 0 && node.rightmost_parent.visible && !node.rightmost_parent.visited && !node.timetraveller) {
                 // abort layout calculation and reposition nodes, when a child is left of its parents
                 Hiski.reposition_node(node);
@@ -376,13 +455,13 @@ var Hiski = {
             if(node.x == 0 || node.x == undefined || node.x == NaN || node.x < 50) {
                 console.warn("Node has x coordinate '"+node.x+"', which seems to be a bug, but I don't know what it is related to.");
             }
-            if(node.x < 90 && Hiski.layout_mode == 0) {
+            if(node.x < 90 && Hiski.layout_mode == "compact") {
                 console.warn("Node has invalid x coordinate " + node.x + ", " + maxx + ", " + year + ", " + endyear);
             }
         }
-        if(Hiski.layout_mode == 2) {
+        if(Hiski.layout_mode == "load-order") {
             for(var i = 0; i < this.nodes.length; i++) {
-                this.nodes[i].x = i*60 + 60;
+                this.nodes[i].x = i*60 + 80;
             }
         }
         for(var i = 0; i < this.relations.length; i++) {
@@ -396,26 +475,28 @@ var Hiski = {
             this.zoom_to = null;
         }
     },
-    color_mode: 0,
+    color_mode: "family-name",
     next_color_mode: function() {
+        // todo: use text based colouring keys
         this.color_mode = (this.color_mode + 1) % 4;
     },
     node_color_function: function(d) {
-/*        if(d == Hiski.selected) {
-            return "#ffffff";
-        } else*/
-        if(Hiski.color_mode == 0) {
+        /*
+        Returns the node colour depending on the corresponding setting.
+        */
+        if(Hiski.color_mode == "family-name") {
             return d.color_by_name;
-        } else if(Hiski.color_mode == 1) {
+        } else if(Hiski.color_mode == "soundex") {
             return d.color_by_soundex;
-        } else if(Hiski.color_mode == 2) {
+        } else if(Hiski.color_mode == "sex") {
             return d.color_by_sex;
-        } else if(Hiski.color_mode == 3) {
+        } else if(Hiski.color_mode == "expendability") {
             return d.expandable() ? "#ccffcc" : "#dddddd";
         }
         return "#ff0000";
     },
     toggle_hide_selected: function() {
+        // todo: rethink
         if(this.selected) {
             if(this.selected.type == "node") {
                 this.selected.visible = !this.selected.visible;
@@ -425,17 +506,22 @@ var Hiski = {
         render_all();
     },
 
-    // map related
+    /* map related */
     map: null,
     map_id: "map",
     map_overlay: null,
     overlay_nodes: null,
     map_projection: null,
 
-    // selection
+    /* selection */
     selected: null,
     lastselected: null,
     select_node: function(node, redraw) {
+        /*
+        selects the given node and redraws subviews if redraw is true. The
+        redraw flag exists to be able to not trigger redraw during angular
+        digest, which is followed by a redraw anyway.
+        */
         Hiski.selected = node;
         for(var i = 0; i < item_views.length; i++) {
             item_views[i].selected_node = node;

@@ -41,6 +41,7 @@ body,
 }
 
 .topmenu {
+    flex-shrink: 0;
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -78,7 +79,7 @@ svg text {
     bottom: 0px;
 }
 div#map {
-    min-height: 400px;
+    min-height: 10px;
 }
 
 
@@ -100,17 +101,26 @@ div#map {
 .columncontainer {
     flex-grow: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     background: #ffcccc;
+}
+.inner-column-container {
+    flex-grow: 1;
+    flex-shrink: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 .mvitem {
     flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 10px;
     display: flex;
     flex-direction: column;
     background: #ffffff;
 
     box-sizing: border-box;
-    border: 1px solid black;
+    /*border: 1px solid black;*/
 }
 .add-row, .add-column, .close-column {
     min-width: 20px;
@@ -128,15 +138,37 @@ div#map {
     box-sizing: border-box;
     border: 1px solid black;
 }
-.resizer {
+.resizer:active {
+    border: 1px solid white;
+}
+.resizer.horizontal {
     height: 8px;
-    vertical-align: text-bottom;
+    vertical-align: middle;
+    padding: 3px;
+}
+.resizer.vertical {
+    width: 8px;
+    padding: 3px;
+}
+.resizer.horizontal .wrap {
+    display: inline-block;
+    margin-top: -10px;
+}
+.resizer.vertical .wrap {
+    display: inline-block;
+    margin-left: -3px;
+    line-height: 0.4em;
+}
+.resizer:focus {
+    text-decoration: none;
 }
 
 .itemheader {
+    flex-shrink: 0;
     display: flex;
     flex-direction: row;
     align-items: stretch;
+    flex-wrap: wrap;
     padding: 0px;
     margin: 0px;
     box-sizing: border-box;
@@ -199,20 +231,27 @@ button:active {
 
 .viewtab {
 /*    width: 100%;*/
+    height: 120px;
     flex-grow: 1;
     flex-shrink: 1;
+    position: relative;
+}
+.map.viewtab {
+    position: relative;
 }
 .map.viewtab, #map {
     max-width: 640px;
     max-height: 640px;
 }
 #map {
+    position: absolute;
     width: 100%;
     height: 100%;
 }
 
 
-.info.viewtab {
+.info.viewtab,
+.search.viewtab {
     padding: 5px;
 }
 
@@ -264,4 +303,50 @@ label span {
 }
 .closebutton {
     margin-right: 20px;
+}
+
+
+
+.search-result {
+    color: #000044;
+    cursor: pointer;
+}
+.search-result:hover {
+    color: #444488;
+}
+.search-result:active {
+    color: #8888cc;
+}
+
+
+
+.comments.viewtab {
+    padding: 5px;
+}
+.comments header h1 {
+    font-size: 120%;
+    margin: 0px;
+}
+.comments header .subheader {
+    font-size: 90%;
+    margin: 0px;
+    color: #444;
+}
+.comments header {
+    border-bottom: 1px solid black;
+    margin-bottom: 10px;
+}
+.comments form {
+    border-top: 1px solid black;
+    margin-top: 10px;
+}
+.comments form textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+.comments form button {
+    display: block;
+    min-width: 50%;
+
 }
