@@ -88,7 +88,9 @@ function tree_init(item_view) {
                     .domain([0, maxyear])
                     .range([0, maxyear * Hiski.year_pixel_ratio]))
                     .ticks(maxyear / 10)
-            .orient("left");
+            .orient("left")
+            .tickFormat(d3.format("d"))
+            ;
     item_view.axis_group = item_view.container.append("g").call(item_view.axis);
 }
 
