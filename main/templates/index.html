@@ -130,12 +130,39 @@
                         <section ng-if="menu.Hiski.selected != null">
                             <header>
                                 <h1>{{ menu.Hiski.selected.name }}</h1>
-                                <p class="subheader">Comments about data quality</p>
+                                <p class="subheader" translate>Comments about data quality</p>
                             </header>
                             <div>
-                                List of comments, todo
+                                <div class="comment" ng-repeat="comment in menu.Hiski.selected.comments">
+                                    <header>
+                                        <h2>{{ comment.author }}</h2>
+                                        <p class="subheader">
+                                            <span class="comment-type" translate>{{ "::" + comment.type }}</span>
+                                            <span class="comment-date">{{ comment.isodate }}</span>
+                                        </p>
+                                    </header>
+                                    <p class="comment-body" ng-repeat="line in comment.content.split('\n')">
+                                        {{ line }}
+                                    </p>
+                                </div>
                             </div>
                             <form ng-submit="menu.leave_comment()">
+                                <label>
+                                    <span translate>Name:</span>
+                                    <input type="text" ng-model="menu.Hiski.comment_name"></input>
+                                </label>
+                                <label>
+                                    <span translate>Email:</span>
+                                    <input type="text" ng-model="menu.Hiski.comment_email"></input>
+                                </label>
+                                <label>
+                                    <span translate>Comment type:</span>
+                                    <select ng-model="menu.comment_type">
+                                        <option value="other" translate>::other</option>
+                                        <option value="invalid" translate>::invalid</option>
+                                        <option value="valid" translate>::valid</option>
+                                    </select>
+                                </label>
                                 <label>
                                     <span translate>Comment:</span>
                                     <textarea ng-model="menu.comment_body"></textarea>

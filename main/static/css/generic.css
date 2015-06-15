@@ -261,7 +261,7 @@ label {
 }
 label span {
     display: inline-block;
-    width: 100px;
+    width: 140px;
 }
 
 .testnote {
@@ -337,7 +337,6 @@ label span {
     margin-bottom: 10px;
 }
 .comments form {
-    border-top: 1px solid black;
     margin-top: 10px;
 }
 .comments form textarea {
@@ -349,4 +348,25 @@ label span {
     display: block;
     min-width: 50%;
 
+}
+
+
+.comments .comment header h2 {
+    font-size: 100%;
+    margin: 0px;
+    padding: 0px;
+    font-weight: bold;
+}
+.comments .comment header .subheader {
+    font-size: 80%;
+}
+.comments .comment header {
+    border-bottom: none;
+    margin: 0px;
+}
+.comments .comment {
+    border-bottom: 1px solid black;
+}
+.comments .comment-body {
+    margin: 5px 0px;
 }

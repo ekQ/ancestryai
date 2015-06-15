@@ -93,6 +93,8 @@ var Hiski = {
             }
             // queue for expanding if the feature is on
             this.queue_for_expand(node);
+            // todo: move comment loading to elsewhere
+            this.load_comments_for(node.xref);
             return node;
         }
     },
@@ -536,5 +538,28 @@ var Hiski = {
     testnote: null,
     debug_mode: false,
     at_entrance: true,
+
+    /* Comment related */
+    // Commentator information
+    comment_name: "",
+    comment_email: "",
+    // Load comments for node
+    load_comments_for: function(xref) {
+        var addr = this.url_root + "json/load/comments/"+xref+"/";
+        if(xref == null)
+            return;
+        if(!(xref in Hiski.node_dict))
+            return;
+        d3.json(addr, function(json) {
+            if(json && json.result == true) {
+                Hiski.node_dict[xref].comments = json.comments;
+
+                Hiski.delayed_render();
+                redraw_views();
+            } else {
+                throw new Error("Loading data '"+xref+"' failed");
+            }
+        });
+    },
 };
 

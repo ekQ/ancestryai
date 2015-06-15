@@ -96,6 +96,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.search_result_list = [];
         menu.search_time = "-";
 
+        menu.comment_type = "other";
         menu.comment_body = "";
 
         menu.testnote = Hiski.testnote;
@@ -166,11 +167,22 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             Hiski.select_node(node, false);
         };
         menu.leave_comment = function() {
-            $.post(Hiski.url_root + "json/leave/comment/"+Hiski.selected.xref+"/", {
+            if(!menu.comment_body) {
+                // todo: tell this to the user somehow
+                console.warn("content not filled.");
+                return;
+            }
+            var xref = Hiski.selected.xref;
+            $.post(Hiski.url_root + "json/leave/comment/"+xref+"/", {
                     content: menu.comment_body,
+                    comment_type: menu.comment_type,
+                    author_name: Hiski.comment_name,
+                    author_email: Hiski.comment_email,
                     })
                     .done(function(data) {
-                        console.warn(data);
+                        Hiski.load_comments_for(xref);
+                        menu.comment_body = "";
+                        menu.comment_type = "other";
                     });
         };
     });

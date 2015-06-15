@@ -2,6 +2,7 @@
 import random
 import jellyfish
 import time
+from datetime import datetime
 from flask import (
     g,
     render_template,
@@ -160,10 +161,37 @@ def json_setting(key):
 @app.route("/json/leave/comment/<xref>/", methods=["POST"])
 def json_leave_comment(xref):
     content = request.form.get("content", None)
+    ip = request.remote_addr
+    author_name = request.form.get("author_name", None)
+    author_email = request.form.get("author_email", None)
+    comment_type = request.form.get("comment_type", None)
+    now = datetime.now()
     if not content:
+        # todo: more validation?
         return jsonify({
             "result": False,
         })
+    print [ip, "said", content, "about", xref, 3, "at", now.isoformat()]
+    comment = Comment(
+            xref = xref,
+            content = content,
+            author_ip_address = ip,
+            author_name = author_name,
+            author_email = author_email,
+            comment_type = comment_type,
+            written_on = now,
+            )
+    session.add(comment)
+    session.commit()
     return jsonify({
         "result": True,
     })
+@app.route("/json/load/comments/<xref>/")
+def json_load_comments(xref):
+    comments = Comment.query.filter_by(xref = xref).all()
+    return jsonify({
+        "result": True,
+        "xref": xref,
+        "comments": [x.as_dict() for x in comments],
+    })
+
