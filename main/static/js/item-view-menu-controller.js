@@ -47,6 +47,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             this.set_mode(this.new_mode);
         };
         this.set_mode = function(mode) {
+            this.new_mode = mode;
             if(this.mode == mode)
                 return;
             if(this.mode == "map" && mode != "map") {
@@ -55,8 +56,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             if(mode == "map") {
                 for(var i = 0; i < item_views.length; i++) {
                     if(item_views[i].mode == "map") {
-                        item_views[i].new_mode = "tree";
-                        item_views[i].set_new_mode();
+                        item_views[i].set_mode("tree");
                     }
                 }
             }
@@ -195,6 +195,12 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                         menu.comment_type = "other";
                     });
         };
+
+        if(this.id < initial_views.view_modes.length) {
+            this.set_mode(initial_views.view_modes[this.id]);
+        } else {
+            this.set_mode("tree");
+        }
     });
 
 
