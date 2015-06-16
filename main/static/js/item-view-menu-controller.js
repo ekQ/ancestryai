@@ -47,8 +47,18 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             this.set_mode(this.new_mode);
         };
         this.set_mode = function(mode) {
+            if(this.mode == mode)
+                return;
             if(this.mode == "map" && mode != "map") {
                 $("#map-storage").append($("#map"));
+            }
+            if(mode == "map") {
+                for(var i = 0; i < item_views.length; i++) {
+                    if(item_views[i].mode == "map") {
+                        item_views[i].new_mode = "tree";
+                        item_views[i].set_new_mode();
+                    }
+                }
             }
             this.mode = mode;
             if(mode == "tree") {
