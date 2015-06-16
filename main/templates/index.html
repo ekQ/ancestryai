@@ -43,7 +43,7 @@
                         </div>
                     </div>
                     <svg id="{{menu.tree_id}}" class="tree viewtab" ng-show="menu.mode == 'tree'">
-                        <filter id="dropshadow" height="130%">
+                        <filter id="{{menu.tree_id}}-dropshadow" height="130%">
                             <feGaussianBlur in="SourceAlpha" stdDeviation="1"/> <!-- how much to blur -->
                             <feColorMatrix
                                 type="matrix"

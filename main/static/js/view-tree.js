@@ -129,6 +129,7 @@ function enter(view) {
                     d.expand_surroundings();
                 })
             ;
+    var dropshadow = "url(\"#"+view.tree_id+"-dropshadow\")";
     newnodes.append("circle")
             .attr("r", 25)
             .style("fill", Hiski.node_color_function)
@@ -140,7 +141,7 @@ function enter(view) {
             .text(function(d) {
                 return d.first_name;
             })
-            .style("filter", "url(#dropshadow)")
+            .style("filter", dropshadow)
             .style("font-weight", "bold")
             .style("font-size", "60%")
             ;
@@ -151,7 +152,7 @@ function enter(view) {
             .text(function(d) {
                 return d.family_name;
             })
-            .style("filter", "url(#dropshadow)")
+            .style("filter", dropshadow)
             .style("font-weight", "bold")
             .style("font-size", "60%")
             ;
@@ -162,7 +163,7 @@ function enter(view) {
             .text(function(d) {
                 return d.data.birth_date_string;
             })
-            .style("filter", "url(#dropshadow)")
+            .style("filter", dropshadow)
             .style("font-weight", "normal")
             .style("font-size", "50%")
             ;
@@ -173,7 +174,7 @@ function enter(view) {
             .text(function(d) {
                 return d.data.death_date_string;
             })
-            .style("filter", "url(#dropshadow)")
+            .style("filter", dropshadow)
             .style("font-weight", "normal")
             .style("font-size", "50%")
             ;
