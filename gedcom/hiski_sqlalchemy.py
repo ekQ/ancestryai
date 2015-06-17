@@ -21,6 +21,9 @@ b_session = sqlalchemy.orm.scoped_session(sqlalchemy.orm.sessionmaker(autoflush=
 b_metadata = sqlalchemy.ThreadLocalMetaData()
 b_metadata.bind = b_engine
 
+def clean_name_token(token):
+    return token.split('\K')[0].lower().strip()
+
 class Person(Entity):
     using_options(metadata=a_metadata, session=a_session, tablename='kastetut', autoload=True, allowcoloverride=True)
     id = Field(Integer, colname="TAPAHTUMAID", primary_key=True)
@@ -52,20 +55,24 @@ class Person(Entity):
             first_name = first_name.split()[0]
         last_name = self.dad_last_name.split('\K')[0].lower().strip()
         self.clean_name = first_name + ' ' + last_name
-        
+    
+
     def clean_name(self, first_name, last_name, patronymic=None):
-        first_name = first_name.split('\K')[0].lower().strip()
+        first_name = clean_name_token(first_name)
         #if len(first_name) > 0:
         #    first_name = first_name.split()[0]
-        last_name = last_name.split('\K')[0].lower().strip()
+        last_name = clean_name_token(last_name)
         if patronymic is None:
             return first_name + ' ' + last_name
         else:
-            patronymic = patronymic.split('\K')[0].lower().strip()
+            patronymic = clean_name_token(patronymic)
             return first_name + ' ' + patronymic + ' ' + last_name
         
     def get_clean_name(self):
         return self.clean_name(self.name, self.dad_last_name)
+
+    def get_clean_first_name(self):
+        return clean_name_token(self.name)
 
     def get_clean_dad_name(self):
         return self.clean_name(self.dad_first_name, self.dad_last_name, self.dad_patronymic)
