@@ -42,13 +42,15 @@ def json_individual(xref):
 @app.route("/json/load/<xref>/")
 @app.route("/json/load-any/")
 def json_load(xref = None):
+    ind = None
     if xref and xref == "@first@":
-        ind = Individual.query.filter_by(xref = xref).first()
+        #ind = Individual.query.filter_by(xref = xref).first()
+        ind = Individual.query.filter_by(xref = "@I0523@").first()
         if not ind:
             xref = None
-    if xref:
+    if xref and not ind:
         ind = Individual.query.filter_by(xref = xref).first()
-    else:
+    elif not ind:
         query = Individual.query
         count = int(query.count())
         i = int(random.random() * count)

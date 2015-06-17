@@ -4,7 +4,7 @@ var Hiski = {
     Main object of the program. Contains state, data and layout calculation, as
     well as functions related to those.
     */
-    url_root: "/",
+    url_root: "/hiski-visualizer/",
     /* nodes / people */
     // nodes in the order of adding them
     nodes: [],
@@ -477,7 +477,8 @@ var Hiski = {
             this.zoom_to = null;
         }
     },
-    color_mode: "family-name",
+    //color_mode: "family-name",
+    color_mode: "sex",
     next_color_mode: function() {
         // todo: use text based colouring keys
         this.color_mode = (this.color_mode + 1) % 4;
