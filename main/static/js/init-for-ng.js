@@ -7,7 +7,7 @@ app.controller("TopMenuController", function($scope, $translate) {
         $scope.render_all = render_all;
         var menu = this;
         menu.Hiski = Hiski;
-        menu.language = "en";
+        menu.language = "fi";
 
         menu.set_language = function(lang) {
             $translate.use(lang);
@@ -54,7 +54,7 @@ app.config(function($translateProvider) {
     for(key in translations) {
         $translateProvider.translations(key, translations[key]);
     }
-    $translateProvider.preferredLanguage("en");
+    $translateProvider.preferredLanguage("fi");
 //    $translateProvider.useCookieStorage();
     $translateProvider.useMissingTranslationHandler("handleMissingTranslations");
     // no sanitation strategy, because we should be in full control of all data
