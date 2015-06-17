@@ -32,6 +32,18 @@ translations.en = {
     "Compact layout": "Compact layout",
     "Node order layout": "Node order layout",
     "Load order layout": "Load order layout",
+    "Comments": "Comments",
+    "Select a node": "Select a node",
+    "Hide": "Hide",
+    "Comments about data quality": "Comments about data quality",
+    "Name:": "Name:",
+    "Email:": "Email:",
+    "Comment type:": "Comment type:",
+    "::other": "Other",
+    "::invalid": "Invalid data",
+    "::valid": "Valid data",
+    "Comment:": "Comment:",
+    "Submit": "Submit",
 
     // language selection
     "Finnish": "Suomi",

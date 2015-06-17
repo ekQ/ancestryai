@@ -96,6 +96,7 @@ function Node(data) {
     this.map_projection_x = null;
     this.map_projection_y = null;
 
+    this.comments = [];
 
     this.get_x = function() {
         return this.x;

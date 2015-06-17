@@ -3,6 +3,14 @@ Angular controller for the multiview, which contains and controls all the
 subviews.
 */
 
+var initial_views = {
+    per_column: [1, 2],
+    view_modes: ["tree", "search", "info"],
+    relative_column_widths: [2, 1],
+    relative_row_heights: [[1], [1, 1]],
+};
+
+
 /* Handling the resizing bars */
 var resizing = {
     item: null,
@@ -93,23 +101,25 @@ app.controller("MultiViewController", function($scope, $translate) {
         // Row of columns containing subview ids
         this.columns = [
             ];
-        var create_item = function() {
+        var create_item = function(manual_id) {
             /*
             Create a new item and give it the id that the corresponding subview
             will get when angular creates the subview controller.
             */
-            var id = peek_next_id();
+            var id = manual_id;
+            if(manual_id == undefined)
+                id = peek_next_id();
             return {
                 id: id,
                 html_id: "ItemView"+id,
             };
         }
-        this.add_column = function() {
+        this.add_column = function(manual_id) {
             /*
             Adds a new column of subviews with initially a single item. Column
             id is the id of its initial item.
             */
-            var item = create_item();
+            var item = create_item(manual_id);
             multi_view.columns.push({
                     items: [
                         item
@@ -118,11 +128,11 @@ app.controller("MultiViewController", function($scope, $translate) {
                     html_id: "Column" + item.id,
                 });
         };
-        this.add_item = function(column_i) {
+        this.add_item = function(column_i, manual_id) {
             /*
             Adds a new item to an existing column
             */
-            multi_view.columns[column_i].items.push(create_item());
+            multi_view.columns[column_i].items.push(create_item(manual_id));
         };
         this.find_item_position = function(item) {
             /*
@@ -220,9 +230,17 @@ app.controller("MultiViewController", function($scope, $translate) {
             }
         };
 
-
         // adds an initial column to the multiview
-        this.add_column();
+        var index = 0;
+        for(var i = 0; i < initial_views.per_column.length; i++) {
+            var count = initial_views.per_column[i];
+            this.add_column(index);
+            index++;
+            for(var j = 1; j < count; j++) {
+                this.add_item(i, index);
+                index++;
+            }
+        }
     });
 
 

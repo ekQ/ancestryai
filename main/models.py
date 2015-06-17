@@ -102,7 +102,20 @@ class Setting(Base):
 class Comment(Base):
     __tablename__ = "comment"
     id = Column(Integer, primary_key=True)
+    # todo: proper foreignkey
     xref = Column(Unicode(16))
+    author_name = Column(Unicode(64))
+    author_email = Column(Unicode(256))
+    author_ip_address = Column(String(48))
     content = Column(UnicodeText)
-    ip_address = Column(String(48))
+    comment_type = Column(Unicode(32))
+    written_on = Column(DateTime)
+    def as_dict(self):
+        return {
+            "xref": self.xref,
+            "author": self.author_name,
+            "content": self.content,
+            "type": self.comment_type,
+            "isodate": self.written_on.isoformat(),
+        }
 

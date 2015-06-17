@@ -47,8 +47,18 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             this.set_mode(this.new_mode);
         };
         this.set_mode = function(mode) {
+            this.new_mode = mode;
+            if(this.mode == mode)
+                return;
             if(this.mode == "map" && mode != "map") {
                 $("#map-storage").append($("#map"));
+            }
+            if(mode == "map") {
+                for(var i = 0; i < item_views.length; i++) {
+                    if(item_views[i].mode == "map") {
+                        item_views[i].set_mode("tree");
+                    }
+                }
             }
             this.mode = mode;
             if(mode == "tree") {
@@ -96,6 +106,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.search_result_list = [];
         menu.search_time = "-";
 
+        menu.comment_type = "other";
         menu.comment_body = "";
 
         menu.testnote = Hiski.testnote;
@@ -166,13 +177,30 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             Hiski.select_node(node, false);
         };
         menu.leave_comment = function() {
-            $.post(Hiski.url_root + "json/leave/comment/"+Hiski.selected.xref+"/", {
+            if(!menu.comment_body) {
+                // todo: tell this to the user somehow
+                console.warn("content not filled.");
+                return;
+            }
+            var xref = Hiski.selected.xref;
+            $.post(Hiski.url_root + "json/leave/comment/"+xref+"/", {
                     content: menu.comment_body,
+                    comment_type: menu.comment_type,
+                    author_name: Hiski.comment_name,
+                    author_email: Hiski.comment_email,
                     })
                     .done(function(data) {
-                        console.warn(data);
+                        Hiski.load_comments_for(xref);
+                        menu.comment_body = "";
+                        menu.comment_type = "other";
                     });
         };
+
+        if(this.id < initial_views.view_modes.length) {
+            this.set_mode(initial_views.view_modes[this.id]);
+        } else {
+            this.set_mode("tree");
+        }
     });
 
 

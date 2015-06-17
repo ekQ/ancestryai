@@ -35,6 +35,19 @@ translations.fi = {
     "Node order layout": "Noodijärjestys asettelu",
     "Load order layout": "Latausjärjestysasettelu",
 
+    "Comments": "Kommentteja",
+    "Select a node": "Valitse noodi",
+    "Hide": "Piilota",
+    "Comments about data quality": "Kommentteja datan laadusta",
+    "Name:": "Nimi:",
+    "Email:": "Email:",
+    "Comment type:": "Kommentin tyyppi:",
+    "::other": "Muu",
+    "::invalid": "Epävalidia dataa",
+    "::valid": "Validia dataa",
+    "Comment:": "Kommentti:",
+    "Submit": "Lähetä",
+
     // language selection
     "Finnish": "Suomi",
     "English": "English",
