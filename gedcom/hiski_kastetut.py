@@ -131,6 +131,7 @@ def parse_hiski_sour(gedcom_file):
     individuals = {}
     sources = {}
     edgelist = []
+    G_data = []
     # Add all individuals to the dict
     for entry in root.traverse():
         if entry.tag == "INDI":
@@ -145,19 +146,28 @@ def parse_hiski_sour(gedcom_file):
             parents = []
             children = []
             husbxref = entry.get_chain("HUSB.value")
+            dad = None
             if husbxref:
-                parents.append(individuals[husbxref])
+                dad = individuals[husbxref]
+                parents.append((dad, "dad"))
             wifexref = entry.get_chain("WIFE.value")
+            mom = None
             if wifexref:
-                parents.append(individuals[wifexref])
+                mom = individuals[wifexref]
+                parents.append((mom, "mom"))
             for childxref in entry.get_multi_chain("CHIL.value"):
-                children.append(individuals[childxref])
-
-            for parent in parents:
-                for child in children:
+                child = individuals[childxref]
+                children.append(child)
+                for parent, ptype in parents:
                     parent.childs.append(child)
                     child.parents.append(parent)
                     edgelist.append((parent.xref, child.xref))
+                    # Construct an edge dict
+                    edge = {"parent":parent.xref, "child": child.xref,
+                            "dad":ptype=="dad", "parent_hiski":False,
+                            "child_hiski":False}
+                    G_data.append(edge)
+
         elif entry.tag == "SOUR":
             hiski = entry.get_chain("TITL.hiski")
             if hiski and "kastetut" in hiski:
@@ -169,6 +179,8 @@ def parse_hiski_sour(gedcom_file):
 
     hiski_infos = {}
     xref2hid = {}
+    # Make sure that one hiski id is not assigned to multiple xrefs
+    used_hids = {}
     n_match = 0
     n_approximates = 0
     n_nomatch = 0
@@ -228,16 +240,43 @@ def parse_hiski_sour(gedcom_file):
                     best_sim = kid_sim
             if best_sim > 0.6:
                 # Match found
-                n_match += 1
-                xref2hid[best_ind.xref] = hiski_id
-                if best_sim < 1:
-                    n_approximates += 1
+                if hiski_id in used_hids:
+                    prev_xref, prev_sim = used_hids[hiski_id]
+                    if prev_sim < best_sim:
+                        # This hiski ID should be rather matched to this xref
+                        xref2hid.pop(prev_xref, None)
+                        n_match -= 1
+                        # XXX n_approximates might be a bit inaccurate after this
+                        print "Found a better match: %s->%s (instead of %s->%s)" % \
+                                (hiski_id, best_ind.xref, hiski_id, prev_xref)
+                        n_match += 1
+                        xref2hid[best_ind.xref] = hiski_id
+                        used_hids[hiski_id] = (best_ind.xref, best_sim)
+                        if best_sim < 1:
+                            n_approximates += 1
+                else:
+                    n_match += 1
+                    xref2hid[best_ind.xref] = hiski_id
+                    used_hids[hiski_id] = (best_ind.xref, best_sim)
+                    if best_sim < 1:
+                        n_approximates += 1
             else:
                 n_nomatch += 1
             if best_sim < 0.7:
                 print "Weak match (sim=%.3f): H:%s - G:%s" % (best_sim, hiski_name, best_ind.get_chain("NAME.GIVN.value").lower())
 
     print "%d hiski ids matched (%d matched only approximately, %d not matched)" % (n_match, n_approximates, n_nomatch)
+
+    # Replace xref by HisKi ID in G_data when possible
+    for edge in G_data:
+        if edge["parent"] in xref2hid:
+            edge["parent"] = xref2hid[edge["parent"]]
+            #edge["parent"] += "?"+xref2hid[edge["parent"]]
+            edge["parent_hiski"] = True
+        if edge["child"] in xref2hid:
+            edge["child"] = xref2hid[edge["child"]]
+            #edge["child"] += "?"+xref2hid[edge["child"]]
+            edge["child_hiski"] = True
 
     # Parent-child edges where both have an HisKi ID
     edges = []
@@ -294,7 +333,7 @@ def parse_hiski_sour(gedcom_file):
             extras.keyboard()
         print par_str + "\t" + child_str
 
-    return edgelist, xref2hid
+    return edgelist, xref2hid, G_data
 
 if __name__ == "__main__":
     #parse_hiski_caus()
