@@ -336,6 +336,10 @@ var Hiski = {
             Hiski.delayed_render();
             return;
         }
+        if(xref == "@first@") {
+            // replace xref here to set first node to something specific
+            //xref = "@I0523@";
+        }
         var addr = this.url_root + "json/load/"+xref+"/";
         if(xref === null)
             addr = this.url_root + "json/load-any/";
