@@ -65,6 +65,7 @@ function Node(data) {
 
     /* order pointers */
     this.rightmost_subnode = null;
+    this.rightmost_sibling = null;
     this.leftmost_parent = null;
     this.rightmost_parent = null;
     this.rightmost_spouse = null;
@@ -196,6 +197,17 @@ function update_rightmost_spouse(node) {
         }
     }
     node.rightmost_spouse = rightmost;
+}
+function update_rightmost_sibling(node) {
+    var rightmost = node.order_fuzzy_index !== null ? node : null;
+    var rightmost_fuzzy = node.order_fuzzy_index;
+    for(var i = 0; i < node.siblings.length; i++) {
+        if(rightmost == null || node.siblings[i].order_fuzzy_index > rightmost_fuzzy) {
+            rightmost = node.siblings[i];
+            rightmost_fuzzy = node.siblings[i].order_fuzzy_index;
+        }
+    }
+    node.rightmost_sibling = rightmost;
 }
 function update_rightmost_subnode(node) {
     var rightmost = node.rightmost_subnode;

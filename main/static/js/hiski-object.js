@@ -45,15 +45,44 @@ var Hiski = {
             update_leftmost_child(node);
             update_rightmost_parent(node);
             update_rightmost_spouse(node);
+            update_rightmost_sibling(node);
             // find location in node_order for the new node
             var order_i = 0;
             if(reference) {
                 var linktype = find_link_type(node, reference);
                 if(linktype == "child") {
                     if(node.siblings.length > 0) {
-                        order_i = this.node_order.indexOf(_.last(node.siblings).rightmost_subnode) + 1;
-                        node.order_reason = "right of siblings " + _.last(node.siblings).xref +
-                                " -> " + _.last(node.siblings).rightmost_subnode.xref;
+                        // find the oldest loaded little sibling of node
+                        var little_sibling = null;
+                        for(var i = 0; i < node.siblings.length; i++) {
+                            if(node.siblings[i].year > node.year) {
+                                if(little_sibling == null ||
+                                            node.siblings[i].year < little_sibling.year ||
+                                            (node.siblings[i].year == little_sibling.year &&
+                                                node.siblings[i].order_fuzzy_index < little_sibling.order_fuzzy_index)) {
+                                    little_sibling = node.siblings[i];
+                                }
+                            }
+                        }
+                        if(little_sibling != null) {
+                            // little sibling found, position to the left of that
+                            // XXX: this causes messiness with spouses at
+                            // times. Could try to prevent that somehow
+                            // Additionally, the layout might like reverse
+                            // order a bit more, but I'm not sure about that.
+                            // Aand, repositioning at least currently ignores
+                            // the little sibling order.
+                            order_i = this.node_order.indexOf(little_sibling);
+                            node.order_reason = "left of little sibling " + little_sibling.xref;
+                        } else {
+                            // little sibling not found, position to the right of other siblings
+//                            order_i = this.node_order.indexOf(_.last(node.siblings).rightmost_subnode) + 1;
+//                            node.order_reason = "right of siblings " + _.last(node.siblings).xref +
+//                                    " -> " + _.last(node.siblings).rightmost_subnode.xref;
+                            order_i = this.node_order.indexOf(node.rightmost_sibling.rightmost_subnode) + 1;
+                            node.order_reason = "right of siblings " + node.rightmost_sibling.xref +
+                                    " -> " + node.rightmost_sibling.rightmost_subnode.xref;
+                        }
                     } else if(node.parents.length == 1) {
                         order_i = this.node_order.indexOf(node.rightmost_parent.rightmost_subnode) + 1;
                         node.order_reason = "right of the only parent's other subfamilies " + node.rightmost_parent.xref + " -> " + node.rightmost_parent.rightmost_subnode.xref;
@@ -80,6 +109,7 @@ var Hiski = {
             // around that need to be updated.
             update_descendant_year(node, null);
             update_rightmost_subnode(node);
+            update_rightmost_sibling(node);
             for(var i = 0; i < node.children.length; i++) {
                 update_leftmost_parent(node.children[i]);
                 update_rightmost_parent(node.children[i]);
