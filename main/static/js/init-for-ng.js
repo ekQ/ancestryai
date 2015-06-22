@@ -34,7 +34,7 @@ app.controller("TopMenuController", function($scope, $translate) {
         };
         menu.toggle_autoexpand = function() {
             Hiski.node_auto_expand_delay = Hiski.node_auto_expand_delay == -1 ? 5000 : -1;
-            Hiski.start_node_autoexpansion();
+            Hiski.start_node_autoexpansion(true);
         };
         menu.go_to_entrance = function() {
             // stop anything automated

@@ -193,9 +193,9 @@ var Hiski = {
         if(!node.expandable())
             return;
         Hiski.node_auto_expand_queue.push(node);
-        Hiski.start_node_autoexpansion();
+        Hiski.start_node_autoexpansion(false);
     },
-    start_node_autoexpansion: function() {
+    start_node_autoexpansion: function(by_button) {
         /*
         Start autoexpander, if it weren't already running and we have a delay
         set for it.
@@ -221,7 +221,10 @@ var Hiski = {
                     Hiski.node_auto_expand_delay != -1 &&
                     !Hiski.node_auto_expander_on) {
             Hiski.node_auto_expander_on = true;
-            setTimeout(expander, Hiski.node_auto_expand_delay);
+            if(by_button)
+                expander();
+            else
+                setTimeout(expander, Hiski.node_auto_expand_delay);
         }
     },
     /* relations / families */
