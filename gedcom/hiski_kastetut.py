@@ -2,7 +2,7 @@
 import sys
 import re
 import jellyfish
-from gedcom import *
+from gedcom import specials, read_file
 import hiski_sqlalchemy as db
 
 re_hiski_kastetut = re.compile("Hiski (?P<hiskitype>[^[]+) \[(?P<hiskiid>[0-9]+)\]")

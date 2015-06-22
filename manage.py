@@ -60,14 +60,14 @@ if command == "db":
         print "* database exported"
 if command == "populate":
     import main
-    from main.populate import *
+    from main.populate import populate_from_gedcom
     for i,sub in enumerate(subs):
         if sub == "gedcom":
             fname = subs[i+1]
             populate_from_gedcom(fname, "store-gedcom" in subs)
 if command == "write":
     import main
-    from main.populate import *
+    from main.populate import reform_gedcom
     from main.models import *
     if "reform" in subs:
         reform_gedcom()

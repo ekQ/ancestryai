@@ -40,22 +40,28 @@ function locate_node(item_view, node, check_offset) {
             .duration(1200)
             .attr("transform", "translate("+item_view.zoom.translate()+")scale("+item_view.zoom.scale()+")")
             ;
-    reposition_axis(item_view, item_view.zoom.translate(), item_view.zoom.scale());
+    reposition_axis(item_view, item_view.zoom.translate(), item_view.zoom.scale(), true);
 }
-function reposition_axis(item_view, translate, scale) {
+function reposition_axis(item_view, translate, scale, is_animated) {
     var shift = -translate[0] / scale + 100 / scale;
-    item_view.axis_group
-            .transition()
-            .duration(1200)
-            .attr("transform", "translate("+shift+",0)")
-            ;
+    if(is_animated) {
+        item_view.axis_group
+                .transition()
+                .duration(1200)
+                .attr("transform", "translate("+shift+",0)")
+                ;
+    } else {
+        item_view.axis_group
+                .attr("transform", "translate("+shift+",0)")
+                ;
+    }
 }
 function tree_init(item_view) {
     item_view.container = null;
     var zoomfun = function() {
         item_view.container
                 .attr("transform", "translate("+d3.event.translate+")scale("+d3.event.scale+")");
-        reposition_axis(item_view, d3.event.translate, d3.event.scale);
+        reposition_axis(item_view, d3.event.translate, d3.event.scale, false);
     }
     item_view.zoom = d3.behavior.zoom()
             .scaleExtent([0.05, 10])
