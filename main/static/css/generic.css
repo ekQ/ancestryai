@@ -11,7 +11,9 @@ body,
     margin: 0px;
 }
 .app {
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: column;
     flex-direction: column;
     height: 100%;
     margin: 0px;
@@ -19,19 +21,26 @@ body,
 .topmenu {
 }
 .body {
+    -webkit-flex-grow: 1;
     flex-grow: 1;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: row;
     flex-direction: row;
     position: relative;
 }
 .main {
+    -webkit-flex-grow: 2;
     flex-grow: 2;
     width: 60%;
     position: relative;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: column;
     flex-direction: column;
 }
 .sidebar {
+    -webkit-flex-grow: 1;
     flex-grow: 1;
     width: 30%;
 }
@@ -41,10 +50,15 @@ body,
 }
 
 .topmenu {
+    -webkit-flex-shrink: 0;
     flex-shrink: 0;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: row;
     flex-direction: row;
+    -webkit-align-items: stretch;
     align-items: stretch;
+    -webkit-flex-wrap: wrap;
     flex-wrap: wrap;
     padding: 0px;
     margin: 0px;
@@ -85,37 +99,55 @@ div#map {
 
 .multiview {
     width: 100%;
+    -webkit-flex-grow: 1;
     flex-grow: 1;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: column;
     flex-direction: column;
     position: relative;
     background-color: #c0ffee;
 }
 .rowcontainer {
     width: 100%;
+    -webkit-flex-grow: 1;
     flex-grow: 1;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: row;
     flex-direction: row;
     background: #ccffcc;
 }
 .columncontainer {
+    -webkit-flex-grow: 1;
     flex-grow: 1;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: row;
     flex-direction: row;
     background: #ffcccc;
 }
 .inner-column-container {
+    -webkit-flex-grow: 1;
     flex-grow: 1;
+    -webkit-flex-shrink: 1;
     flex-shrink: 1;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: column;
     flex-direction: column;
+    -webkit-align-items: stretch;
     align-items: stretch;
 }
 .mvitem {
+    -webkit-flex-grow: 1;
     flex-grow: 1;
+    -webkit-flex-shrink: 1;
     flex-shrink: 1;
     min-height: 10px;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: column;
     flex-direction: column;
     background: #ffffff;
 
@@ -131,8 +163,11 @@ div#map {
     background: #cccccc;
     text-align: center;
 
+    display: -webkit-flex;
     display: flex;
+    -webkit-justify-content: center;
     justify-content: center;
+    -webkit-align-items: center;
     align-items: center;
 
     box-sizing: border-box;
@@ -164,10 +199,15 @@ div#map {
 }
 
 .itemheader {
+    -webkit-flex-shrink: 0;
     flex-shrink: 0;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: row;
     flex-direction: row;
+    -webkit-align-items: stretch;
     align-items: stretch;
+    -webkit-flex-wrap: wrap;
     flex-wrap: wrap;
     padding: 0px;
     margin: 0px;
@@ -232,7 +272,9 @@ button:active {
 .viewtab {
 /*    width: 100%;*/
     height: 120px;
+    -webkit-flex-grow: 1;
     flex-grow: 1;
+    -webkit-flex-shrink: 1;
     flex-shrink: 1;
     position: relative;
     overflow: auto;
@@ -274,8 +316,11 @@ label span {
 
 
 .entrance {
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: column;
     flex-direction: column;
+    -webkit-align-items: center;
     align-items: center;
     min-height: 100%;
     width: 100%;
@@ -288,6 +333,7 @@ label span {
     width: 800px;
 }
 .entrance .explanation {
+    -webkit-flex-grow: 1;
     flex-grow: 1;
     width: 800px;
     padding: 10px;
@@ -297,9 +343,13 @@ label span {
 
 
 .right-end {
+    -webkit-flex-grow: 1;
     flex-grow: 1;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: row;
     flex-direction: row;
+    -webkit-justify-content: flex-end;
     justify-content: flex-end;
 }
 .closebutton {
