@@ -54,7 +54,8 @@ var Hiski = {
                     if(node.siblings.length > 0) {
                         // find the oldest loaded little sibling of node
                         var little_sibling = null;
-                        for(var i = 0; i < node.siblings.length; i++) {
+                        // disabled for now for better looking trees
+/*                        for(var i = 0; i < node.siblings.length; i++) {
                             if(node.siblings[i].year > node.year) {
                                 if(little_sibling == null ||
                                             node.siblings[i].year < little_sibling.year ||
@@ -63,7 +64,7 @@ var Hiski = {
                                     little_sibling = node.siblings[i];
                                 }
                             }
-                        }
+                        }*/
                         if(little_sibling != null) {
                             // little sibling found, position to the left of that
                             // XXX: this causes messiness with spouses at
