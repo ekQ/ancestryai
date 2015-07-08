@@ -9,6 +9,8 @@ def ensure_unicode(s):
     if isinstance(s, str):
         return s.decode("utf8")
     return s
+def u(s):
+    return ensure_unicode(s)
 
 # todo: use the gedcom.py implementation instead
 def get_chain(root, chain):
@@ -28,15 +30,15 @@ def populate_from_gedcom(fname, store_gedcom=False):
     t0 = time.time()
     root = gedcom.read_file(fname)
     t1 = time.time()
-    print "gedcom parsed     {}ms".format(str(int((t1 - t0)*1000)).rjust(8))
+    print "gedcom parsed               {}ms".format(str(int((t1 - t0)*1000)).rjust(8))
     for entry in root.traverse():
         if entry.tag == "FAM":
             if entry.level != 0:
                 continue
-            candidate = Family.query.filter_by(xref = ensure_unicode(entry.xref)).first()
-            if candidate:
-                print "Family '{}' already exists".format(entry.xref)
-                continue
+#            candidate = Family.query.filter_by(xref = ensure_unicode(entry.xref)).first()
+#            if candidate:
+#                print "Family '{}' already exists".format(entry.xref)
+#                continue
             fam = Family(
                     xref = ensure_unicode(entry.xref),
                     tag = u"FAM",
@@ -45,8 +47,50 @@ def populate_from_gedcom(fname, store_gedcom=False):
             session.add(fam)
     session.flush()
     t2 = time.time()
-    print "families added    {}ms".format(str(int((t2 - t1)*1000)).rjust(8))
+    print "families added              {}ms".format(str(int((t2 - t1)*1000)).rjust(8))
     for entry in root.traverse():
+        if entry.tag == "INDI":
+            if entry.level != 0:
+                continue
+#            candidate = Individual.query.filter_by(xref = ensure_unicode(entry.xref)).first()
+#            if candidate:
+#                print "Individual '{}' already exists".format(entry.xref)
+#                continue
+            ind = Individual(
+                    xref = ensure_unicode(entry.xref),
+                    tag = u"INDI",
+                    )
+            session.add(ind)
+    session.flush()
+    t2b = time.time()
+    print "dummy individuals added     {}ms".format(str(int((t2b - t2)*1000)).rjust(8))
+    for entry in root.traverse():
+        if entry.tag == "INDI":
+            if entry.level != 0:
+                continue
+            candidate = Individual.query.filter_by(xref = ensure_unicode(entry.xref)).first()
+            for value in entry.get_multi_chain("BIRT.DATE.value"):
+                candidate.add_attribute("Date of Birth", u(value), 1.0)
+            for value in entry.get_multi_chain("BIRT.DATE.year"):
+                candidate.add_attribute("Year of Birth", u(value), 1.0)
+            for value in entry.get_multi_chain("SEX.value"):
+                candidate.add_attribute("Sex", u(value), 1.0)
+            for value in entry.get_multi_chain("NAME.value"):
+                candidate.add_attribute("Full Name", u(value), 1.0)
+                first_name = value.split("/")[0].strip()
+                last_name = value.split("/")[1].strip()
+                for val in first_name.split():
+                    candidate.add_attribute("First Name", u(val), 1.0)
+                    candidate.add_attribute("First Name Soundex", soundex.soundex(u(val.upper())), 1.0)
+                for val in last_name.split():
+                    candidate.add_attribute("Family Name", u(val), 1.0)
+                    candidate.add_attribute("Family Name Soundex", soundex.soundex(u(val.upper())), 1.0)
+    session.flush()
+    t2c = time.time()
+    print "individual attributes added {}ms".format(str(int((t2c - t2b)*1000)).rjust(8))
+    for entry in root.traverse():
+        # this loop is to be removed. Replaced with the two above, which work in the new database format
+        break
         if entry.tag == "INDI":
             if entry.level != 0:
                 continue
@@ -92,7 +136,13 @@ def populate_from_gedcom(fname, store_gedcom=False):
                 fam.parents.append(ind)
             session.add(ind)
     t3 = time.time()
-    print "individuals added {}ms".format(str(int((t3 - t2)*1000)).rjust(8))
+#    print "individuals added {}ms".format(str(int((t3 - t2)*1000)).rjust(8))
+    for ind in Individual.query.options(joinedload(Individual.fields)).all():
+        ind.create_dict_json()
+    t4 = time.time()
+    print "individual json dicts       {}ms".format(str(int((t4-t3)*1000)).rjust(8))
+    for key, value in models_times.items():
+        print "    {}{}ms".format(key.ljust(28), str(int(value*1000)).rjust(8))
     if root.get_chain("HEAD.ROLE.value") == "test":
         testnote = ensure_unicode(root.get_chain("HEAD.ROLE.NOTE.value"))
         if testnote:

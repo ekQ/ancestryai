@@ -123,6 +123,9 @@
                                 <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
                                     {{ ind.name }}
                                 </div>
+                                <div ng-show="!menu.search_result_list.length" translate>
+                                    No results
+                                </div>
                             </div>
                         </form>
                     </div>

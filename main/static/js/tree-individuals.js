@@ -7,10 +7,10 @@ function color_hash(str) {
     /*
     Generate a colour from a string by hashing the string.
     */
+    if(!str)
+        return "#000000";
     var hash = 0;
     var chr;
-    if(str.length == 0)
-        return "#000000";
     var len = str.length;
     for(var i = 0; i < len; i++) {
         chr = str.charCodeAt(i);
@@ -79,12 +79,14 @@ function Node(data) {
     this.year = data.birth_date_year;
     this.guessed_year = null;
     this.color_by_name = color_hash(this.family_name);
-    this.color_by_soundex = color_hash(
+/*    this.color_by_soundex = color_hash(
             // because fooin and fooinen were mixed a lot in my sample data
             endsWith(this.family_name, "nen") ?
-                this.data.soundex6family.replace(/5(0*)$/, "0$1") :
-                this.data.soundex6family
-            );
+                this.data.soundex_family.replace(/5(0*)$/, "0$1") :
+                this.data.soundex_family
+            );*/
+    // temporary to avoid error
+    this.color_by_soundex = color_hash(this.data.soundex_family);
     this.color_by_sex = color_sex(this.data.sex);
     this.last_open_descendant_year = this.year;
     this.timetraveller = false;

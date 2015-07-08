@@ -1,0 +1,126 @@
+
+Performance measurements of different sqlalchemy options. Measurements of
+populate and search.
+
+===============================================
+lazy = select (default)
+-----------------------
+gedcom parsed                   4980ms
+families added                  1119ms
+dummy individuals added         3240ms
+individual attributes added    44858ms
+individual json dicts         332145ms
+    json-dump                        607ms
+    fetch-fields                  304960ms
+    fetch-fields-simplify             47ms
+    fetch-fields-fetch            304425ms
+    fetch-fields-singlify            416ms
+    create-obj                     25759ms
+
+===============================================
+lazy = immediate
+----------------
+gedcom parsed                   4994ms
+families added                  1143ms
+dummy individuals added         3250ms
+individual attributes added    58024ms
+individual json dicts          21352ms
+    json-dump                        388ms
+    fetch-fields                     568ms
+    fetch-fields-simplify             31ms
+    fetch-fields-fetch                42ms
+    fetch-fields-singlify            464ms
+    create-obj                     20177ms
+---------------------------------------------
+searching firstname Eric (prejsoned):
+-------------------------------------
+soundex on term:         0ms
+query from db:          29ms
+jaro_distance:           0ms
+unique and limit:     1080ms
+as dictionaries:         0ms
+----------------------------
+total:                1110ms
+---------------------------------------------
+searching firstname Eric (on the fly jsoned):
+---------------------------------------------
+soundex on term:         0ms
+query from db:          35ms
+jaro_distance:           0ms
+unique and limit:     1084ms
+as dictionaries:       219ms
+----------------------------
+total:                1338ms
+
+
+
+===============================================
+lazy = joined
+-------------
+gedcom parsed                   4992ms
+families added                  1100ms
+dummy individuals added         3232ms
+individual attributes added    88581ms
+individual json dicts          23152ms
+    json-dump                        391ms
+    fetch-fields                     565ms
+    fetch-fields-simplify             33ms
+    fetch-fields-fetch                46ms
+    fetch-fields-singlify            454ms
+    create-obj                     20144ms
+
+===============================================
+lazy = subquery
+---------------
+gedcom parsed                   5017ms
+families added                  1132ms
+dummy individuals added         3307ms
+individual attributes added    76533ms
+individual json dicts          24873ms
+    json-dump                        394ms
+    fetch-fields                     544ms
+    fetch-fields-simplify             33ms
+    fetch-fields-fetch                43ms
+    fetch-fields-singlify            435ms
+    create-obj                     21949ms
+
+===============================================
+joinedload query on populate and lazy joined in IndividualField for search
+--------------------------------------------------------------------------
+populate
+--------
+gedcom parsed                   4973ms
+families added                  1118ms
+dummy individuals added         3244ms
+individual attributes added    39988ms
+individual json dicts          27989ms
+    json-dump                        395ms
+    fetch-fields                     597ms
+    fetch-fields-simplify             37ms
+    fetch-fields-fetch                44ms
+    fetch-fields-singlify            483ms
+    create-obj                     22853ms
+
+search Eric
+-----------
+soundex on term:         0ms
+query from db:         182ms
+jaro_distance:           0ms
+unique and limit:        0ms
+as dictionaries:         0ms
+----------------------------
+total:                 183ms
+
+search Eric (I think it cached the query)
+-----------------------------------------
+soundex on term:         0ms
+query from db:          31ms
+jaro_distance:           0ms
+unique and limit:        0ms
+as dictionaries:         0ms
+----------------------------
+total:                  31ms
+
+===============================================
+===============================================
+===============================================

@@ -47,6 +47,7 @@ translations.fi = {
     "::valid": "Validia dataa",
     "Comment:": "Kommentti:",
     "Submit": "Lähetä",
+    "No results": "Ei tuloksia",
 
     // language selection
     "Finnish": "Suomi",

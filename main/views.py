@@ -78,52 +78,77 @@ def language(lang):
 
 
 @app.route("/json/search/firstname/<term>/")
-def json_search_firstname(term):
+def json_search_firstname_instrumented(term):
     t0 = time.time()
-    soundex6term = soundex.soundex(term, 6)
-    soundex3term = soundex.soundex(term, 3)
-    inds = None
-    if not inds:
-        inds = Individual.query.filter_by(soundex6first = soundex6term).all()
-    if not inds:
-        inds = Individual.query.filter_by(soundex3first = soundex3term).all()
-    if not inds:
+    soundex_term = soundex.soundex(term)
+    t2 = time.time()
+    print "-"*60,2
+    indfs = IndividualField.query.filter_by(value = soundex_term, key = "First Name Soundex").all()
+#    indfs = IndividualField.query.all()
+    if not indfs:
         return jsonify({
-            "soundex6": soundex6term,
+            "soundex": soundex_term,
             "result": False,
         })
-    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
+    t3 = time.time()
+    print "-"*60,3
+    indfs = sorted(indfs, key=lambda x: jellyfish.jaro_distance(x.value, term), reverse=True)
+    t4 = time.time()
+    print "-"*60,4
+    reduced = []
+    visited = set([])
+    for indf in indfs:
+        if indf.individual_id in visited:
+            continue
+        reduced.append(indf)
+        visited.add(indf.individual_id)
+        if len(reduced) == 50:
+            break
+    inds = [x.individual for x in reduced]
+    print len(indfs), len(inds)
+    t5 = time.time()
+    print "-"*60,5
+    result = [x.as_dict() for x in inds]
     t1 = time.time()
+    def to8ms(a):
+        return str(int(a*1000)).rjust(8)
+    print """
+soundex on term:  {}ms
+query from db:    {}ms
+jaro_distance:    {}ms
+unique and limit: {}ms
+as dictionaries:  {}ms
+----------------------------
+total:            {}ms
+""".format(to8ms(t2-t0), to8ms(t3-t2), to8ms(t4-t3), to8ms(t5-t4), to8ms(t1-t5), to8ms(t1-t0))
     return jsonify({
-        "soundex6": soundex6term,
+        "soundex": soundex_term,
         "result": True,
         "count": len(inds),
-        "inds": [x.as_dict() for x in inds],
+        "inds": result,
         "time": t1 - t0,
     })
 
 @app.route("/json/search/familyname/<term>/")
 def json_search_familyname(term):
     t0 = time.time()
-    soundex6term = soundex.soundex(term, 6)
-    soundex3term = soundex.soundex(term, 3)
+    soundex_term = soundex.soundex(term.upper())
     inds = None
     if not inds:
-        inds = Individual.query.filter_by(soundex6family = soundex6term).all()
-    if not inds:
-        inds = Individual.query.filter_by(soundex3family = soundex3term).all()
+        inds = Individual.query.filter_by(soundex_family = soundex_term).all()
     if not inds:
         return jsonify({
-            "soundex6": soundex6term,
+            "soundex": soundex_term,
             "result": False,
         })
     inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_family, term), reverse=True)
+    result = [x.as_dict() for x in inds]
     t1 = time.time()
     return jsonify({
-        "soundex6": soundex6term,
+        "soundex": soundex_term,
         "result": True,
         "count": len(inds),
-        "inds": [x.as_dict() for x in inds],
+        "inds": result,
         "time": t1 - t0,
     })
 

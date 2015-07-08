@@ -92,6 +92,9 @@ if __name__ == "__main__":
         debug_test("Ashcroft", "A", -5)
         debug_test("White", "W300", 4)
         debug_test(u"Mömmö", "M5")
+        debug_test(u"Äjäinen", u"Ä255")
+        debug_test("ASHCROFT", "A2613")
+        debug_test("ashcroft", "a2613")
         print "-"*55
         print "all tests ok" if fail_count == 0 else "{} tests failed".format(fail_count)
     else:
