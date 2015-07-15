@@ -178,7 +178,7 @@ function enter(view) {
             .attr("y", 10)
             .attr("dominant-baseline", "central")
             .text(function(d) {
-                return d.data.birth_date_string;
+                return d.from_data("birth_date_string");
             })
             .style("filter", dropshadow)
             .style("font-weight", "normal")
@@ -189,7 +189,7 @@ function enter(view) {
             .attr("y", 20)
             .attr("dominant-baseline", "central")
             .text(function(d) {
-                return d.data.death_date_string;
+                return d.from_data("death_date_string");
             })
             .style("filter", dropshadow)
             .style("font-weight", "normal")

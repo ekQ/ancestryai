@@ -60,6 +60,18 @@ def populate_from_gedcom(fname, store_gedcom=False):
                     xref = ensure_unicode(entry.xref),
                     tag = u"INDI",
                     )
+            for tag in entry.by_tag("FAMC"):
+                fam = Family.query.filter_by(xref = ensure_unicode(tag.value)).first()
+                if not fam:
+                    print "Family '{}' not found for individual '{}'".format(tag.xref, xref)
+                    continue
+                fam.children.append(ind)
+            for tag in entry.by_tag("FAMS"):
+                fam = Family.query.filter_by(xref = ensure_unicode(tag.value)).first()
+                if not fam:
+                    print "Family '{}' not found for individual '{}'".format(tag.xref, xref)
+                    continue
+                fam.parents.append(ind)
             session.add(ind)
     session.flush()
     t2b = time.time()

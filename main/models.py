@@ -75,6 +75,14 @@ class Individual(Base):
         t1 = time.time()
         res = {}
         for field in fields:
+            if not field.key in res:
+                res[field.key] = []
+            res[field.key].append((field.certainty_ppm, field.value))
+        for key, values in res.items():
+            res[key] = sorted(res[key])
+        return res
+        #
+        for field in fields:
             tup = (field.certainty_ppm, field.id, field.value)
             if not field.key in res:
                 res[field.key] = tup
@@ -115,6 +123,7 @@ class Individual(Base):
         models_times["create-obj"] += t2-t1
         models_times["json-dump"] += t3-t2
     def as_dict(self):
+        self.create_dict_json()
         return json.loads(self.dict_json)
     def add_attribute(self, key, value, certainty):
         indfield = IndividualField(

@@ -47,11 +47,24 @@ function Node(data) {
     /*
     "class" for an individual.
     */
+    this.from_data = function(key, option) {
+        if(typeof(option) === 'undefined')
+            option = "first";
+        if(option == "all")
+            return key in this.data ? this.data[key] : [];
+        if(!(key in this.data))
+            return null;
+        if(this.data[key] === null)
+            return null;
+        if(this.data[key].constructor === Array)
+            return this.data[key][0][1];
+        return this.data[key];
+    };
     /* identifying and source data */
     this.type = "node";
     this.data = data;
-    this.xref = data.xref;
-    this.name = data.name;
+    this.xref = this.from_data("xref");
+    this.name = this.from_data("name");
     this.first_name = this.name.split("/")[0];
     this.family_name = this.name.split("/")[1];
 
@@ -76,7 +89,7 @@ function Node(data) {
     /* layout related fields */
     this.x = _.random(0, 400) + 200;
     this.y = 0;
-    this.year = data.birth_date_year;
+    this.year = this.from_data("birth_date_year");
     this.guessed_year = null;
     this.color_by_name = color_hash(this.family_name);
 /*    this.color_by_soundex = color_hash(
@@ -86,8 +99,8 @@ function Node(data) {
                 this.data.soundex_family
             );*/
     // temporary to avoid error
-    this.color_by_soundex = color_hash(this.data.soundex_family);
-    this.color_by_sex = color_sex(this.data.sex);
+    this.color_by_soundex = color_hash(this.from_data("soundex_family"));
+    this.color_by_sex = color_sex(this.from_data("sex"));
     this.last_open_descendant_year = this.year;
     this.timetraveller = false;
     this.visible = true;
