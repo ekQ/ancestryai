@@ -1,5 +1,7 @@
 
+import os
 import time
+import json
 from gedcom import gedcom
 from soundexpy import soundex
 from .models import *
@@ -130,4 +132,32 @@ def reform_gedcom():
         else:
             entry = gedcom.Entry(0, "@F{}@".format(nextid), "FAM", None)
 
+
+
+
+def populate_from_recons(fname):
+    base = os.path.dirname(fname)
+    f = open(fname)
+    lines = f.readlines()
+    f.close()
+    sources = {}
+    for line in lines:
+        source, sourcefile = [x.strip() for x in line.split(":")]
+        sources[source] = os.path.join(base, sourcefile)
+    if "parishes" in sources:
+        with open(sources["parishes"]) as f:
+            data = json.load(f)
+            print len(data)
+    if "villages" in sources:
+        with open(sources["villages"]) as f:
+            data = json.load(f)
+            print len(data)
+    if "individuals" in sources:
+        with open(sources["individuals"]) as f:
+            data = json.load(f)
+            print len(data)
+    if "edges" in sources:
+        with open(sources["edges"]) as f:
+            data = json.load(f)
+            print len(data)
 
