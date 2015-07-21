@@ -417,7 +417,7 @@ var Hiski = {
 
     /* custom layout stuff */
     layout_mode: "compact",
-    year_pixel_ratio: 5,
+    year_pixel_ratio: 10,
     calc_and_render_layout: function() {
         /*
         Calculates node positions and renders all subviews showing the tree view.
