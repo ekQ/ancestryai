@@ -9,7 +9,7 @@ function color_hash(str) {
     */
     var hash = 0;
     var chr;
-    if(str.length == 0)
+    if(str === undefined || str === null || str.length == 0)
         return "#000000";
     var len = str.length;
     for(var i = 0; i < len; i++) {
@@ -52,8 +52,8 @@ function Node(data) {
     this.data = data;
     this.xref = data.xref;
     this.name = data.name;
-    this.first_name = this.name.split("/")[0];
-    this.family_name = this.name.split("/")[1];
+    this.first_name = data.name_first;
+    this.family_name = data.name_family;
 
     /* graph and person relations */
     this.relations = [];

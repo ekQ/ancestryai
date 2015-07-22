@@ -5,6 +5,7 @@ from main.database import Base, session
 from pbkdf2 import crypt
 
 class User(Base):
+    # this is not really used in any way, as the site doesn't have a login feature
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     username = Column(Unicode(64))
@@ -29,6 +30,18 @@ family_child_link = Table("family_child_link", Base.metadata,
     Column("family_id", Integer, ForeignKey("family.id")),
 )
 
+class Parish(Base):
+    __tablename__ = "parish"
+    id = Column(Integer, primary_key=True)
+    lat = Column(Float)
+    lon = Column(Float)
+
+class Village(Base):
+    __tablename__ = "village"
+    id = Column(Integer, primary_key=True)
+    lat = Column(Float)
+    lon = Column(Float)
+
 class Individual(Base):
     __tablename__ = "individual"
     id = Column(Integer, primary_key=True)
@@ -45,6 +58,12 @@ class Individual(Base):
     death_date_year = Column(Integer)
     death_date = Column(Date)
 
+    parish_id = Column(Integer, ForeignKey("parish.id"))
+    parish = relationship("Parish", backref="individuals")
+
+    village_id = Column(Integer, ForeignKey("village.id"))
+    village = relationship("Village", backref="individuals")
+
     soundex6first = Column(Unicode(6))
     soundex6family = Column(Unicode(6))
     soundex3first = Column(Unicode(3))
@@ -55,6 +74,8 @@ class Individual(Base):
         return {
             "xref": self.xref,
             "name": self.name,
+            "name_first": self.name_first,
+            "name_family": self.name_family,
             "tag": self.tag,
             "sex": self.sex,
             "birth_date_string": self.birth_date_string,

@@ -11,6 +11,7 @@ def ensure_unicode(s):
     if isinstance(s, str):
         return s.decode("utf8")
     return s
+u = ensure_unicode
 
 # todo: use the gedcom.py implementation instead
 def get_chain(root, chain):
@@ -133,9 +134,36 @@ def reform_gedcom():
             entry = gedcom.Entry(0, "@F{}@".format(nextid), "FAM", None)
 
 
-
+class Timer:
+    def __init__(self, verbose=False, messagelen=20):
+        now = time.time()
+        self.times = [(now, now, "", [])]
+        self.subtimes = []
+        self.verbose = verbose
+        self.messagelen = messagelen
+    def duration_ms(self, entry):
+        return int((entry[1] - entry[0]) * 1000)
+    def measure(self, message):
+        if len(message) > self.messagelen:
+            self.messagelen = len(message) + 10
+        now = time.time()
+        self.times.append((self.times[-1][1], now, message, self.subtimes))
+        self.subtimes = []
+        if self.verbose:
+            print "{{:{}}} {{:8}}ms".format(self.messagelen).format(message, self.duration_ms(self.times[-1]))
+    def submeasure(self, message):
+        if len(message) > self.messagelen:
+            self.messagelen = len(message) + 10
+        now = time.time()
+        if self.subtimes:
+            self.subtimes.append((self.subtimes[-1][1], now, message))
+        else:
+            self.subtimes.append((self.times[-1][1], now, message))
+        if self.verbose:
+            print "{{:{}}} {{:8}}ms".format(self.messagelen).format(message, self.duration_ms(self.subtimes[-1]))
 
 def populate_from_recons(fname):
+    t = Timer(True, 30)
     base = os.path.dirname(fname)
     f = open(fname)
     lines = f.readlines()
@@ -144,20 +172,86 @@ def populate_from_recons(fname):
     for line in lines:
         source, sourcefile = [x.strip() for x in line.split(":")]
         sources[source] = os.path.join(base, sourcefile)
+    t.measure("header processed")
+    count_parishes = None
+    count_villages = None
+    count_individuals = None
+    count_families = None
     if "parishes" in sources:
         with open(sources["parishes"]) as f:
             data = json.load(f)
-            print len(data)
+            for d in data:
+                parish = Parish(**d)
+                session.add(parish)
+            count_parishes = len(data)
+    t.measure("{} parishes added".format(count_parishes))
     if "villages" in sources:
         with open(sources["villages"]) as f:
             data = json.load(f)
-            print len(data)
+            for d in data:
+                village = Village(**d)
+                session.add(village)
+            count_villages = len(data)
+    session.flush()
+    t.measure("{} villages added".format(count_villages))
     if "individuals" in sources:
         with open(sources["individuals"]) as f:
             data = json.load(f)
-            print len(data)
+            for d in data:
+                name_first = u(" ".join(d["name"].split()[:-1]))
+                name_family = u(d["name"].split()[-1] if d["name"].strip() else None)
+                ind = Individual(
+                        xref = u(d["hiski_id"]),
+                        name = u(d["name"]),
+                        name_first = name_first,
+                        name_family = name_family,
+                        tag = u"INDI",
+                        sex = u"?",
+                        birth_date_string = u"{}.{}.{}".format(d["day"], d["month"], d["year"]),
+                        birth_date_year = d["year"],
+                        death_date_string = None,
+                        death_date_year = None,
+                        # todo: revise soundex storing to be more sensible
+                        soundex6family = u(soundex.soundex(name_family)),
+                        )
+                session.add(ind)
+            count_individuals = len(data)
+    session.flush()
+    t.measure("{} individuals added".format(count_individuals))
     if "edges" in sources:
         with open(sources["edges"]) as f:
             data = json.load(f)
-            print len(data)
+            parent_candidates = {}
+            for d in data:
+                if not d["child"] in parent_candidates:
+                    parent_candidates[d["child"]] = []
+                parent_candidates[d["child"]].append(d)
+            family_candidates = {}
+            of_len = {}
+            for child, parents in parent_candidates.iteritems():
+                key = tuple([x["parent"] for x in parents])
+                if not key in family_candidates:
+                    family_candidates[key] = []
+                family_candidates[key].append(child)
+                of_len[len(parents)] = of_len.get(len(parents), 0) + 1
+            i = 0
+            for parents, children in family_candidates.iteritems():
+                i += 1
+                fam_id = u"F{}".format(i)
+                fam = Family(
+                        xref = fam_id,
+                        tag = u"FAM",
+                        )
+                session.add(fam)
+                for parent in parents:
+                    ind = Individual.query.filter_by(xref = parent).first()
+                    fam.parents.append(ind)
+                for child in children:
+                    ind = Individual.query.filter_by(xref = child).first()
+                    fam.children.append(ind)
+            print len(parent_candidates), len(family_candidates)
+            print of_len
+            count_families = len(data)
+    session.commit()
+    t.measure("{} families added".format(count_families))
 
