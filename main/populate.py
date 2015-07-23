@@ -2,6 +2,7 @@
 import os
 import time
 import json
+from instrumenting.instrumenting import Timer
 from gedcom import gedcom
 from soundexpy import soundex
 from .models import *
@@ -74,10 +75,12 @@ def populate_from_gedcom(fname, store_gedcom=False):
                     death_date_year = get_chain(entry, "DEAT.DATE.year"),
                     # death_date
                     # soundex encodings
-                    soundex6first = ensure_unicode(soundex.soundex(name_first, 6)),
-                    soundex6family = ensure_unicode(soundex.soundex(name_family, 6)),
-                    soundex3first = ensure_unicode(soundex.soundex(name_first, 3)),
-                    soundex3family = ensure_unicode(soundex.soundex(name_family, 3)),
+                    soundex6first = ensure_unicode(soundex.soundex(name_first.upper(), 6)),
+                    soundex6family = ensure_unicode(soundex.soundex(name_family.upper(), 6)),
+                    soundex3first = ensure_unicode(soundex.soundex(name_first.upper(), 3)),
+                    soundex3family = ensure_unicode(soundex.soundex(name_family.upper(), 3)),
+                    soundex_first = u(soundex.soundex(name_first.upper())),
+                    soundex_family = u(soundex.soundex(name_family.upper())),
                     # loaded gedcom
                     loaded_gedcom = ensure_unicode(gedcom.reform(entry)) if store_gedcom else None,
                     )
@@ -134,33 +137,6 @@ def reform_gedcom():
             entry = gedcom.Entry(0, "@F{}@".format(nextid), "FAM", None)
 
 
-class Timer:
-    def __init__(self, verbose=False, messagelen=20):
-        now = time.time()
-        self.times = [(now, now, "", [])]
-        self.subtimes = []
-        self.verbose = verbose
-        self.messagelen = messagelen
-    def duration_ms(self, entry):
-        return int((entry[1] - entry[0]) * 1000)
-    def measure(self, message):
-        if len(message) > self.messagelen:
-            self.messagelen = len(message) + 10
-        now = time.time()
-        self.times.append((self.times[-1][1], now, message, self.subtimes))
-        self.subtimes = []
-        if self.verbose:
-            print "{{:{}}} {{:8}}ms".format(self.messagelen).format(message, self.duration_ms(self.times[-1]))
-    def submeasure(self, message):
-        if len(message) > self.messagelen:
-            self.messagelen = len(message) + 10
-        now = time.time()
-        if self.subtimes:
-            self.subtimes.append((self.subtimes[-1][1], now, message))
-        else:
-            self.subtimes.append((self.times[-1][1], now, message))
-        if self.verbose:
-            print "{{:{}}} {{:8}}ms".format(self.messagelen).format(message, self.duration_ms(self.subtimes[-1]))
 
 def populate_from_recons(fname):
     t = Timer(True, 30)
@@ -199,7 +175,7 @@ def populate_from_recons(fname):
             data = json.load(f)
             for d in data:
                 name_first = u(" ".join(d["name"].split()[:-1]))
-                name_family = u(d["name"].split()[-1] if d["name"].strip() else None)
+                name_family = u(d["name"].split()[-1] if d["name"].strip() else "")
                 ind = Individual(
                         xref = u(d["hiski_id"]),
                         name = u(d["name"]),
@@ -212,7 +188,9 @@ def populate_from_recons(fname):
                         death_date_string = None,
                         death_date_year = None,
                         # todo: revise soundex storing to be more sensible
-                        soundex6family = u(soundex.soundex(name_family)),
+                        soundex6family = u(soundex.soundex(name_family.upper())),
+                        soundex_first = u(soundex.soundex(name_first.upper())),
+                        soundex_family = u(soundex.soundex(name_family.upper())),
                         )
                 session.add(ind)
             count_individuals = len(data)
@@ -249,8 +227,6 @@ def populate_from_recons(fname):
                 for child in children:
                     ind = Individual.query.filter_by(xref = child).first()
                     fam.children.append(ind)
-            print len(parent_candidates), len(family_candidates)
-            print of_len
             count_families = len(data)
     session.commit()
     t.measure("{} families added".format(count_families))

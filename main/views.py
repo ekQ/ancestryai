@@ -14,6 +14,7 @@ from flask import (
     request,
 )
 from flask.ext.babel import refresh
+from instrumenting.instrumenting import Timer
 from soundexpy import soundex
 from . import app
 from gedcom import gedcom
@@ -79,67 +80,74 @@ def language(lang):
 
 @app.route("/json/search/firstname/<term>/")
 def json_search_firstname(term):
-    t0 = time.time()
-    soundex6term = soundex.soundex(term, 6)
-    soundex3term = soundex.soundex(term, 3)
-    inds = None
+    t = Timer()
+    soundex_term = soundex.soundex(term.upper())
+    inds = Individual.query.filter_by(soundex_first = soundex_term).all()
     if not inds:
-        inds = Individual.query.filter_by(soundex6first = soundex6term).all()
-    if not inds:
-        inds = Individual.query.filter_by(soundex3first = soundex3term).all()
-    if not inds:
+        print "No matches"
         return jsonify({
-            "soundex6": soundex6term,
+            "soundex": soundex_term,
             "result": False,
         })
+    t.measure("Database queried")
     inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
-    t1 = time.time()
+    t.measure("Candidates sorted with jaro distance")
+    ind_dict = [x.as_dict() for x in inds]
+    t.measure("Converted individuals to dicts")
+    if app.debug:
+        t.print_all()
     return jsonify({
-        "soundex6": soundex6term,
+        "soundex": soundex_term,
         "result": True,
         "count": len(inds),
-        "inds": [x.as_dict() for x in inds],
-        "time": t1 - t0,
+        "inds": ind_dict,
+        "time": t.full_duration(),
     })
 
 @app.route("/json/search/familyname/<term>/")
 def json_search_familyname(term):
-    t0 = time.time()
-    soundex6term = soundex.soundex(term, 6)
-    soundex3term = soundex.soundex(term, 3)
-    inds = None
-    if not inds:
-        inds = Individual.query.filter_by(soundex6family = soundex6term).all()
-    if not inds:
-        inds = Individual.query.filter_by(soundex3family = soundex3term).all()
+    t = Timer()
+    soundex_term = soundex.soundex(term.upper())
+    inds = Individual.query.filter_by(soundex_family = soundex_term).all()
     if not inds:
         return jsonify({
             "soundex6": soundex6term,
             "result": False,
         })
+    t.measure("Database queried")
     inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_family, term), reverse=True)
-    t1 = time.time()
+    t.measure("Candidates sorted with jaro distance")
+    ind_dict = [x.as_dict() for x in inds]
+    t.measure("Converted individuals to dicts")
+    if app.debug:
+        t.print_all()
     return jsonify({
-        "soundex6": soundex6term,
+        "soundex": soundex_term,
         "result": True,
         "count": len(inds),
-        "inds": [x.as_dict() for x in inds],
-        "time": t1 - t0,
+        "inds": ind_dict,
+        "time": t.full_duration(),
     })
 
 @app.route("/json/search/pure-python-family/<term>/")
 def json_search_pure_python_family(term):
-    t0 = time.time()
+    t = Timer()
     inds = Individual.query.all()
+    t.measure("Fetched all individuals from database")
     inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_family, term), reverse=True)
+    t.measure("Sorted with jaro distance")
     inds = inds[:25]
-    t1 = time.time()
+    t.measure("Pruned to a limit")
+    ind_dict = [x.as_dict() for x in inds]
+    t.measure("Converted individuals to dicts")
+    if app.debug:
+        t.print_all()
     return jsonify({
-        "soundex6": "-",
+        "soundex": "-",
         "result": True,
         "count": len(inds),
-        "inds": [x.as_dict() for x in inds],
-        "time": t1 - t0,
+        "inds": ind_dict,
+        "time": t.full_duration(),
     })
 
 @app.route("/json/setting/<key>/")

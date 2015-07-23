@@ -82,8 +82,8 @@ function Node(data) {
     this.color_by_soundex = color_hash(
             // because fooin and fooinen were mixed a lot in my sample data
             endsWith(this.family_name, "nen") ?
-                this.data.soundex6family.replace(/5(0*)$/, "0$1") :
-                this.data.soundex6family
+                this.data.soundex_family.replace(/5$/, "") :
+                this.data.soundex_family
             );
     this.color_by_sex = color_sex(this.data.sex);
     this.last_open_descendant_year = this.year;

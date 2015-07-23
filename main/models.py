@@ -69,6 +69,9 @@ class Individual(Base):
     soundex3first = Column(Unicode(3))
     soundex3family = Column(Unicode(3))
 
+    soundex_first = Column(Unicode(16))
+    soundex_family = Column(Unicode(16))
+
     loaded_gedcom = Column(UnicodeText)
     def as_dict(self):
         return {
@@ -87,7 +90,23 @@ class Individual(Base):
             "sub_families": [x.xref for x in self.sub_families],
             "sup_families": [x.xref for x in self.sup_families],
             "soundex6family": self.soundex6family,
+            "soundex_family": self.soundex_family,
         }
+
+class ParentProbability(Base):
+    __tablename__ = "parent_probability"
+    id = Column(Integer, primary_key=True)
+    person_id = Column(Integer, ForeignKey("individual.id"))
+    person = relationship("Individual",
+            foreign_keys = "ParentProbability.person_id",
+            backref = "parent_probabilities",
+            )
+    parent_id = Column(Integer, ForeignKey("individual.id"))
+    parent = relationship("Individual",
+            foreign_keys = "ParentProbability.parent_id",
+            backref = "child_probabilities",
+            )
+    probability = Column(Float)
 
 class Family(Base):
     __tablename__ = "family"

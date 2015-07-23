@@ -77,8 +77,8 @@
                             Hide
                         </button>
                         <dl ng-if="menu.Hiski.debug_mode">
-                            <dt>soundex6family</dt>
-                                <dd>{{ menu.Hiski.selected.data.soundex6family }}</dd>
+                            <dt>soundex_family</dt>
+                                <dd>{{ menu.Hiski.selected.data.soundex_family }}</dd>
                             <dt>fuzzy index</dt>
                                 <dd>{{ menu.Hiski.selected.order_fuzzy_index }}</dd>
                             <dt>order reason</dt>
@@ -119,7 +119,7 @@
                             <button type="submit" translate>Search</button>
                             <div class="searchresults">
                                 <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
-                                <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex6 }})</div>
+                                <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex }})</div>
                                 <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
                                     {{ ind.name }}
                                 </div>

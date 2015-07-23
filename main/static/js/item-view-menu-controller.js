@@ -101,7 +101,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
 
         menu.search_by = "firstname";
         menu.search_term = "";
-        menu.search_soundex6 = "";
+        menu.search_soundex = "";
         menu.search_result_term = "";
         menu.search_result_list = [];
         menu.search_time = "-";
@@ -128,7 +128,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.show_search = function(json, term) {
             menu.search_result_list = json["inds"];
             menu.search_result_term = term;
-            menu.search_soundex6 = json["soundex6"];
+            menu.search_soundex = json["soundex"];
             menu.search_time = json["time"];
             menu._redraw();
         };
