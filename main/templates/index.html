@@ -72,6 +72,8 @@
                                 <dd ng-if="menu.Hiski.selected.data.sex == 'M'" translate>Male</dd>
                                 <dd ng-if="menu.Hiski.selected.data.sex == 'F'" translate>Female</dd>
                                 <dd ng-if="menu.Hiski.selected.data.sex == '?'" translate>Unknown</dd>
+                            <dt translate ng-if="menu.Hiski.selected.has_probabilities">Parent probabilities</dt>
+                                <dd ng-repeat="p in menu.Hiski.selected.parent_probabilities">{{ p.name }}: {{p.prob}}</dd>
                         </dl>
                         <button ng-click="menu.Hiski.toggle_hide_selected()" ng-if="menu.Hiski.selected !== null" translate>
                             Hide

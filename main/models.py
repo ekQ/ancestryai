@@ -1,4 +1,5 @@
 
+import json
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from main.database import Base, session
@@ -64,16 +65,15 @@ class Individual(Base):
     village_id = Column(Integer, ForeignKey("village.id"))
     village = relationship("Village", backref="individuals")
 
-    soundex6first = Column(Unicode(6))
-    soundex6family = Column(Unicode(6))
-    soundex3first = Column(Unicode(3))
-    soundex3family = Column(Unicode(3))
-
     soundex_first = Column(Unicode(16))
     soundex_family = Column(Unicode(16))
 
+    pre_dicted = Column(UnicodeText)
+
     loaded_gedcom = Column(UnicodeText)
     def as_dict(self):
+        if self.pre_dicted:
+            return json.loads(self.pre_dicted)
         return {
             "xref": self.xref,
             "name": self.name,
@@ -89,8 +89,8 @@ class Individual(Base):
             "death_date": self.death_date,
             "sub_families": [x.xref for x in self.sub_families],
             "sup_families": [x.xref for x in self.sup_families],
-            "soundex6family": self.soundex6family,
             "soundex_family": self.soundex_family,
+            "parent_probabilities": [{"xref": x.parent.xref, "name": x.parent.name, "prob": x.probability} for x in self.parent_probabilities],
         }
 
 class ParentProbability(Base):

@@ -75,10 +75,6 @@ def populate_from_gedcom(fname, store_gedcom=False):
                     death_date_year = get_chain(entry, "DEAT.DATE.year"),
                     # death_date
                     # soundex encodings
-                    soundex6first = ensure_unicode(soundex.soundex(name_first.upper(), 6)),
-                    soundex6family = ensure_unicode(soundex.soundex(name_family.upper(), 6)),
-                    soundex3first = ensure_unicode(soundex.soundex(name_first.upper(), 3)),
-                    soundex3family = ensure_unicode(soundex.soundex(name_family.upper(), 3)),
                     soundex_first = u(soundex.soundex(name_first.upper())),
                     soundex_family = u(soundex.soundex(name_family.upper())),
                     # loaded gedcom
@@ -188,7 +184,6 @@ def populate_from_recons(fname):
                         death_date_string = None,
                         death_date_year = None,
                         # todo: revise soundex storing to be more sensible
-                        soundex6family = u(soundex.soundex(name_family.upper())),
                         soundex_first = u(soundex.soundex(name_first.upper())),
                         soundex_family = u(soundex.soundex(name_family.upper())),
                         )
@@ -204,6 +199,17 @@ def populate_from_recons(fname):
                 if not d["child"] in parent_candidates:
                     parent_candidates[d["child"]] = []
                 parent_candidates[d["child"]].append(d)
+            t.submeasure("edges to parent_candidates")
+            for d in data:
+                parent = Individual.query.filter_by(xref = d["parent"]).first()
+                person = Individual.query.filter_by(xref = d["child"]).first()
+                pp = ParentProbability(
+                        parent = parent,
+                        person = person,
+                        probability = d["prob"],
+                        )
+                session.add(pp)
+            t.submeasure("parent probabilities")
             family_candidates = {}
             of_len = {}
             for child, parents in parent_candidates.iteritems():
@@ -212,6 +218,7 @@ def populate_from_recons(fname):
                     family_candidates[key] = []
                 family_candidates[key].append(child)
                 of_len[len(parents)] = of_len.get(len(parents), 0) + 1
+            t.submeasure("parent_candidates to family_candidates")
             i = 0
             for parents, children in family_candidates.iteritems():
                 i += 1
@@ -227,7 +234,13 @@ def populate_from_recons(fname):
                 for child in children:
                     ind = Individual.query.filter_by(xref = child).first()
                     fam.children.append(ind)
+            t.submeasure("families added and linked to individuals")
             count_families = len(data)
-    session.commit()
     t.measure("{} families added".format(count_families))
+    for ind in Individual.query.all():
+        ind.pre_dicted = u(json.dumps(ind.as_dict()))
+    t.measure("{} individuals pre dicted".format(count_individuals))
+    t.print_total()
+    session.commit()
+
 

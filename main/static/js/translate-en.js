@@ -44,6 +44,7 @@ translations.en = {
     "::valid": "Valid data",
     "Comment:": "Comment:",
     "Submit": "Submit",
+    "Unknown": "Unknown",
 
     // language selection
     "Finnish": "Suomi",

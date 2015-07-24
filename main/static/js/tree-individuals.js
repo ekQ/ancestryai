@@ -54,6 +54,8 @@ function Node(data) {
     this.name = data.name;
     this.first_name = data.name_first;
     this.family_name = data.name_family;
+    this.parent_probabilities = this.data.parent_probabilities;
+    this.has_probabilities = this.parent_probabilities.length > 0;
 
     /* graph and person relations */
     this.relations = [];

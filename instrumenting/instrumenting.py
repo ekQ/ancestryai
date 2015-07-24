@@ -30,6 +30,8 @@ class Timer:
         else:
             self.subtimes.append((self.times[-1][1], now, message))
         if self.verbose:
+            if len(self.subtimes) == 1:
+                print
             self.print_message(message, self.duration_ms(self.subtimes[-1]))
     def print_all(self):
         for t in self.times[1:]:
@@ -40,3 +42,5 @@ class Timer:
                 self.print_message(message, self.duration_ms(st))
     def full_duration(self):
         return self.times[-1][1] - self.times[0][0]
+    def print_total(self):
+        print "in total: {}".format(self.duration_ms(self.full_duration()))

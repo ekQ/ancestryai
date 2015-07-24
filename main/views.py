@@ -111,7 +111,7 @@ def json_search_familyname(term):
     inds = Individual.query.filter_by(soundex_family = soundex_term).all()
     if not inds:
         return jsonify({
-            "soundex6": soundex6term,
+            "soundex": soundex_term,
             "result": False,
         })
     t.measure("Database queried")
