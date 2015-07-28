@@ -96,6 +96,11 @@ function Node(data) {
     /* map related */
     this.mapx = _.random(0, 400000) / 1000.0;
     this.mapy = _.random(0, 160000) / 1000.0 - 80.0;
+    if(data.location.lat && data.location.lon) {
+        console.warn(data.location);
+        this.mapx = data.location.lat;
+        this.mapy = data.location.lon;
+    }
     this.map_projection_x = null;
     this.map_projection_y = null;
 

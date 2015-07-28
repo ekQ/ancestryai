@@ -36,12 +36,26 @@ class Parish(Base):
     id = Column(Integer, primary_key=True)
     lat = Column(Float)
     lon = Column(Float)
+    def as_dict(self):
+        return {
+            "type": "parish",
+            "id": self.id,
+            "lat": self.lat,
+            "lon": self.lon,
+        }
 
 class Village(Base):
     __tablename__ = "village"
     id = Column(Integer, primary_key=True)
     lat = Column(Float)
     lon = Column(Float)
+    def as_dict(self):
+        return {
+            "type": "village",
+            "id": self.id,
+            "lat": self.lat,
+            "lon": self.lon,
+        }
 
 class Individual(Base):
     __tablename__ = "individual"
@@ -74,6 +88,11 @@ class Individual(Base):
     def as_dict(self):
         if self.pre_dicted:
             return json.loads(self.pre_dicted)
+        location = {"lat": None, "lon": None, "type": "none"}
+        if self.village:
+            location = self.village.as_dict()
+#        if self.parish:
+#            location = self.parish.as_dict()
         return {
             "xref": self.xref,
             "name": self.name,
@@ -91,6 +110,7 @@ class Individual(Base):
             "sup_families": [x.xref for x in self.sup_families],
             "soundex_family": self.soundex_family,
             "parent_probabilities": [{"xref": x.parent.xref, "name": x.parent.name, "prob": x.probability} for x in self.parent_probabilities],
+            "location": location,
         }
 
 class ParentProbability(Base):

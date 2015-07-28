@@ -135,7 +135,7 @@ def reform_gedcom():
 
 
 def populate_from_recons(fname):
-    t = Timer(True, 30)
+    t = Timer(True, 48)
     base = os.path.dirname(fname)
     f = open(fname)
     lines = f.readlines()
@@ -188,6 +188,15 @@ def populate_from_recons(fname):
                         soundex_family = u(soundex.soundex(name_family.upper())),
                         )
                 session.add(ind)
+            t.submeasure("individual objects created")
+            session.flush()
+            for d in data:
+                if d["village_id"] == None and d["parish_id"] == None:
+                    continue
+                ind = Individual.query.filter_by(xref = d["hiski_id"]).first()
+                ind.village = Village.query.filter_by(id = d["village_id"]).first()
+                ind.parish = Parish.query.filter_by(id = d["parish_id"]).first()
+            t.submeasure("villages and parishes linked")
             count_individuals = len(data)
     session.flush()
     t.measure("{} individuals added".format(count_individuals))
@@ -240,7 +249,8 @@ def populate_from_recons(fname):
     for ind in Individual.query.all():
         ind.pre_dicted = u(json.dumps(ind.as_dict()))
     t.measure("{} individuals pre dicted".format(count_individuals))
-    t.print_total()
     session.commit()
+    t.measure("commit")
+    t.print_total()
 
 
