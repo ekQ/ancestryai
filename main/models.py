@@ -91,8 +91,8 @@ class Individual(Base):
         location = {"lat": None, "lon": None, "type": "none"}
         if self.village:
             location = self.village.as_dict()
-#        if self.parish:
-#            location = self.parish.as_dict()
+        elif self.parish:
+            location = self.parish.as_dict()
         return {
             "xref": self.xref,
             "name": self.name,
