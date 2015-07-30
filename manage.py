@@ -20,6 +20,8 @@ commands
         gedcom <fname>  - populate from a gedcom file
         store-gedcom    - store full gedcom data for nodes in database. Useful
                           if writing out is desired later on.
+        recons <fname>  - populate from a recons file, where the given file is
+                          a header file.
     write             - write gedcom out from the database
         reform          - reform the gedcom data in database
         gedcom <fname>  - write the gedcom data to the given file
