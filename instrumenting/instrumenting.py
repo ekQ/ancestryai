@@ -43,4 +43,4 @@ class Timer:
     def full_duration(self):
         return self.times[-1][1] - self.times[0][0]
     def print_total(self):
-        print "in total: {}".format(int(self.full_duration() * 1000))
+        print "in total: {}ms".format(int(self.full_duration() * 1000))
