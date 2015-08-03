@@ -89,6 +89,13 @@ function map_init() {
                 lines
                         .attr("d", function(d) { return linefunction([d.p, d.c]) })
                         ;
+                var move_to_front = function(elem) {
+                    elem.parentNode.appendChild(elem);
+                }
+                nodes.each(function(d) {
+                    if(d == Hiski.selected)
+                        move_to_front(this);
+                })
             }
         };
     };
