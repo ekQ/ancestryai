@@ -48,6 +48,7 @@ translations.fi = {
     "Comment:": "Kommentti:",
     "Submit": "Lähetä",
     "Unknown": "Tuntematon",
+    "Hide descendants": "Piilota jälkeläiset",
 
     // language selection
     "Finnish": "Suomi",

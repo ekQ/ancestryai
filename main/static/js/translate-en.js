@@ -45,6 +45,7 @@ translations.en = {
     "Comment:": "Comment:",
     "Submit": "Submit",
     "Unknown": "Unknown",
+    "Hide descendants": "Hide descendants",
 
     // language selection
     "Finnish": "Suomi",

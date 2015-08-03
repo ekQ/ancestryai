@@ -76,7 +76,7 @@
                                 <dd ng-repeat="p in menu.Hiski.selected.parent_probabilities">{{ p.name }}: {{p.prob}}</dd>
                         </dl>
                         <button ng-click="menu.Hiski.toggle_hide_selected()" ng-if="menu.Hiski.selected !== null" translate>
-                            Hide
+                            Hide descendants
                         </button>
                         <dl ng-if="menu.Hiski.debug_mode">
                             <dt>soundex_family</dt>

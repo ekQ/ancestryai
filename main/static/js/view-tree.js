@@ -141,6 +141,7 @@ function enter(view) {
             .append("g")
                 .classed("node", true)
                 .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
+                .style("cursor", "pointer")
                 .on("click", function(d) {
                     Hiski.select_node(d, true);
                     d.expand_surroundings();
@@ -204,10 +205,28 @@ function enter(view) {
             .append("g")
                 .classed("relation", true)
                 .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
+                .style("cursor", "pointer")
+                .on("click", function(d) {
+                    if(d.next_to_hidden())
+                        d.expand_surroundings();
+                    else if(d.next_to_selected())
+                        Hiski.hide_relative(Hiski.selected, d);
+                })
             ;
     newrelations.append("circle")
             .attr("r", 5)
-            .on("click", function(d) { d.expand_surroundings(); })
+            .style("cursor", "pointer")
+            ;
+    newrelations.append("svg:text")
+            .attr("text-anchor", "middle")
+            .attr("dominany-baseline", "central")
+            .attr("y", 4)
+            .text(function(d) {
+                return d.next_to_hidden() ? "+" : "";
+            })
+            .style("font-weight", "bold")
+            .style("font-size", "80%")
+            .style("fill", function(d) { return d.next_to_selected() ? "#000000" : "#ffffff" })
             ;
 }
 function render_all() {
@@ -268,15 +287,6 @@ function render(view) {
             move_to_front(this);
     })
 
-    var next_to_selected = function(d) {
-        if(Hiski.selected === null)
-            return false;
-        for(var i = 0; i < Hiski.selected.relations.length; i++) {
-            if(Hiski.selected.relations[i] == d)
-                return true;
-        }
-        return false;
-    }
     if(Hiski.lastselected != Hiski.selected) {
         view.relationsvg.selectAll("circle")
                 .style("stroke", "#ffffff")
@@ -284,7 +294,10 @@ function render(view) {
                 ;
     }
     view.relationsvg.selectAll("circle")
-            .attr("r", 5)
+//            .attr("r", 5)
+            .attr("r", function(d) {
+                return d.next_to_hidden() ? 8 : 5;
+            })
             ;
     view.relationsvg
             .transition()
@@ -297,9 +310,15 @@ function render(view) {
 //            .duration(short_duration)
             ;
     view.relationsvg.selectAll("circle")
-            .style("fill", function(d) { return next_to_selected(d) ? "#ffffff" : "#000000" })
-            .style("stroke", function(d) { return next_to_selected(d) ? "#000000" : "#ffffff" })
+            .style("fill", function(d) { return d.next_to_selected() ? "#ffffff" : "#000000" })
+            .style("stroke", function(d) { return d.next_to_selected() ? "#000000" : "#ffffff" })
 //            .attr("r", function(d) { return next_to_selected(d) ? 8 : 5 })
+            ;
+    view.relationsvg.selectAll("text")
+            .text(function(d) {
+                return d.next_to_hidden() ? "+" : "";
+            })
+            .style("fill", function(d) { return d.next_to_selected() ? "#000000" : "#ffffff" })
             ;
 }
 

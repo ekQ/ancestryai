@@ -361,8 +361,12 @@ var Hiski = {
         from preloaded_nodes and adds that, if it was preloaded on for example
         a search.
         */
-        if(xref in this.node_dict)
+        if(xref in this.node_dict) {
+            if(!this.node_dict[xref].visible) {
+                this.open_fold(this.node_dict[xref]);
+            }
             return;
+        }
         if(xref in this.relation_dict)
             return;
         if(xref in this.preloaded_nodes) {
@@ -450,9 +454,11 @@ var Hiski = {
         var pad = 80;
         var pad_years = 9;
         var years_x = [];
+        // initialize reservation buffer
         for(var i = 0; i < 3000; i++) {
             years_x.push(x);
         }
+        // position nodes
         this.reset_node_visited();
         var arr = this.node_order;
         for(var i = 0; i < arr.length; i++) {
@@ -504,12 +510,55 @@ var Hiski = {
                 this.nodes[i].x = i*60 + 80;
             }
         }
+        // position relations
         for(var i = 0; i < this.relations.length; i++) {
             var relation = this.relations[i];
             var pos = relation_preferred_position(relation);
             relation.x = pos[0];
             relation.y = pos[1];
         }
+        // separate overlapping relations
+        var relations_copy = [];
+        var i = this.relations.length;
+        while(i--) { relations_copy[i] = this.relations[i]; }
+        relations_copy.sort(function(a,b) {
+            if(a.y != b.y)
+                return a.y - b.y;
+            if(a.x != b.x)
+                return a.x - b.x;
+            var apfis = a.parent_fuzzy_index_sum();
+            var bpfis = b.parent_fuzzy_index_sum();
+            if(apfis != bpfis)
+                return apfis - bpfis;
+            if(a.children.length > 0 && b.children.length > 0)
+                return a.children[0].order_fuzzy_index - b.children[0].order_fuzzy_index;
+            if(b.children.length > 0)
+                return 1;
+            if(a.children.length > 0)
+                return -1;
+            return 0;
+        });
+        var lastx = null;
+        var lasty = null;
+        var lasti = 0;
+        var relation_separation_pad = 14;
+        for(var i = 0; i < relations_copy.length; i++) {
+            var x = relations_copy[i].x;
+            var y = relations_copy[i].y;
+            if(lastx === null || (Math.abs(x - lastx) > 10) || (Math.abs(y - lasty) > 10) || (i == relations_copy.length - 1)) {
+                var width = i - lasti + ((i == relations_copy.length - 1 && Math.abs(x - lastx) < 10 && Math.abs(y - lasty) < 10) ? 1 : 0);
+                if(width > 1) {
+                    for(var j = lasti; j < lasti + width; j++) {
+                        relations_copy[j].x = relations_copy[j].x + (j - lasti - (width - 1) / 2) * relation_separation_pad;
+                    }
+                }
+                lastx = x;
+                lasty = y;
+                lasti = i;
+            }
+        }
+
+        // if zooming to somewhere, do it
         if(this.zoom_to !== null) {
             locate_node_on_all(this.zoom_to);
             this.zoom_to = null;
@@ -536,10 +585,138 @@ var Hiski = {
         return "#ff0000";
     },
     toggle_hide_selected: function() {
+        this.hide_descendants(this.selected);
+        return;
         // todo: rethink
         if(this.selected) {
             if(this.selected.type == "node") {
                 this.selected.visible = !this.selected.visible;
+            }
+        }
+        this.calc_layout();
+        render_all();
+    },
+    next_fold: 1,
+    hide_descendants: function(node, family) {
+        this.reset_node_visited();
+        var buffer = [];
+        if(typeof family !== "undefined") {
+            for(var i = 0; i < family.children.length; i++)
+                buffer.push([family.children[i], false]);
+            for(var i = 0; i < node.children.length; i++)
+                buffer.push([node.children[i], true]);
+        }
+        buffer.push([node, false]);
+        var prebuffer = [node];
+        var k = 0;
+        var fold_id = this.next_fold++;
+        while(prebuffer.length > 0 && k < 20) {
+            k += 1;
+            var cur = prebuffer.shift();
+            for(var i = 0; i < cur.parents.length; i++) {
+                buffer.push([cur.parents[i], true]);
+                prebuffer.push(cur.parents[i]);
+            }
+        }
+        while(buffer.length > 0 && k < 100) {
+            k += 1;
+            var arr = buffer.shift();
+            var cur = arr[0];
+            if(cur.visited)
+                continue;
+            if(!cur.is_visible())
+                continue;
+            var mode = arr[1];
+            for(var i = 0; i < cur.parents.length; i++) {
+                buffer.push([cur.parents[i], mode]);
+            }
+            for(var i = 0; i < cur.children.length; i++) {
+                buffer.splice(0, 0, [cur.children[i], mode]);
+            }
+            cur.visible = mode;
+            cur.visited = true;
+            if(mode == false)
+                cur.fold = fold_id;
+        }
+        node.visible = true;
+        node.fold = 0;
+        this.calc_layout();
+        render_all();
+    },
+    hide_ancestors: function(node, family) {
+        this.reset_node_visited();
+        var buffer = [];
+        if(typeof family !== "undefined") {
+            for(var i = 0; i < family.parents.length; i++)
+                buffer.push([family.parents[i], false]);
+            for(var i = 0; i < node.parents.length; i++)
+                buffer.push([node.parents[i], true]);
+        }
+        buffer.push([node, false]);
+        var prebuffer = [node];
+        var k = 0;
+        var fold_id = this.next_fold++;
+        while(prebuffer.length > 0 && k < 20) {
+            k += 1;
+            var cur = prebuffer.shift();
+            for(var i = 0; i < cur.children.length; i++) {
+                buffer.push([cur.children[i], true]);
+                prebuffer.push(cur.children[i]);
+            }
+        }
+        while(buffer.length > 0 && k < 100) {
+            k += 1;
+            var arr = buffer.shift();
+            var cur = arr[0];
+            if(cur.visited)
+                continue;
+            if(!cur.is_visible())
+                continue;
+            var mode = arr[1];
+            for(var i = 0; i < cur.children.length; i++) {
+                buffer.push([cur.children[i], mode]);
+            }
+            for(var i = 0; i < cur.parents.length; i++) {
+                buffer.splice(0, 0, [cur.parents[i], mode]);
+            }
+            cur.visible = mode;
+            cur.visited = true;
+            if(mode == false)
+                cur.fold = fold_id;
+        }
+        node.visible = true;
+        node.fold = 0;
+        this.calc_layout();
+        render_all();
+    },
+    hide_relative: function(node, family) {
+        for(var i = 0; i < family.parents.length; i++) {
+            if(family.parents[i] == node)
+                return this.hide_descendants(node, family);
+        }
+        for(var i = 0; i < family.children.length; i++) {
+            if(family.children[i] == node)
+                return this.hide_ancestors(node, family);
+        }
+    },
+    open_fold: function(node) {
+        var fold = node.fold;
+        if(fold == 0)
+            return;
+        var buffer = [node];
+        while(buffer.length > 0) {
+            var cur = buffer.shift();
+            if(cur.visited)
+                continue;
+            if(cur.fold != fold)
+                continue;
+            cur.fold = 0;
+            cur.visible = true;
+            for(var i = 0; i < cur.parents.length; i++) {
+                buffer.push(cur.parents[i]);
+            }
+            for(var i = 0; i < cur.children.length; i++) {
+                buffer.push(cur.children[i]);
             }
         }
         this.calc_layout();
