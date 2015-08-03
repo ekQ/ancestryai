@@ -362,13 +362,14 @@ var Hiski = {
         a search.
         */
         if(xref in this.node_dict) {
-            if(!this.node_dict[xref].visible) {
+            if(!this.node_dict[xref].is_visible()) {
                 this.open_fold(this.node_dict[xref]);
             }
             return;
         }
-        if(xref in this.relation_dict)
+        if(xref in this.relation_dict) {
             return;
+        }
         if(xref in this.preloaded_nodes) {
             Hiski.add_entry(this.preloaded_nodes[xref], reference);
             Hiski.delayed_render();
@@ -421,7 +422,7 @@ var Hiski = {
 
     /* custom layout stuff */
     layout_mode: "compact",
-    year_pixel_ratio: 5,
+    year_pixel_ratio: 6,
     calc_and_render_layout: function() {
         /*
         Calculates node positions and renders all subviews showing the tree view.
@@ -565,10 +566,6 @@ var Hiski = {
         }
     },
     color_mode: "family-name",
-    next_color_mode: function() {
-        // todo: use text based colouring keys
-        this.color_mode = (this.color_mode + 1) % 4;
-    },
     node_color_function: function(d) {
         /*
         Returns the node colour depending on the corresponding setting.
@@ -581,6 +578,8 @@ var Hiski = {
             return d.color_by_sex;
         } else if(Hiski.color_mode == "expendability") {
             return d.expandable() ? "#ccffcc" : "#dddddd";
+        } else if(Hiski.color_mode == "family-relation") {
+            return d.selection_relation_color();
         }
         return "#ff0000";
     },
@@ -703,6 +702,7 @@ var Hiski = {
         var fold = node.fold;
         if(fold == 0)
             return;
+        this.reset_node_visited();
         var buffer = [node];
         while(buffer.length > 0) {
             var cur = buffer.shift();
@@ -747,6 +747,59 @@ var Hiski = {
             redraw_views();
         }
         render_all();
+    },
+    update_selection_relations: function() {
+        for(var i = 0; i < this.nodes.length; i++) {
+            this.nodes[i].selection_relation = "";
+        }
+        for(var i = 0; i < this.relations.length; i++) {
+            this.relations[i].selection_relation = "";
+        }
+        if(this.selected == null)
+            return;
+        for(var i = 0; i < this.selected.relations.length; i++) {
+            this.selected.relations[i].set_selection_relation("next-to-selected");
+        }
+        var relation_terms = ["selected", {
+            children: ["child", {
+                children: ["grandchild", {
+                }],
+            }],
+            parents: ["parent", {
+                parents: ["grandparent", {
+                }],
+                children: ["sibling", {
+                }],
+            }],
+            spouses: ["spouse", {
+            }],
+        }];
+        this.reset_node_visited();
+        var buffer = [[this.selected, relation_terms]];
+        while(buffer.length > 0) {
+            var arr = buffer.shift();
+            var cur = arr[0];
+            if(cur.visited)
+                continue;
+            cur.visited = true;
+            var terms = arr[1][1];
+            cur.set_selection_relation(arr[1][0]);
+            if(terms.parents !== undefined) {
+                for(var i = 0; i < cur.parents.length; i++) {
+                    buffer.push([cur.parents[i], terms.parents]);
+                }
+            }
+            if(terms.children !== undefined) {
+                for(var i = 0; i < cur.children.length; i++) {
+                    buffer.push([cur.children[i], terms.children]);
+                }
+            }
+            if(terms.spouses !== undefined) {
+                for(var i = 0; i < cur.spouses.length; i++) {
+                    buffer.push([cur.spouses[i], terms.spouses]);
+                }
+            }
+        }
     },
     zoom_to: null,
 

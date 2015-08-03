@@ -41,6 +41,11 @@ function Relation(data) {
         }
         return false;
     };
+    this.selection_relation = "";
+    this.set_selection_relation = function(value, force) {
+        if(this.selection_relation == "" || force == true)
+            this.selection_relation = value;
+    };
 
     this.get_x = function() {
         return this.x;

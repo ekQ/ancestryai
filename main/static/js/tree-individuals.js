@@ -33,6 +33,22 @@ function color_sex(sex) {
 //    alert("unhandled sex: '"+sex+"'");
     return "#dddddd";
 }
+function color_selection_relation(rel) {
+    var colors = {
+        "selected":     "#aaffaa",
+        "parent":       "#ffaaaa",
+        "child":        "#aaaaff",
+        "sibling":      "#ffaaff",
+        "spouse":       "#ffffaa",
+        "grandparent":  "#ee4444",
+        "grandchild":   "#4444ee",
+    };
+    if(rel in colors)
+        return colors[rel];
+    if(rel == "")
+        return "#dddddd";
+    return "#eeeeee";
+}
 function endsWith(str, suffix) {
     /*
     Checks if a given string ends with a given suffix.
@@ -88,17 +104,25 @@ function Node(data) {
                 this.data.soundex_family
             );
     this.color_by_sex = color_sex(this.data.sex);
+    this.selection_relation_color = function() {
+        return color_selection_relation(this.selection_relation);
+    };
     this.last_open_descendant_year = this.year;
     this.timetraveller = false;
     this.visible = true;
     this.is_visible = function() { return this.visible; }
     this.fold = 0;
+    this.selection_relation = "";
+    this.set_selection_relation = function(value, force) {
+        if(this.selection_relation == "" || force == true)
+            this.selection_relation = value;
+    };
 
     /* map related */
     this.mapx = _.random(0, 400000) / 1000.0;
     this.mapy = _.random(0, 160000) / 1000.0 - 80.0;
     if(data.location.lat && data.location.lon) {
-        console.warn(data.location);
+//        console.warn(data.location);
         this.mapy = data.location.lat;
         this.mapx = data.location.lon;
     }

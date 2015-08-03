@@ -12,8 +12,8 @@ function map_node_transform(d) {
 
 function map_init() {
     Hiski.map = new google.maps.Map(d3.select("#map").node(), {
-            zoom: 8,
-            center: new google.maps.LatLng(37., 12.),
+            zoom: 7,
+            center: new google.maps.LatLng(62.9, 27.7),
             mapTypeId: google.maps.MapTypeId.TERRAIN,
             });
     var overlay = new google.maps.OverlayView();

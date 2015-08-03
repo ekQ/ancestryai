@@ -75,8 +75,8 @@ function Link(relation, node, type) {
 
     this.get_path_points = function() {
         var points = [];
-        var node_size = 20;
-        var relation_size = 5;
+        var node_size = 25;
+        var relation_size = 6;
         var pad = 0;
         var straight = 4;
         var y_space = this.relation.y_space - node_size - relation_size - straight*2 - pad*2;
@@ -103,11 +103,11 @@ function Link(relation, node, type) {
         if(distance < 1000)
             return "#000000";
         else if(distance < 3000)
-            return "#888888";
+            return "#666666";
         else if(distance < 6000)
-            return "#cccccc";
+            return "#aaaaaa";
         else
-            return "#e3e3e3";
+            return "#dddddd";
     };
 }
 var line_function = d3.svg.line()
