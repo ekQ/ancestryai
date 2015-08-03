@@ -316,7 +316,11 @@ function render(view) {
             ;
     view.relationsvg.selectAll("text")
             .text(function(d) {
-                return d.next_to_hidden() ? "+" : "";
+                if(d.next_to_hidden())
+                    return "+";
+                if(d.next_to_selected())
+                    return "-";
+                return "";
             })
             .style("fill", function(d) { return d.next_to_selected() ? "#000000" : "#ffffff" })
             ;
