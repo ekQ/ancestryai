@@ -72,6 +72,7 @@ class Individual(Base):
     death_date_string = Column(Unicode(64))
     death_date_year = Column(Integer)
     death_date = Column(Date)
+    component_id = Column(Integer)
 
     parish_id = Column(Integer, ForeignKey("parish.id"))
     parish = relationship("Parish", backref="individuals")
@@ -87,7 +88,10 @@ class Individual(Base):
     loaded_gedcom = Column(UnicodeText)
     def as_dict(self):
         if self.pre_dicted:
-            return json.loads(self.pre_dicted)
+            d = json.loads(self.pre_dicted)
+            # because at least currently this is calculated after the pre dicting
+            d["component_id"] = self.component_id
+            return d
         location = {"lat": None, "lon": None, "type": "none"}
         if self.village:
             location = self.village.as_dict()
@@ -133,6 +137,7 @@ class Family(Base):
     id = Column(Integer, primary_key=True)
     xref = Column(Unicode(16), index=True, unique=True)
     tag = Column(Unicode(4))
+    component_id = Column(Integer)
 
     loaded_gedcom = Column(UnicodeText)
 

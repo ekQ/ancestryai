@@ -203,3 +203,29 @@ def json_load_comments(xref):
         "comments": [x.as_dict() for x in comments],
     })
 
+
+@app.route("/json/people-path/<xref1>/<xref2>/")
+def json_people_path(xref1, xref2):
+    t = Timer(True, 40)
+    ind1 = Individual.query.filter_by(xref = xref1).first()
+    ind2 = Individual.query.filter_by(xref = xref1).first()
+    if ind1.component_id == 0:
+        raise Exception("component ids not populated")
+    if ind1.component_id != ind2.component_id:
+        return jsonift({
+            "result": True,
+            "xrefs": [],
+            "exists": False,
+        })
+    cid = ind1.component_id
+    t.measure("endpoints queried")
+    # takes almost a second. Joined load took over minute. We'll see if it will work without joinedload
+    inds = Individual.query.filter_by(component_id = cid).all()
+    fams = Family.query.filter_by(component_id = cid).all()
+    t.measure("loaded everything")
+    t.print_total()
+    return jsonify({
+        "result": True,
+        "xrefs": [],
+        "exists": True,
+    })

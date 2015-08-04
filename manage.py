@@ -62,7 +62,7 @@ if command == "db":
         print "* database exported"
 if command == "populate":
     import main
-    from main.populate import populate_from_gedcom, populate_from_recons
+    from main.populate import populate_from_gedcom, populate_from_recons, populate_component_ids
     for i,sub in enumerate(subs):
         if sub == "gedcom":
             fname = subs[i+1]
@@ -70,6 +70,8 @@ if command == "populate":
         if sub == "recons":
             fname = subs[i+1]
             populate_from_recons(fname)
+        if sub == "components":
+            populate_component_ids()
 if command == "write":
     import main
     from main.populate import reform_gedcom

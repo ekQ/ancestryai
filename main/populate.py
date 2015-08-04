@@ -254,3 +254,36 @@ def populate_from_recons(fname):
     t.print_total()
 
 
+def populate_component_ids():
+    t = Timer(True, 60)
+    inds = Individual.query.options(joinedload("*")).all()
+    fams = Family.query.options(joinedload("*")).all()
+#    dict_fams = {x.xref: x for x in fams}
+    t.measure("queried to memory")
+    for ind in inds:
+        ind.component_id = 0
+    t.measure("resetted component ids")
+    next_id = 0
+    max_size = 0
+    for ind in inds:
+        if ind.component_id > 0:
+            continue
+        next_id += 1
+        buf = [ind]
+        size = 0
+        while buf:
+            cur = buf.pop()
+            if cur.component_id > 0:
+                continue
+            cur.component_id = next_id
+            size += 1
+            for fam in cur.sub_families + cur.sup_families:
+                fam.component_id = next_id
+                for ind2 in fam.parents + fam.children:
+                    buf.append(ind2)
+#        t.submeasure("floodfill component {}".format(next_id))
+        max_size = max(max_size, size)
+    t.measure("floodfill {} components for {} people, max size {}".format(next_id, len(inds), max_size))
+    session.commit()
+    t.measure("commit")
+    t.print_total()
