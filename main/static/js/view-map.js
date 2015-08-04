@@ -67,12 +67,14 @@ function map_init() {
                     newlinedata.push({
                         p: Hiski.selected.parents[i],
                         c: Hiski.selected,
+                        rel: "parent",
                     });
                 }
                 for(var i = 0; i < Hiski.selected.children.length; i++) {
                     newlinedata.push({
                         p: Hiski.selected.children[i],
                         c: Hiski.selected,
+                        rel: "child",
                     });
                 }
             }
@@ -88,6 +90,7 @@ function map_init() {
                         ;
                 lines
                         .attr("d", function(d) { return linefunction([d.p, d.c]) })
+                        .style("stroke", function(d) { return color_selection_relation(d.rel, 1); })
                         ;
                 var move_to_front = function(elem) {
                     elem.parentNode.appendChild(elem);

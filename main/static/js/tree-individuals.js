@@ -33,18 +33,19 @@ function color_sex(sex) {
 //    alert("unhandled sex: '"+sex+"'");
     return "#dddddd";
 }
-function color_selection_relation(rel) {
+function color_selection_relation(rel, idx) {
+    idx = (typeof idx === "undefined") ? 0 : idx;
     var colors = {
-        "selected":     "#aaffaa",
-        "parent":       "#ffaaaa",
-        "child":        "#aaaaff",
-        "sibling":      "#ffaaff",
-        "spouse":       "#ffffaa",
-        "grandparent":  "#ee4444",
-        "grandchild":   "#4444ee",
+        "selected":     ["#aaffaa", "#44aa44"],
+        "parent":       ["#ffaaaa", "#aa4444"],
+        "child":        ["#aaaaff", "#5555bb"],
+        "sibling":      ["#ffaaff", "#aa44bb"],
+        "spouse":       ["#ffffaa", "#aaaa44"],
+        "grandparent":  ["#ee4444", "#992222"],
+        "grandchild":   ["#4444ee", "#222299"],
     };
     if(rel in colors)
-        return colors[rel];
+        return colors[rel][idx];
     if(rel == "")
         return "#dddddd";
     return "#eeeeee";
