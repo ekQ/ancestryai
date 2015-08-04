@@ -10,8 +10,8 @@ class Timer:
         self.messagelen = messagelen
     def duration_ms(self, entry):
         return int((entry[1] - entry[0]) * 1000)
-    def print_message(self, message, time_ms):
-        print "{{:{}}} {{:8}}ms".format(self.messagelen).format(message, time_ms)
+    def print_message(self, message, time_ms, is_submeasure=False):
+        print "{{:{}}} {{}}{{:8}}ms".format(self.messagelen).format(message, "    " if is_submeasure else "", time_ms)
     def measure(self, message):
         if len(message) > self.messagelen:
             self.messagelen = len(message) + 10
@@ -19,7 +19,7 @@ class Timer:
         self.times.append((self.times[-1][1], now, message, self.subtimes))
         self.subtimes = []
         if self.verbose:
-            self.print_message(message, self.duration_ms(self.times[-1]))
+            self.print_message(message, self.duration_ms(self.times[-1]), False)
     def submeasure(self, message):
         message = "    " + message
         if len(message) > self.messagelen:
@@ -32,14 +32,14 @@ class Timer:
         if self.verbose:
             if len(self.subtimes) == 1:
                 print
-            self.print_message(message, self.duration_ms(self.subtimes[-1]))
+            self.print_message(message, self.duration_ms(self.subtimes[-1]), True)
     def print_all(self):
         for t in self.times[1:]:
             begin, end, message, subtimes = t
-            self.print_message(message, self.duration_ms(t))
+            self.print_message(message, self.duration_ms(t), False)
             for st in subtimes:
                 sbegin, send, smessage = st
-                self.print_message(message, self.duration_ms(st))
+                self.print_message(message, self.duration_ms(st), True)
     def full_duration(self):
         return self.times[-1][1] - self.times[0][0]
     def print_total(self):
