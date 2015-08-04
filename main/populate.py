@@ -9,9 +9,11 @@ from .models import *
 from .database import session
 
 def ensure_unicode(s):
+    if isinstance(s, unicode):
+        return s
     if isinstance(s, str):
         return s.decode("utf8")
-    return s
+    return unicode(s)
 u = ensure_unicode
 
 # todo: use the gedcom.py implementation instead
@@ -149,6 +151,10 @@ def populate_from_recons(fname):
     count_villages = None
     count_individuals = None
     count_families = None
+    dict_parishes = {}
+    dict_villages = {}
+    dict_individuals = {}
+    dict_families = {}
     if "parishes" in sources:
         with open(sources["parishes"]) as f:
             data = json.load(f)
@@ -164,8 +170,12 @@ def populate_from_recons(fname):
                 village = Village(**d)
                 session.add(village)
             count_villages = len(data)
-    session.flush()
     t.measure("{} villages added".format(count_villages))
+    session.flush()
+    t.measure("session flushed")
+    dict_parishes = {x.id: x for x in Parish.query.all()}
+    dict_villages = {x.id: x for x in Village.query.all()}
+    t.measure("parishes and villages queried to memory")
     if "individuals" in sources:
         with open(sources["individuals"]) as f:
             data = json.load(f)
@@ -190,16 +200,24 @@ def populate_from_recons(fname):
                 session.add(ind)
             t.submeasure("individual objects created")
             session.flush()
+            dict_individuals = {x.xref: x for x in Individual.query.all()}
+            t.submeasure("individuals queried to memory")
             for d in data:
                 if d["village_id"] == None and d["parish_id"] == None:
                     continue
-                ind = Individual.query.filter_by(xref = d["hiski_id"]).first()
-                ind.village = Village.query.filter_by(id = d["village_id"]).first()
-                ind.parish = Parish.query.filter_by(id = d["parish_id"]).first()
+                ind = dict_individuals.get(u(d["hiski_id"]), None)
+                ind.village = dict_villages.get(d["village_id"], None)
+                ind.parish = dict_parishes.get(d["parish_id"], None)
+#                ind = Individual.query.filter_by(xref = d["hiski_id"]).first()
+#                ind.village = Village.query.filter_by(id = d["village_id"]).first()
+#                ind.parish = Parish.query.filter_by(id = d["parish_id"]).first()
             t.submeasure("villages and parishes linked")
             count_individuals = len(data)
-    session.flush()
+            t.submeasure("length measured")
+            session.flush()
+            t.submeasure("session flushed")
     t.measure("{} individuals added".format(count_individuals))
+    edge_errors = 0
     if "edges" in sources:
         with open(sources["edges"]) as f:
             data = json.load(f)
@@ -210,8 +228,13 @@ def populate_from_recons(fname):
                 parent_candidates[d["child"]].append(d)
             t.submeasure("edges to parent_candidates")
             for d in data:
-                parent = Individual.query.filter_by(xref = d["parent"]).first()
-                person = Individual.query.filter_by(xref = d["child"]).first()
+                parent = dict_individuals.get(u(d["parent"]), None)
+                person = dict_individuals.get(u(d["child"]), None)
+                if not parent or not person:
+                    edge_errors += 1
+                    continue
+#                parent = Individual.query.filter_by(xref = d["parent"]).first()
+#                person = Individual.query.filter_by(xref = d["child"]).first()
                 pp = ParentProbability(
                         parent = parent,
                         person = person,
@@ -237,16 +260,37 @@ def populate_from_recons(fname):
                         tag = u"FAM",
                         )
                 session.add(fam)
+            t.submeasure("families added")
+            session.flush()
+            t.submeasure("session flushed")
+            dict_families = {x.xref: x for x in Family.query.all()}
+            t.submeasure("families queried to memory")
+            i = 0
+            for parents, children in family_candidates.iteritems():
+                i += 1
+                fam_id = u"F{}".format(i)
+                fam = dict_families.get(fam_id)
                 for parent in parents:
-                    ind = Individual.query.filter_by(xref = parent).first()
+                    ind = dict_individuals.get(u(parent), None)
+                    if not ind:
+                        edge_errors += 1
+                        continue
+#                    ind = Individual.query.filter_by(xref = parent).first()
                     fam.parents.append(ind)
                 for child in children:
-                    ind = Individual.query.filter_by(xref = child).first()
+                    ind = dict_individuals.get(u(child), None)
+                    if not ind:
+                        edge_errors += 1
+                        continue
+#                    ind = Individual.query.filter_by(xref = child).first()
                     fam.children.append(ind)
-            t.submeasure("families added and linked to individuals")
+            t.submeasure("families linked to individuals")
+#            t.submeasure("families added and linked to individuals")
             count_families = len(data)
-    t.measure("{} families added".format(count_families))
-    for ind in Individual.query.all():
+            t.submeasure("length measured")
+    t.measure("{} families added{}".format(count_families, "with {} errors".format(edge_errors) if edge_errors > 0 else ""))
+#    for ind in dict_individuals.values():
+    for ind in Individual.query.options(joinedload("*")).all():
         ind.pre_dicted = u(json.dumps(ind.as_dict()))
     t.measure("{} individuals pre dicted".format(count_individuals))
     session.commit()

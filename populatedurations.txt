@@ -1,0 +1,82 @@
+Durations for three different versions of recons populating. Initial is a
+version that queries the database whenever needing an object. If the memory
+becomes a problem, the initial one might be better choice than the others.
+Inmemory loads the objects into a dict after creating them. However,
+pre-dicting time increased. Joinedload started from inmemory and added a
+joinedload to the query that pre-dicts the individuals.
+
+Result was a drop from 388 seconds to 120 seconds. Memory usage for 50k people
+test data was about 1.423g, as reported by top.
+
+initial
+-------
+header processed                                       14ms
+522 parishes added                                     45ms
+9410 villages added                                   655ms
+
+    individual objects created                       4402ms
+    villages and parishes linked                   128629ms
+51235 individuals added                            141518ms
+
+    edges to parent_candidates                        239ms
+    parent probabilities                            82007ms
+    parent_candidates to family_candidates             43ms
+    families added and linked to individuals        56150ms
+41352 families added                               138441ms
+51235 individuals pre dicted                        85807ms
+commit                                              22367ms
+in total: 388851ms
+
+inmemory
+--------
+header processed                                        1ms
+522 parishes added                                     28ms
+9410 villages added                                   248ms
+parishes and villages queried to memory               472ms
+
+    individual objects created                       4335ms
+    individuals queried to memory                    8404ms
+    villages and parishes linked                     2011ms
+    length measured                                     0ms
+51235 individuals added                             21726ms
+
+    edges to parent_candidates                        169ms
+    parent probabilities                             4841ms
+    parent_candidates to family_candidates             46ms
+    families added                                    369ms
+    families queried to memory                      10133ms
+    families linked to individuals                  31482ms
+    length measured                                     0ms
+41352 families added                                47043ms
+51235 individuals pre dicted                       227844ms
+commit                                              15357ms
+in total: 312721ms
+
+joinedload
+----------
+header processed                                        0ms
+522 parishes added                                     29ms
+9410 villages added                                   251ms
+session flushed                                       390ms
+parishes and villages queried to memory                82ms
+
+    individual objects created                       4357ms
+    individuals queried to memory                    8353ms
+    villages and parishes linked                     2041ms
+    length measured                                     0ms
+    session flushed                                  6863ms
+51235 individuals added                             21616ms
+
+    edges to parent_candidates                        168ms
+    parent probabilities                             4881ms
+    parent_candidates to family_candidates             45ms
+    families added                                    376ms
+    session flushed                                 10056ms
+    families queried to memory                        132ms
+    families linked to individuals                  31118ms
+    length measured                                     0ms
+41352 families added                                46779ms
+51235 individuals pre dicted                        34785ms
+commit                                              15609ms
+in total: 119546ms
+
