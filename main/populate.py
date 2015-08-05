@@ -9,9 +9,11 @@ from .models import *
 from .database import session
 
 def ensure_unicode(s):
+    if isinstance(s, unicode):
+        return s
     if isinstance(s, str):
         return s.decode("utf8")
-    return s
+    return unicode(s)
 u = ensure_unicode
 
 # todo: use the gedcom.py implementation instead
@@ -257,7 +259,7 @@ def populate_from_recons(fname):
 def populate_component_ids():
     t = Timer(True, 60)
     inds = Individual.query.options(joinedload("*")).all()
-    fams = Family.query.options(joinedload("*")).all()
+    fams = Family.query.options().all()
 #    dict_fams = {x.xref: x for x in fams}
     t.measure("queried to memory")
     for ind in inds:

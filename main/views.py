@@ -1,4 +1,5 @@
 
+import bisect
 import random
 import jellyfish
 import time
@@ -208,11 +209,16 @@ def json_load_comments(xref):
 def json_people_path(xref1, xref2):
     t = Timer(True, 40)
     ind1 = Individual.query.filter_by(xref = xref1).first()
-    ind2 = Individual.query.filter_by(xref = xref1).first()
-    if ind1.component_id == 0:
-        raise Exception("component ids not populated")
+    ind2 = Individual.query.filter_by(xref = xref2).first()
+    if ind1.component_id == 0 or ind1.component_id == None:
+        return jsonify({
+            "result": False,
+            "exists": False,
+            "message": "components not populated; cannot search paths",
+
+        })
     if ind1.component_id != ind2.component_id:
-        return jsonift({
+        return jsonify({
             "result": True,
             "xrefs": [],
             "exists": False,
@@ -221,11 +227,50 @@ def json_people_path(xref1, xref2):
     t.measure("endpoints queried")
     # takes almost a second. Joined load took over minute. We'll see if it will work without joinedload
     inds = Individual.query.filter_by(component_id = cid).all()
-    fams = Family.query.filter_by(component_id = cid).all()
+#    fams = Family.query.filter_by(component_id = cid).all()
     t.measure("loaded everything")
+    visited = set([])
+    routing = {}
+    buf = [(0, 0, ind1, None)]
+    steps = 0
+    adds = 0
+    while buf:
+        priority, distance, cur, source = buf.pop(0)
+        if cur.xref in visited:
+            continue
+        visited.add(cur.xref)
+        routing[cur] = source
+        steps += 1
+        if cur == ind2:
+            break
+        for fam in cur.sub_families + cur.sup_families:
+            for nei in fam.parents + fam.children:
+                # the 50. means that if people get children at over 50 years age, the path might not be optimal
+                prio = distance + abs(cur.birth_date_year - ind2.birth_date_year) / 50.
+                pos = bisect.bisect(buf, (prio,))
+                buf[pos:pos] = [(prio, distance + 1, nei, cur)]
+                adds += 1
+    t.submeasure("searching for node")
+    if ind2 in routing:
+        path = []
+        cur = ind2
+        while cur:
+            path.append(cur)
+            cur = routing[cur]
+    t.submeasure("reconstructing path")
+    t.measure("graph search for the path")
+    out_xrefs = [x.xref for x in path]
+    out_dicts = [x.as_dict() for x in path]
+    t.measure("converting for output")
     t.print_total()
+    print "visited {} unique nodes and added to buffer {} nodes".format(steps, adds)
     return jsonify({
         "result": True,
-        "xrefs": [],
+        "xrefs": out_xrefs,
+        "inds": out_dicts,
         "exists": True,
+        "component_id": ind1.component_id,
+        "length": len(path),
+        "time": t.full_duration(),
+        "visited_count": steps,
     })
