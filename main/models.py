@@ -84,6 +84,7 @@ class Individual(Base):
     soundex_family = Column(Unicode(16))
 
     pre_dicted = Column(UnicodeText)
+    neighboring_ids = Column(UnicodeText)
 
     loaded_gedcom = Column(UnicodeText)
     def as_dict(self):

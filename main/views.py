@@ -225,9 +225,9 @@ def json_people_path(xref1, xref2):
         })
     cid = ind1.component_id
     t.measure("endpoints queried")
-    # takes almost a second. Joined load took over minute. We'll see if it will work without joinedload
+    # takes about a second to load them all
     inds = Individual.query.filter_by(component_id = cid).all()
-#    fams = Family.query.filter_by(component_id = cid).all()
+    ind_dict = {x.xref: x for x in inds}
     t.measure("loaded everything")
     visited = set([])
     routing = {}
@@ -243,13 +243,14 @@ def json_people_path(xref1, xref2):
         steps += 1
         if cur == ind2:
             break
-        for fam in cur.sub_families + cur.sup_families:
-            for nei in fam.parents + fam.children:
-                # the 50. means that if people get children at over 50 years age, the path might not be optimal
-                prio = distance + abs(cur.birth_date_year - ind2.birth_date_year) / 50.
-                pos = bisect.bisect(buf, (prio,))
-                buf[pos:pos] = [(prio, distance + 1, nei, cur)]
-                adds += 1
+        for nei_id in json.loads(cur.neighboring_ids):
+            nei = ind_dict[nei_id]
+            # the 50. means that if people get children at over 50 years age,
+            # the path might not be optimal
+            prio = distance + abs(nei.birth_date_year - ind2.birth_date_year) / 50.
+            pos = bisect.bisect(buf, (prio,))
+            buf[pos:pos] = [(prio, distance + 1, nei, cur)]
+            adds += 1
     t.submeasure("searching for node")
     if ind2 in routing:
         path = []
