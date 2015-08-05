@@ -284,7 +284,7 @@ def populate_component_ids():
                 fam.component_id = next_id
                 for ind2 in fam.parents + fam.children:
                     buf.append(ind2)
-                    n_ids.append(ind2.xref)
+                    n_ids.append([fam.xref, ind2.xref])
             cur.neighboring_ids = u(json.dumps(n_ids))
 #        t.submeasure("floodfill component {}".format(next_id))
         max_size = max(max_size, size)

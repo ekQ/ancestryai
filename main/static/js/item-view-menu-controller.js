@@ -163,6 +163,27 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                         throw new Error("Loading ppfamily search '"+term+"' failed");
                     }
                 });
+            } else if(menu.search_by == "path") {
+                var addr = Hiski.url_root + "json/people-path/"+term+"/"+Hiski.selected.xref+"/";
+                d3.json(addr, function(json) {
+                    if(json) {
+                        var flat = [];
+                        for(var i = 0; i < json.xrefs.length; i++) {
+                            var fam = json.xrefs[i][0];
+                            var ind = json.xrefs[i][1];
+                            if(fam !== null) {
+                                Hiski.load(fam, null, Hiski.selected);
+                                flat.push(fam);
+                            }
+                            Hiski.load(ind, null, Hiski.selected);
+                            flat.push(ind);
+                        }
+                        Hiski.selected_path = flat;
+                        menu.show_search(json, "Path from "+term+" to "+Hiski.selected.xref);
+                    } else {
+                        throw new Error("Loading path search '"+term+"' '"+Hiski.selected.xref+"' failed");
+                    }
+                });
             }
         };
         menu.testzoom = function() {

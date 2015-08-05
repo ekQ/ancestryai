@@ -219,7 +219,7 @@ def json_people_path(xref1, xref2):
         })
     if ind1.component_id != ind2.component_id:
         return jsonify({
-            "result": True,
+            "result": False,
             "xrefs": [],
             "exists": False,
         })
@@ -231,36 +231,49 @@ def json_people_path(xref1, xref2):
     t.measure("loaded everything")
     visited = set([])
     routing = {}
-    buf = [(0, 0, ind1, None)]
+    routing_path_pieces = {}
+    buf = [(0, 0, ind1, None, (None, None))]
     steps = 0
     adds = 0
     while buf:
-        priority, distance, cur, source = buf.pop(0)
+        priority, distance, cur, source, path_piece = buf.pop(0)
         if cur.xref in visited:
             continue
         visited.add(cur.xref)
         routing[cur] = source
+        routing_path_pieces[cur] = path_piece
         steps += 1
         if cur == ind2:
             break
-        for nei_id in json.loads(cur.neighboring_ids):
+        for fam_id, nei_id in json.loads(cur.neighboring_ids):
             nei = ind_dict[nei_id]
             # the 50. means that if people get children at over 50 years age,
             # the path might not be optimal
             prio = distance + abs(nei.birth_date_year - ind2.birth_date_year) / 50.
             pos = bisect.bisect(buf, (prio,))
-            buf[pos:pos] = [(prio, distance + 1, nei, cur)]
+            buf[pos:pos] = [(prio, distance + 1, nei, cur, (fam_id, nei_id))]
             adds += 1
     t.submeasure("searching for node")
-    if ind2 in routing:
-        path = []
-        cur = ind2
-        while cur:
-            path.append(cur)
-            cur = routing[cur]
+    if not ind2 in routing:
+        return jsonify({
+            "result": False,
+            "xrefs": [],
+            "exists": False,
+            "message": "even though they were in the same component",
+        })
+    path = []
+    alt_path = []
+    cur = ind2
+    while cur:
+        path.append(cur)
+        if routing[cur]:
+            alt_path.append(routing_path_pieces[cur])
+        else:
+            alt_path.append([None, cur.xref])
+        cur = routing[cur]
     t.submeasure("reconstructing path")
     t.measure("graph search for the path")
-    out_xrefs = [x.xref for x in path]
+    out_xrefs = alt_path[::-1]
     out_dicts = [x.as_dict() for x in path]
     t.measure("converting for output")
     t.print_total()

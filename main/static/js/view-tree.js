@@ -261,6 +261,8 @@ function render(view) {
             .style("stroke", function(d) {
                     if(d.relation.selection_relation == "next-to-selected")
                         return "#ffffff";
+                    if(_.contains(Hiski.selected_path, d.relation.xref) && _.contains(Hiski.selected_path, d.node.xref))
+                        return "#ffffff";
                     return d.get_color();
                 })
             .style("stroke-width", function(d) {
@@ -285,7 +287,13 @@ function render(view) {
 //            .transition()
 //            .duration(short_duration)
             .style("fill", Hiski.node_color_function)
-            .style("stroke", function(d) { return d == Hiski.selected ? "#ffffff" : "#000000" })
+            .style("stroke", function(d) {
+                if(d == Hiski.selected)
+                    return "#ffffff";
+                if(_.contains(Hiski.selected_path, d.xref))
+                    return "#ffffff";
+                return "#000000";
+            })
             .style("stroke-width", function(d) { return d == Hiski.selected ? 3 : 1 })
             ;
     view.nodesvg.each(function(d) {
@@ -316,8 +324,20 @@ function render(view) {
 //            .duration(short_duration)
             ;
     view.relationsvg.selectAll("circle")
-            .style("fill", function(d) { return d.next_to_selected() ? "#ffffff" : "#000000" })
-            .style("stroke", function(d) { return d.next_to_selected() ? "#000000" : "#ffffff" })
+            .style("fill", function(d) {
+                if(d.next_to_selected())
+                    return "#ffffff";
+                if(_.contains(Hiski.selected_path, d.xref))
+                    return "#ffffff";
+                return "#000000";
+            })
+            .style("stroke", function(d) {
+                if(d.next_to_selected())
+                    return "#000000";
+                if(_.contains(Hiski.selected_path, d.xref))
+                    return "#000000";
+                return "#ffffff";
+            })
 //            .attr("r", function(d) { return next_to_selected(d) ? 8 : 5 })
             ;
     view.relationsvg.selectAll("text")

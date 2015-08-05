@@ -14,7 +14,7 @@ var Hiski = {
     node_order: [],
     // nodes that were loaded during search, but not yet added
     preloaded_nodes: {},
-    add_node: function(node_data, reference) {
+    add_node: function(node_data, reference, anchor) {
         /*
         Adds a node based on given json data. Places the node initially to the
         coordinates of the reference from where it will be animated to its
@@ -29,6 +29,9 @@ var Hiski = {
             if(reference !== null) {
                 node.x = reference.x;
                 node.y = reference.y;
+            } else if(anchor !== null && anchor !== undefined) {
+                node.x = anchor.x;
+                node.y = anchor.y;
             }
             this.nodes.push(node);
             this.node_dict[node.xref] = node;
@@ -265,7 +268,7 @@ var Hiski = {
     relations: [],
     // xref to relation dictionary
     relation_dict: {},
-    add_relation: function(relation_data, reference) {
+    add_relation: function(relation_data, reference, anchor) {
         /*
         Add a relation based on given json data. Returns the relation in
         question.
@@ -279,6 +282,9 @@ var Hiski = {
             if(reference !== null) {
                 relation.x = reference.x;
                 relation.y = reference.y;
+            } else if(anchor != null && anchor != undefined) {
+                relation.x = anchor.x;
+                relation.y = anchor.y;
             }
             this.relations.push(relation);
             this.relation_dict[relation.xref] = relation;
@@ -333,14 +339,14 @@ var Hiski = {
         }
     },
     /* other */
-    add_entry: function(entry, reference) {
+    add_entry: function(entry, reference, anchor) {
         /*
         Adds a relation or node depending on which kind of json is given.
         */
         if(entry.tag == "FAM") {
-            return this.add_relation(entry, reference);
+            return this.add_relation(entry, reference, anchor);
         } else if(entry.tag == "INDI") {
-            return this.add_node(entry, reference);
+            return this.add_node(entry, reference, anchor);
         } else {
             throw new Error("Unhandled tag '"+entry.tag+"'");
         }
@@ -355,7 +361,7 @@ var Hiski = {
             this.delayed_render();
         }
     },
-    load: function(xref, reference) {
+    load: function(xref, reference, anchor) {
         /*
         Loads the node of given xref, if it didn't exist yet. Takes the data
         from preloaded_nodes and adds that, if it was preloaded on for example
@@ -371,7 +377,7 @@ var Hiski = {
             return;
         }
         if(xref in this.preloaded_nodes) {
-            Hiski.add_entry(this.preloaded_nodes[xref], reference);
+            Hiski.add_entry(this.preloaded_nodes[xref], reference, anchor);
             Hiski.delayed_render();
             return;
         }
@@ -389,7 +395,7 @@ var Hiski = {
                     return;
                 }
                 Hiski.preloaded_nodes[json.entry.xref] = json.entry;
-                var entry = Hiski.add_entry(json.entry, reference);
+                var entry = Hiski.add_entry(json.entry, reference, anchor);
                 if(reference === null) {
                     Hiski.zoom_to = entry;
                 }
@@ -733,6 +739,7 @@ var Hiski = {
     /* selection */
     selected: null,
     lastselected: null,
+    selected_path: [],
     select_node: function(node, redraw) {
         /*
         selects the given node and redraws subviews if redraw is true. The
@@ -740,6 +747,7 @@ var Hiski = {
         digest, which is followed by a redraw anyway.
         */
         Hiski.selected = node;
+        Hiski.selected_path = [];
         for(var i = 0; i < item_views.length; i++) {
             item_views[i].selected_node = node;
         }
