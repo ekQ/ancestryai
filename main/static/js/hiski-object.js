@@ -613,18 +613,15 @@ var Hiski = {
         }
         buffer.push([node, false]);
         var prebuffer = [node];
-        var k = 0;
         var fold_id = this.next_fold++;
-        while(prebuffer.length > 0 && k < 20) {
-            k += 1;
+        while(prebuffer.length > 0) {
             var cur = prebuffer.shift();
             for(var i = 0; i < cur.parents.length; i++) {
                 buffer.push([cur.parents[i], true]);
                 prebuffer.push(cur.parents[i]);
             }
         }
-        while(buffer.length > 0 && k < 100) {
-            k += 1;
+        while(buffer.length > 0) {
             var arr = buffer.shift();
             var cur = arr[0];
             if(cur.visited)
@@ -659,18 +656,15 @@ var Hiski = {
         }
         buffer.push([node, false]);
         var prebuffer = [node];
-        var k = 0;
         var fold_id = this.next_fold++;
-        while(prebuffer.length > 0 && k < 20) {
-            k += 1;
+        while(prebuffer.length > 0) {
             var cur = prebuffer.shift();
             for(var i = 0; i < cur.children.length; i++) {
                 buffer.push([cur.children[i], true]);
                 prebuffer.push(cur.children[i]);
             }
         }
-        while(buffer.length > 0 && k < 100) {
-            k += 1;
+        while(buffer.length > 0) {
             var arr = buffer.shift();
             var cur = arr[0];
             if(cur.visited)
