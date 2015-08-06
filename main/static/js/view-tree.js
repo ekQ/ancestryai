@@ -154,26 +154,27 @@ function enter(view) {
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", -18)
+            .attr("y", -7)
             .attr("dominant-baseline", "central")
             .text(function(d) {
                 return d.first_name;
             })
             .style("filter", dropshadow)
             .style("font-weight", "bold")
-            .style("font-size", "60%")
+            .style("font-size", "70%")
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", -5)
+            .attr("y", 7)
             .attr("dominant-baseline", "central")
             .text(function(d) {
                 return d.family_name;
             })
             .style("filter", dropshadow)
             .style("font-weight", "bold")
-            .style("font-size", "60%")
+            .style("font-size", "70%")
             ;
+            /*
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
             .attr("y", 10)
@@ -196,6 +197,7 @@ function enter(view) {
             .style("font-weight", "normal")
             .style("font-size", "50%")
             ;
+            */
 
 
     view.relationsvg = view.relationsvg

@@ -158,6 +158,9 @@ div#map {
     min-width: 20px;
     min-height: 20px;
 }
+.add-row:hover, .add-column:hover, .close-column:hover {
+    background: #e6e6e6;
+}
 .add-row, .add-column, .close-column, .resizer {
     position: relative;
     background: #cccccc;
