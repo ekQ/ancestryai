@@ -22,6 +22,7 @@ commands
                           if writing out is desired later on.
         recons <fname>  - populate from a recons file, where the given file is
                           a header file.
+        components      - populate connected components for people path search
     write             - write gedcom out from the database
         reform          - reform the gedcom data in database
         gedcom <fname>  - write the gedcom data to the given file
