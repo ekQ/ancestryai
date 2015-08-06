@@ -1,6 +1,6 @@
 
 * {
-    font-family: Arial;
+    font-family: 'Cabin', sans-serif;
 }
 
 html,
@@ -171,7 +171,7 @@ div#map {
     align-items: center;
 
     box-sizing: border-box;
-    border: 1px solid black;
+    /* border: 1px solid black;*/
 }
 .resizer:active {
     border: 1px solid white;
@@ -179,11 +179,13 @@ div#map {
 .resizer.horizontal {
     height: 8px;
     vertical-align: middle;
-    padding: 3px;
+    padding: 4px;
+    border: none;
 }
 .resizer.vertical {
     width: 8px;
-    padding: 3px;
+    padding: 4px;
+    border: none;
 }
 .resizer.horizontal .wrap {
     display: inline-block;
@@ -191,7 +193,7 @@ div#map {
 }
 .resizer.vertical .wrap {
     display: inline-block;
-    margin-left: -3px;
+    margin-left: -2.5px;
     line-height: 0.4em;
 }
 .resizer:focus {
