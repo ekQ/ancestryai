@@ -155,6 +155,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                     }
                 });
             } else if(menu.search_by == "ppfamily") {
+                // this is for debug purposes
                 var addr = Hiski.url_root + "json/search/pure-python-family/"+term+"/";
                 d3.json(addr, function(json) {
                     if(json) {
@@ -179,6 +180,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                             flat.push(ind);
                         }
                         Hiski.selected_path = flat;
+                        Hiski.delayed_render();
                         menu.show_search(json, "Path from "+term+" to "+Hiski.selected.xref);
                     } else {
                         throw new Error("Loading path search '"+term+"' '"+Hiski.selected.xref+"' failed");

@@ -261,9 +261,9 @@ function render(view) {
             ;
     view.linksvg
             .style("stroke", function(d) {
-                    if(d.relation.selection_relation == "next-to-selected")
-                        return "#ffffff";
                     if(_.contains(Hiski.selected_path, d.relation.xref) && _.contains(Hiski.selected_path, d.node.xref))
+                        return "#ffeeee";
+                    if(d.relation.selection_relation == "next-to-selected")
                         return "#ffffff";
                     return d.get_color();
                 })
@@ -275,7 +275,9 @@ function render(view) {
         elem.parentNode.appendChild(elem);
     }
     view.linksvg.each(function(d) {
-        if(d.node == Hiski.selected)
+        if(d.relation.selection_relation == "next-to-selected")
+            move_to_front(this);
+        else if(_.contains(Hiski.selected_path, d.relation.xref) && _.contains(Hiski.selected_path, d.node.xref))
             move_to_front(this);
     })
 
@@ -327,16 +329,16 @@ function render(view) {
             ;
     view.relationsvg.selectAll("circle")
             .style("fill", function(d) {
-                if(d.next_to_selected())
-                    return "#ffffff";
                 if(_.contains(Hiski.selected_path, d.xref))
+                    return "#ffeeee";
+                if(d.next_to_selected())
                     return "#ffffff";
                 return "#000000";
             })
             .style("stroke", function(d) {
-                if(d.next_to_selected())
-                    return "#000000";
                 if(_.contains(Hiski.selected_path, d.xref))
+                    return "#000000";
+                if(d.next_to_selected())
                     return "#000000";
                 return "#ffffff";
             })
