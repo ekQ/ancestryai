@@ -43,20 +43,6 @@
                         </div>
                     </div>
                     <svg id="{{menu.tree_id}}" class="tree viewtab" ng-show="menu.mode == 'tree'">
-                        <filter id="{{menu.tree_id}}-dropshadow" height="130%">
-                            <feGaussianBlur in="SourceAlpha" stdDeviation="1"/> <!-- how much to blur -->
-                            <feColorMatrix
-                                type="matrix"
-                                values="0.0  0.0  0.0  0.0  1.0
-                                        0.0  0.0  0.0  0.0  1.0
-                                        0.0  0.0  0.0  0.0  1.0
-                                        0.0  0.0  0.0 10.0  0.0" />
-                            <feOffset dx="0" dy="0" result="offsetblur"/> <!-- how much to offset -->
-                            <feMerge> 
-                                <feMergeNode/> <!-- the offset blurred image -->
-                                <feMergeNode in="SourceGraphic"/> <!-- the element that the filter is applied to -->
-                            </feMerge>
-                        </filter>
                     </svg>
                     <div class="info viewtab" ng-show="menu.mode == 'info'">
                         <dl>

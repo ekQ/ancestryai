@@ -148,11 +148,31 @@ function enter(view) {
                 })
             ;
     var dropshadow = "url(\"#"+view.tree_id+"-dropshadow\")";
+    newnodes.append("svg:text")
+            .attr("y", -7)
+            .text(function(d) {
+                return d.first_name;
+            })
+            .style("stroke", "#000000")
+            .style("stroke-width", "8")
+            .style("stroke-linecap", "round")
+            .style("stroke-linejoin", "round")
+            ;
+    newnodes.append("svg:text")
+            .attr("y", 7)
+            .text(function(d) {
+                return d.family_name;
+            })
+            .style("stroke", "#000000")
+            .style("stroke-width", "8")
+            .style("stroke-linecap", "round")
+            .style("stroke-linejoin", "round")
+            ;
     newnodes.append("circle")
             .attr("r", 25)
             .style("fill", Hiski.node_color_function)
             ;
-    newnodes.append("svg:text")
+    /*newnodes.append("svg:text")
             .attr("text-anchor", "middle")
             .attr("y", -7)
             .attr("dominant-baseline", "central")
@@ -171,6 +191,46 @@ function enter(view) {
                 return d.family_name;
             })
             .style("filter", dropshadow)
+            .style("font-weight", "bold")
+            .style("font-size", "70%")
+            ;*/
+    // create outlines
+    newnodes.append("svg:text")
+            .attr("y", -7)
+            .text(function(d) {
+                return d.first_name;
+            })
+            .style("stroke", "#ffffff")
+            .style("stroke-width", "6")
+            .style("stroke-linecap", "round")
+            .style("stroke-linejoin", "round")
+            ;
+    newnodes.append("svg:text")
+            .attr("y", 7)
+            .text(function(d) {
+                return d.family_name;
+            })
+            .style("stroke", "#ffffff")
+            .style("stroke-width", "6")
+            .style("stroke-linecap", "round")
+            .style("stroke-linejoin", "round")
+            ;
+    //create actual texts
+    newnodes.append("svg:text")
+            .attr("y", -7)
+            .text(function(d) {
+                return d.first_name;
+            })
+            ;
+    newnodes.append("svg:text")
+            .attr("y", 7)
+            .text(function(d) {
+                return d.family_name;
+            })
+            ;
+    newnodes.selectAll("text")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "central")
             .style("font-weight", "bold")
             .style("font-size", "70%")
             ;

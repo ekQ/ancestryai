@@ -102,7 +102,7 @@ function Relation(data) {
             maxspouse = Math.max(maxspouse === null ? -2000000000 : maxspouse,
                     this.parents[i].get_y());
         }
-        this.y_space = 50;
+        this.y_space = 40;
         if(minchild === null && maxspouse === null) {
             return this.y;
         } else if(maxspouse === null) {
