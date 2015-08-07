@@ -3,6 +3,10 @@
     font-family: 'Cabin', sans-serif;
 }
 
+ul {
+    list-style-type: none;
+}
+
 html,
 body,
 .everything,
@@ -66,11 +70,15 @@ body,
 }
 .topmenu select {
     display: block;
-    padding: 4px 10px 4px 20px;
+/*    padding: 4px 10px 4px 20px;*/
+    padding: 2px 8px 2px 18px;
+    margin: 2px;
 }
 .topmenu button {
     display: block;
-    padding: 4px 20px;
+/*    padding: 4px 20px;*/
+    padding: 2px 18px;
+    margin: 2px;
 }
 
 svg .node circle {
@@ -221,11 +229,15 @@ div#map {
 }
 .itemheader select {
     display: block;
-    padding: 2px 5px 2px 10px;
+/*    padding: 2px 5px 2px 10px;*/
+    padding: 0px 3px 0px 8px;
+    margin: 2px;
 }
 .itemheader button {
     display: block;
-    padding: 2px 10px;
+/*    padding: 2px 10px;*/
+    padding: 0px 8px;
+    margin: 2px;
 }
 select,
 button.toggled:hover,
@@ -258,12 +270,21 @@ button:focus {
 select,
 button.toggled:active,
 button {
-    border: 2px outset #888888;
+/*    border: 2px outset #888888;*/
+    border: 1px solid #888888;
+    border-radius: 10px;
+}
+button.resizer {
+    border-radius: 0px;
 }
 select:active,
 button.toggled,
 button:active {
-    border: 2px inset #888888;
+/*    border: 2px inset #888888;*/
+    border: 1px solid white;
+}
+select {
+    padding-left: 4px;
 }
 .itemheader,
 .topmenu {
