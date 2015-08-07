@@ -26,6 +26,11 @@ commands
     write             - write gedcom out from the database
         reform          - reform the gedcom data in database
         gedcom <fname>  - write the gedcom data to the given file
+    comments          - manage comments
+        printall        - print all comments
+        export          - print all comments in a json format
+        print <id>      - print comment of the given id
+        delete <id>     - delete comment of the given id
 """.format(sys.argv[0])
     sys.exit(0)
 
@@ -88,3 +93,7 @@ if command == "write":
             for fam in Family.query.all():
                 f.write(fam.loaded_gedcom)
             f.close()
+if command == "comments":
+    import main
+    from main.commenttools import handlecommands
+    handlecommands(subs)

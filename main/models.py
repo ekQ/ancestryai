@@ -184,4 +184,11 @@ class Comment(Base):
             "type": self.comment_type,
             "isodate": self.written_on.isoformat(),
         }
-
+    def as_privileged_dict(self):
+        d = self.as_dict()
+        d.update({
+            "email": self.author_email,
+            "ip": self.author_ip_address,
+            "id": self.id,
+        })
+        return d
