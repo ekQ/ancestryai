@@ -305,7 +305,6 @@ function render_all() {
     if(Hiski.map) {
         update_map();
     }
-    Hiski.lastselected = Hiski.selected;
 }
 function render(view) {
     var duration = 2200;

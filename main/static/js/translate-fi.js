@@ -50,6 +50,16 @@ translations.fi = {
     "Unknown": "Tuntematon",
     "Hide descendants": "Piilota jälkeläiset",
 
+    "Colour by relation": "Väritä suhteen mukaan",
+    "Pathsearch": "Polkuhaku",
+    "From selected:": "Valitusta:",
+    "Select someone": "Valitse joku",
+    "To:": "Kohde:",
+    "Last selection": "Edellinen valinta",
+    "Select nodes": "Valitse noodeja",
+    "Parent probabilities": "Vanhempien todennäköisyydet",
+    "Search path": "Hae polku",
+
     // language selection
     "Finnish": "Suomi",
     "English": "English",

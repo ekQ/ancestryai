@@ -106,6 +106,13 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.search_result_list = [];
         menu.search_time = "-";
 
+        menu.pathsearch_mode = "last-selection";
+        menu.pathsearch_xref = "";
+        menu.pathsearch_time = "-";
+        menu.pathsearch_from = null;
+        menu.pathsearch_to = null;
+        menu.pathsearch_list = [];
+
         menu.comment_type = "other";
         menu.comment_body = "";
 
@@ -164,8 +171,17 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                         throw new Error("Loading ppfamily search '"+term+"' failed");
                     }
                 });
-            } else if(menu.search_by == "path") {
-                var addr = Hiski.url_root + "json/people-path/"+term+"/"+Hiski.selected.xref+"/";
+            }
+        };
+        menu.do_pathsearch = function() {
+            var xref = null;
+            if(menu.pathsearch_mode == "last-selection") {
+                xref = Hiski.lastselected.xref;
+            } else if(menu.pathsearch_mode == "xref") {
+                xref = menu.pathsearch_xref;
+            }
+            if(xref != null) {
+                var addr = Hiski.url_root + "json/people-path/"+xref+"/"+Hiski.selected.xref+"/";
                 d3.json(addr, function(json) {
                     if(json) {
                         var flat = [];
@@ -181,7 +197,11 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                         }
                         Hiski.selected_path = flat;
                         Hiski.delayed_render();
-                        menu.show_search(json, "Path from "+term+" to "+Hiski.selected.xref);
+                        menu.pathsearch_results = json["inds"];
+                        menu.pathsearch_time = json["time"];
+                        menu.pathsearch_from = json["inds"][0];
+                        menu.pathsearch_to = json["inds"][json["inds"].length - 1];
+                        menu.pathsearch_list = json["inds"];
                     } else {
                         throw new Error("Loading path search '"+term+"' '"+Hiski.selected.xref+"' failed");
                     }

@@ -46,6 +46,15 @@ translations.en = {
     "Submit": "Submit",
     "Unknown": "Unknown",
     "Hide descendants": "Hide descendants",
+    "Colour by relation": "Colour by relation",
+    "Pathsearch": "Pathsearch",
+    "From selected:": "From selected:",
+    "Select someone": "Select someone",
+    "To:": "To:",
+    "Last selection": "Last selection",
+    "Select nodes": "Select nodes",
+    "Parent probabilities": "Parent probabilities",
+    "Search path": "Search path",
 
     // language selection
     "Finnish": "Suomi",

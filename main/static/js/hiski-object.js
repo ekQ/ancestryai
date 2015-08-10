@@ -740,8 +740,12 @@ var Hiski = {
         redraw flag exists to be able to not trigger redraw during angular
         digest, which is followed by a redraw anyway.
         */
-        Hiski.selected = node;
-        Hiski.selected_path = [];
+        console.warn("selecting " + node.name + " from ");
+        console.warn(this.selected);
+        if(this.lastselected != this.selected)
+            this.lastselected = this.selected;
+        this.selected = node;
+        this.selected_path = [];
         for(var i = 0; i < item_views.length; i++) {
             item_views[i].selected_node = node;
         }

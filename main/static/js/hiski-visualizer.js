@@ -2,12 +2,16 @@
 
 function add_debug_toggle() {
     var buffer = "aaaaa";
+    var buffer2 = "abcdeabcde";
     d3.select("body")
             .on("keydown", function() {
                 buffer += d3.event.key;
+                buffer2 += d3.event.keyCode;
                 if(buffer.length > 5)
                     buffer = buffer.slice(buffer.length - 5);
-                if(buffer == "debug" && !Hiski.debug_mode) {
+                if(buffer2.length > 10)
+                    buffer2 = buffer2.slice(buffer2.length - 10);
+                if((buffer == "debug" || buffer2 == "6869668571") && !Hiski.debug_mode) {
                     Hiski.debug_mode = true;
                     redraw_views();
                 }
