@@ -55,6 +55,9 @@ translations.en = {
     "Select nodes": "Select nodes",
     "Parent probabilities": "Parent probabilities",
     "Search path": "Search path",
+    "No path": "No path",
+    "Celebrity": "Celebrity",
+    "Loading": "Loading",
 
     // language selection
     "Finnish": "Suomi",

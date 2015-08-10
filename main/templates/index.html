@@ -130,31 +130,51 @@
                                     <select class="path-search-mode" ng-model="menu.pathsearch_mode">
                                         <option value="last-selection" translate>Last selection</option>
                                         <option value="xref">xref</option>
+                                        <option value="celebrity" ng-if="menu.Hiski.celebrity_nodes.length > 0" translate>Celebrity</option>
                                     </select>
                                 </label>
-                                <label><span class="intentionally-empty"></span>
-                                    <span class="search-result"
-                                                ng-show="menu.pathsearch_mode == 'last-selection' && menu.Hiski.lastselected != null"
-                                                ng-click="menu.load(menu.Hiski.lastselected.xref)">
-                                        {{ menu.Hiski.lastselected.name }}
-                                    </span>
-                                    <span ng-show="menu.pathsearch_mode == 'last-selection' && menu.Hiski.lastselected == null" translate>Select nodes</span>
-                                    <input type="text" ng-show="menu.pathsearch_mode == 'xref'" ng-model="menu.pathsearch_xref"></input>
+                                <label ng-show="menu.pathsearch_mode == 'celebrity'">
+                                    <div ng-repeat="ind in menu.Hiski.celebrity_nodes">
+                                        <span class="pathsearch-celebrity-selection">
+                                            <input type="radio" name="pathsearch-celebrity-selection-{{menu.id}}" value="{{ ind.xref }}" ng-model="menu.pathsearch_celebrity_xref">
+                                            </input>
+                                        </span>
+                                        <span class="search-result"
+                                                ng-click="menu.load(ind.xref)">
+                                            {{ ind.name }}
+                                        </span>
+                                    </div>
+                                </label>
+                                <label ng-show="menu.pathsearch_mode != 'celebrity'">
+                                    <span class="intentionally-empty"></span>
+                                        <span class="search-result"
+                                                    ng-show="menu.pathsearch_mode == 'last-selection' && menu.Hiski.lastselected != null"
+                                                    ng-click="menu.load(menu.Hiski.lastselected.xref)">
+                                            {{ menu.Hiski.lastselected.name }}
+                                        </span>
+                                        <span ng-show="menu.pathsearch_mode == 'last-selection' && menu.Hiski.lastselected == null" translate>Select nodes</span>
+                                        <input type="text" ng-show="menu.pathsearch_mode == 'xref'" ng-model="menu.pathsearch_xref"></input>
                                 </label>
                                 <button type="submit" translate>Search path</button>
                             </div>
                         </form>
-                            <div class="searchresults">
-                                <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.pathsearch_time | number:3 }}</div>
-                                <div ng-show="menu.pathsearch_list.length == 0">
-                                    <span>{{ menu.pathsearch_form.name }}</span>
-                                    -
-                                    <span>{{ menu.pathsearch_to.name }}</span>
-                                </div>
-                                <div class="search-result" ng-repeat="ind in menu.pathsearch_list" ng-click="menu.load(ind.xref)">
-                                    {{ ind.name }}
-                                </div>
+                        <div class="searchresults" ng-if="menu.pathsearch_state == 'idle'">
+                            <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.pathsearch_time | number:3 }}</div>
+                            <div ng-show="menu.pathsearch_list.length == 0">
+                                <span>{{ menu.pathsearch_form.name }}</span>
+                                -
+                                <span>{{ menu.pathsearch_to.name }}</span>
                             </div>
+                            <div class="search-result" ng-repeat="ind in menu.pathsearch_list" ng-click="menu.load(ind.xref)">
+                                {{ ind.name }}
+                            </div>
+                            <div ng-show="menu.pathsearch_list.length == 0" translate>
+                                No path
+                            </div>
+                        </div>
+                        <div ng-if="menu.pathsearch_state == 'loading'" translate>
+                            Loading
+                        </div>
                     </div>
                     <div id="{{ menu.comments_id }}" class="comments viewtab" ng-show="menu.mode == 'comments'">
                         <section ng-if="menu.Hiski.selected != null">

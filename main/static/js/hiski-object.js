@@ -741,7 +741,6 @@ var Hiski = {
         digest, which is followed by a redraw anyway.
         */
         console.warn("selecting " + node.name + " from ");
-        console.warn(this.selected);
         if(this.lastselected != this.selected)
             this.lastselected = this.selected;
         this.selected = node;
@@ -834,6 +833,15 @@ var Hiski = {
                 throw new Error("Loading data '"+xref+"' failed");
             }
         });
+    },
+
+    /* Celebrities */
+    celebrity_nodes: [],
+    set_celebrities: function(inds) {
+        for(var i = 0; i < inds.length; i++) {
+            this.preloaded_nodes[inds[i].xref] = inds[i];
+        }
+        this.celebrity_nodes = inds;
     },
 };
 

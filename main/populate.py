@@ -181,6 +181,7 @@ def populate_from_recons(fname):
                         name_family = name_family,
                         tag = u"INDI",
                         sex = u"?",
+                        is_celebrity = d.get("is_celebrity", False),
                         birth_date_string = u"{}.{}.{}".format(d["day"], d["month"], d["year"]),
                         birth_date_year = d["year"],
                         death_date_string = None,

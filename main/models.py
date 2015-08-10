@@ -73,6 +73,7 @@ class Individual(Base):
     death_date_year = Column(Integer)
     death_date = Column(Date)
     component_id = Column(Integer)
+    is_celebrity = Column(Boolean)
 
     parish_id = Column(Integer, ForeignKey("parish.id"))
     parish = relationship("Parish", backref="individuals")

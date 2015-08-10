@@ -59,6 +59,9 @@ translations.fi = {
     "Select nodes": "Valitse noodeja",
     "Parent probabilities": "Vanhempien todennäköisyydet",
     "Search path": "Hae polku",
+    "No path": "Ei polkua",
+    "Celebrity": "Julkisuuden henkilö",
+    "Loading": "Latautuu",
 
     // language selection
     "Finnish": "Suomi",

@@ -32,5 +32,12 @@ $(document).ready(function() {
 //            throw new Error("Loading testnote failed");
         }
     });
+    d3.json(Hiski.url_root + "json/celebrities/", function(json) {
+        if(json && json.result == true) {
+            Hiski.set_celebrities(json.inds);
+        } else {
+            throw new Error("Loading celebrities failed");
+        }
+    });
     add_debug_toggle();
 });

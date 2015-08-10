@@ -210,18 +210,26 @@ def json_people_path(xref1, xref2):
     t = Timer(True, 40)
     ind1 = Individual.query.filter_by(xref = xref1).first()
     ind2 = Individual.query.filter_by(xref = xref2).first()
+    if ind1 == None or ind2 == None:
+        return jsonify({
+            "result": False,
+            "xrefs": [],
+            "exists": False,
+            "message": "some non-existing individual selected {}, {}".format(xref1, xref2),
+        })
     if ind1.component_id == 0 or ind1.component_id == None:
         return jsonify({
             "result": False,
+            "xrefs": [],
             "exists": False,
             "message": "components not populated; cannot search paths",
-
         })
     if ind1.component_id != ind2.component_id:
         return jsonify({
             "result": False,
             "xrefs": [],
             "exists": False,
+            "message": "individuals in different components",
         })
     cid = ind1.component_id
     t.measure("endpoints queried")
@@ -287,4 +295,20 @@ def json_people_path(xref1, xref2):
         "length": len(path),
         "time": t.full_duration(),
         "visited_count": steps,
+    })
+
+@app.route("/json/celebrities/")
+def json_celebrities():
+    t = Timer(True, 40)
+    inds = Individual.query.filter_by(is_celebrity = True).all()
+    t.measure("loading celebrities")
+    inds = sorted(inds, key=lambda x: (x.name_family, x.name_first))
+    t.measure("sorting")
+    ind_dicts = [x.as_dict() for x in inds]
+    t.measure("converting to dictionaries")
+    t.print_total()
+    return jsonify({
+        "result": True,
+        "inds": ind_dicts,
+        "time": t.full_duration(),
     })

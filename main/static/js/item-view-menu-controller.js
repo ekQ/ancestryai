@@ -107,11 +107,13 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.search_time = "-";
 
         menu.pathsearch_mode = "last-selection";
+        menu.pathsearch_state = "idle";
         menu.pathsearch_xref = "";
         menu.pathsearch_time = "-";
         menu.pathsearch_from = null;
         menu.pathsearch_to = null;
         menu.pathsearch_list = [];
+        menu.pathsearch_celebrity_xref = null;
 
         menu.comment_type = "other";
         menu.comment_body = "";
@@ -179,9 +181,12 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                 xref = Hiski.lastselected.xref;
             } else if(menu.pathsearch_mode == "xref") {
                 xref = menu.pathsearch_xref;
+            } else if(menu.pathsearch_mode == "celebrity") {
+                xref = menu.pathsearch_celebrity_xref;
             }
             if(xref != null) {
                 var addr = Hiski.url_root + "json/people-path/"+xref+"/"+Hiski.selected.xref+"/";
+                menu.pathsearch_state = "loading";
                 d3.json(addr, function(json) {
                     if(json) {
                         var flat = [];
@@ -199,9 +204,19 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                         Hiski.delayed_render();
                         menu.pathsearch_results = json["inds"];
                         menu.pathsearch_time = json["time"];
-                        menu.pathsearch_from = json["inds"][0];
-                        menu.pathsearch_to = json["inds"][json["inds"].length - 1];
-                        menu.pathsearch_list = json["inds"];
+                        if(json["result"]) {
+                            menu.pathsearch_from = json["inds"][0];
+                            menu.pathsearch_to = json["inds"][json["inds"].length - 1];
+                            menu.pathsearch_list = json["inds"];
+                        } else {
+                            menu.pathsearch_from = null;
+                            menu.pathsearch_to = null;
+                            menu.pathsearch_list = [];
+                        }
+                        if(json["message"]) {
+                            console.warn(json["message"]);
+                        }
+                        menu.pathsearch_state = "idle";
                     } else {
                         throw new Error("Loading path search '"+term+"' '"+Hiski.selected.xref+"' failed");
                     }
