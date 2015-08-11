@@ -216,6 +216,7 @@ def json_people_path(xref1, xref2):
             "xrefs": [],
             "exists": False,
             "message": "some non-existing individual selected {}, {}".format(xref1, xref2),
+            "error": "no-such-individual",
         })
     if ind1.component_id == 0 or ind1.component_id == None:
         return jsonify({
@@ -223,6 +224,7 @@ def json_people_path(xref1, xref2):
             "xrefs": [],
             "exists": False,
             "message": "components not populated; cannot search paths",
+            "error": "no-component-info",
         })
     if ind1.component_id != ind2.component_id:
         return jsonify({
@@ -268,6 +270,7 @@ def json_people_path(xref1, xref2):
             "xrefs": [],
             "exists": False,
             "message": "even though they were in the same component",
+            "error": "unexpected-error",
         })
     path = []
     alt_path = []

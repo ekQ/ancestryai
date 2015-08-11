@@ -323,7 +323,8 @@ select {
 
 
 .info.viewtab,
-.search.viewtab {
+.search.viewtab,
+.pathsearch.viewtab {
     padding: 5px;
 }
 

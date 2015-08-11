@@ -134,6 +134,10 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.load = function(xref) {
             Hiski.load_or_focus(xref, null);
         };
+        menu.celebrity_select_and_load = function(xref) {
+            this.pathsearch_celebrity_xref = xref;
+            Hiski.load_or_focus(xref, null);
+        };
         menu.show_search = function(json, term) {
             menu.search_result_list = json["inds"];
             menu.search_result_term = term;
@@ -178,13 +182,20 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.do_pathsearch = function() {
             var xref = null;
             if(menu.pathsearch_mode == "last-selection") {
-                xref = Hiski.lastselected.xref;
+                if(Hiski.lastselected == null) {
+                    menu.pathsearch_error = "no-selection";
+                } else {
+                    xref = Hiski.lastselected.xref;
+                }
             } else if(menu.pathsearch_mode == "xref") {
                 xref = menu.pathsearch_xref;
             } else if(menu.pathsearch_mode == "celebrity") {
                 xref = menu.pathsearch_celebrity_xref;
             }
-            if(xref != null) {
+            if(Hiski.selected == null) {
+                console.warn("No nodes selected");
+                menu.pathsearch_error = "no-selection";
+            } else if(xref != null) {
                 var addr = Hiski.url_root + "json/people-path/"+xref+"/"+Hiski.selected.xref+"/";
                 menu.pathsearch_state = "loading";
                 d3.json(addr, function(json) {
@@ -208,10 +219,12 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                             menu.pathsearch_from = json["inds"][0];
                             menu.pathsearch_to = json["inds"][json["inds"].length - 1];
                             menu.pathsearch_list = json["inds"];
+                            menu.pathsearch_error = null;
                         } else {
                             menu.pathsearch_from = null;
                             menu.pathsearch_to = null;
                             menu.pathsearch_list = [];
+                            menu.pathsearch_error = json["error"];
                         }
                         if(json["message"]) {
                             console.warn(json["message"]);

@@ -58,6 +58,11 @@ translations.en = {
     "No path": "No path",
     "Celebrity": "Celebrity",
     "Loading": "Loading",
+    "Found path between:": "Found path between:",
+    "and": "and",
+    "::no-selection": "Please select individuals from a tree view.",
+    "::no-such-individual": "One of the provided individuals doesn't exist on server.",
+    "::no-component-info": "Component information was not populated on server.",
 
     // language selection
     "Finnish": "Suomi",

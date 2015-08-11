@@ -140,7 +140,7 @@
                                             </input>
                                         </span>
                                         <span class="search-result"
-                                                ng-click="menu.load(ind.xref)">
+                                                ng-click="menu.celebrity_select_and_load(ind.xref)">
                                             {{ ind.name }}
                                         </span>
                                     </div>
@@ -160,9 +160,10 @@
                         </form>
                         <div class="searchresults" ng-if="menu.pathsearch_state == 'idle'">
                             <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.pathsearch_time | number:3 }}</div>
-                            <div ng-show="menu.pathsearch_list.length == 0">
-                                <span>{{ menu.pathsearch_form.name }}</span>
-                                -
+                            <div ng-show="menu.pathsearch_list.length > 0">
+                                <span translate>Found path between:</span>
+                                <span>{{ menu.pathsearch_from.name }}</span>
+                                <span translate>and</span>
                                 <span>{{ menu.pathsearch_to.name }}</span>
                             </div>
                             <div class="search-result" ng-repeat="ind in menu.pathsearch_list" ng-click="menu.load(ind.xref)">
@@ -170,6 +171,9 @@
                             </div>
                             <div ng-show="menu.pathsearch_list.length == 0" translate>
                                 No path
+                            </div>
+                            <div ng-if="menu.pathsearch_error != null" translate>
+                                {{ "::" + menu.pathsearch_error }}
                             </div>
                         </div>
                         <div ng-if="menu.pathsearch_state == 'loading'" translate>

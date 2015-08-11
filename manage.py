@@ -97,3 +97,10 @@ if command == "comments":
     import main
     from main.commenttools import handlecommands
     handlecommands(subs)
+if command == "toggle_celebrity":
+    import main
+    from main.models import *
+    from main.database import session
+    ind = Individual.query.filter_by(xref = subs[0]).first()
+    ind.is_celebrity = not ind.is_celebrity
+    session.commit()
