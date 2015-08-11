@@ -321,12 +321,15 @@ function render(view) {
     view.linksvg
             .style("stroke", function(d) {
                     if(_.contains(Hiski.selected_path, d.relation.xref) && _.contains(Hiski.selected_path, d.node.xref))
-                        return "#ffeeee";
+                        //return "#ffeeee";
+                        return "#880000";
                     if(d.relation.selection_relation == "next-to-selected")
                         return "#ffffff";
                     return d.get_color();
                 })
             .style("stroke-width", function(d) {
+                    if(_.contains(Hiski.selected_path, d.relation.xref) && _.contains(Hiski.selected_path, d.node.xref))
+                        return 5;
                     return d.node == Hiski.selected ? 4 : 2;
                 })
             ;

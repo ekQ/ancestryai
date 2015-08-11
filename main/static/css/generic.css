@@ -286,7 +286,6 @@ button:active {
 select {
     padding-left: 4px;
 }
-.itemheader,
 .topmenu {
     background: #fefefe;
     background-image: -webkit-linear-gradient(top, #fefefe, #d1d1d1);
@@ -294,6 +293,9 @@ select {
     background-image: -ms-linear-gradient(top, #fefefe, #d1d1d1);
     background-image: -o-linear-gradient(top, #fefefe, #d1d1d1);
     background-image: linear-gradient(to bottom, #fefefe, #d1d1d1);
+}
+.itemheader {
+    background: #d1d1d1;
 }
 
 .viewtab {
