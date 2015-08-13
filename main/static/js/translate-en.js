@@ -63,6 +63,7 @@ translations.en = {
     "::no-selection": "Please select individuals from a tree view.",
     "::no-such-individual": "One of the provided individuals doesn't exist on server.",
     "::no-component-info": "Component information was not populated on server.",
+    "Hide others": "Hide others",
 
     // language selection
     "Finnish": "Suomi",

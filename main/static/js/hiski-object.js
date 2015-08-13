@@ -698,6 +698,25 @@ var Hiski = {
                 return this.hide_ancestors(node, family);
         }
     },
+    hide_besides_path: function() {
+        if(this.selected_path.length < 3)
+            return;
+        var fold_id = this.next_fold++;
+        for(var i = 0; i < this.node_order.length; i++) {
+            if(this.node_order[i].fold == 0) {
+                this.node_order[i].fold = fold_id;
+                this.node_order[i].visible = false;
+            }
+        }
+        // every second in the list is an individual
+        for(var i = 0; i < this.selected_path.length; i += 2) {
+            var node = this.node_dict[this.selected_path[i]];
+            node.fold = 0;
+            node.visible = true;
+        }
+        this.calc_layout();
+        render_all();
+    },
     open_fold: function(node) {
         var fold = node.fold;
         if(fold == 0)
@@ -740,7 +759,6 @@ var Hiski = {
         redraw flag exists to be able to not trigger redraw during angular
         digest, which is followed by a redraw anyway.
         */
-        console.warn("selecting " + node.name + " from ");
         if(this.lastselected != this.selected)
             this.lastselected = this.selected;
         this.selected = node;

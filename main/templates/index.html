@@ -156,6 +156,7 @@
                                         <input type="text" ng-show="menu.pathsearch_mode == 'xref'" ng-model="menu.pathsearch_xref"></input>
                                 </label>
                                 <button type="submit" translate>Search path</button>
+                                <button type="button" translate ng-click="menu.Hiski.hide_besides_path()">Hide others</button>
                             </div>
                         </form>
                         <div class="searchresults" ng-if="menu.pathsearch_state == 'idle'">

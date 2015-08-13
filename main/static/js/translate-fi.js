@@ -67,6 +67,7 @@ translations.fi = {
     "::no-selection": "Valitse henkilöitä puunäkymästä.",
     "::no-such-individual": "Joku haetuista henkilöistä ei löydy palvelimelta.",
     "::no-component-info": "Komponentti informaatiota ei ole populoitu palvelimelle.",
+    "Hide others": "Piilota muut",
 
     // language selection
     "Finnish": "Suomi",
