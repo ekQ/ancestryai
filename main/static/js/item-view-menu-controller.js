@@ -105,6 +105,11 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.search_result_term = "";
         menu.search_result_list = [];
         menu.search_time = "-";
+        menu.search_triplets = [{
+            relation: "self",
+            search_type: "firstname",
+            search_term: "",
+        }];
 
         menu.pathsearch_mode = "last-selection";
         menu.pathsearch_state = "idle";
@@ -145,6 +150,20 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             menu.search_time = json["time"];
             menu._redraw();
         };
+        menu.do_multi_search = function() {
+            var search_json = JSON.stringify(menu.search_triplets);
+            var addr = Hiski.url_root + "json/multi-search/";
+            d3.json(addr, function(json) {
+                    if(json) {
+                        menu.show_search(json, "");
+                    } else {
+                        throw new Error("Loading firstname search '"+term+"' failed");
+                    }
+                })
+                .header("Content-Type","application/json")
+                .send("POST", search_json)
+                ;
+        };
         menu.do_search = function() {
             var term = menu.search_term;
             if(menu.search_by == "xref") {
@@ -179,6 +198,15 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                 });
             }
         };
+        menu.add_search_triplet = function() {
+            menu.search_triplets.push({
+                relation: "self",
+                search_type: "firstname",
+                search_term: "",
+            });
+        };
+
+
         menu.do_pathsearch = function() {
             var xref = null;
             if(menu.pathsearch_mode == "last-selection") {

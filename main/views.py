@@ -315,3 +315,83 @@ def json_celebrities():
         "inds": ind_dicts,
         "time": t.full_duration(),
     })
+
+
+@app.route("/json/multi-search/", methods=["POST"])
+def json_multi_search():
+    def soundex_upper(s):
+        return soundex.soundex(s.upper())
+    def nop(s):
+        return s
+    conversions = {
+        "firstname": {
+            "field": "soundex_first",
+            "function": soundex_upper,
+        },
+        "familyname": {
+            "field": "soundex_family",
+            "function": soundex_upper,
+        },
+        "xref": {
+            "field": "xref",
+            "function": nop,
+        },
+        "birthyear": {
+            "field": "birth_date_year",
+            "function": nop,
+            "between": "-",
+        },
+    }
+    t = Timer(True, 40)
+    data = request.get_json()
+    # construct queries
+    self_query_terms = []
+    for d in data:
+        if d["relation"] == "self":
+            if d["search_type"] not in conversions:
+                mes = "no such conversion: {}".format(d["search_type"])
+                print mes
+                return jsonify({
+                    "result": False,
+                    "soundex": "",
+                    "message": mes,
+                })
+            con = conversions[d["search_type"]]
+            if "between" in con and con["between"] in d["search_term"]:
+                if len(d["search_term"].split(con["between"])) > 2:
+                    mes = "multiple between separators present"
+                    print mes
+                    return jsonify({
+                        "result": False,
+                        "soundex": "",
+                        "message": mes,
+                    })
+                begin, end = [x.strip() for x in d["search_term"].split(con["between"])]
+                self_query_terms.append(getattr(Individual, con["field"]).between(begin, end))
+            else:
+                self_query_terms.append(getattr(Individual, con["field"]) == con["function"](d["search_term"]))
+
+    t = Timer()
+    # query database
+    inds = Individual.query.filter(*self_query_terms).limit(50).all()
+    if not inds:
+        print "No matches"
+        return jsonify({
+            "soundex": "",
+            "result": False,
+        })
+    t.measure("Database queried")
+#    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
+#    t.measure("Candidates sorted with jaro distance")
+    # convert to dictionaries
+    ind_dict = [x.as_dict() for x in inds]
+    t.measure("Converted individuals to dicts")
+    if app.debug:
+        t.print_all()
+    return jsonify({
+        "soundex": "",
+        "result": True,
+        "count": len(inds),
+        "inds": ind_dict,
+        "time": t.full_duration(),
+    })

@@ -457,3 +457,17 @@ label span {
 .pathsearch-celebrity-selection {
     text-align: right;
 }
+
+
+.triplet > * {
+    -webkit-flex-grow: 1;
+    flex-grow: 1;
+    width: 31%;
+    box-sizing: border-box;
+}
+.triplet {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+}

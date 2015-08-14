@@ -93,27 +93,31 @@
                         <!-- #map will be moved here, as only one such can exist at a time -->
                     </div>
                     <div id="{{ menu.search_id }}" class="search viewtab" ng-show="menu.mode == 'search'">
-                        <form ng-submit="menu.do_search()">
-                            <label><span translate>Search by</span>
-                                <select class="search-by" ng-model="menu.search_by">
+                        <div class="tripets">
+                            <div class="triplet" ng-repeat="triplet in menu.search_triplets">
+                                <select ng-model="triplet.relation">
+                                    <option value="self">self</option>
+                                </select>
+                                <select ng-model="triplet.search_type">
                                     <option value="firstname" translate>First name</option>
                                     <option value="familyname" translate>Family name</option>
+                                    <option value="birthyear" translate>Birth year</option>
                                     <option value="xref">xref</option>
-                                    <option value="ppfamily" ng-if="menu.Hiski.debug_mode">PPFamily</option>
                                 </select>
-                            </label>
-                            <label><span translate>Search term</span>
-                                <input class="search-term" type="text" ng-model="menu.search_term"></input>
-                            </label>
-                            <button type="submit" translate>Search</button>
-                            <div class="searchresults">
-                                <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
-                                <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex }})</div>
-                                <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
-                                    {{ ind.name }}
-                                </div>
+                                <input type="text" ng-model="triplet.search_term"></input>
                             </div>
-                        </form>
+                            <button type="button" ng-click="menu.add_search_triplet()" translate>Add term</button>
+                        </div>
+                        <div>
+                            <button type="button" ng-click="menu.do_multi_search()" translate>Search</button>
+                        </div>
+                        <div class="searchresults">
+                            <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
+                            <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex }})</div>
+                            <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
+                                {{ ind.name }}
+                            </div>
+                        </div>
                     </div>
                     <div class="pathsearch viewtab" ng-show="menu.mode == 'pathsearch'">
                         <form ng-submit="menu.do_pathsearch()">
