@@ -95,8 +95,9 @@
                     <div id="{{ menu.search_id }}" class="search viewtab" ng-show="menu.mode == 'search'">
                         <div class="tripets">
                             <div class="triplet" ng-repeat="triplet in menu.search_triplets">
-                                <select ng-model="triplet.relation">
+                                <select ng-model="triplet.relation" ng-change="menu.check_if_remove_triplet(triplet)">
                                     <option value="self">self</option>
+                                    <option value="remove" translate ng-if="menu.search_triplets.length > 1">remove</option>
                                 </select>
                                 <select ng-model="triplet.search_type">
                                     <option value="firstname" translate>First name</option>
