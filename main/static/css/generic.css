@@ -356,7 +356,7 @@ label span {
     width: 100%;
 }
 .entrance .banner {
-    height: 150px;
+/*    height: 150px;*/
     width: 800px;
 }
 .entrance .topmenu {
@@ -470,4 +470,16 @@ label span {
     display: flex;
     -webkit-flex-direction: row;
     flex-direction: row;
+}
+
+
+.smalllogo {
+    height: 23px;
+    display: block;
+}
+#smalllogobutton {
+    padding: 1px 5px;
+}
+.bannerlogo {
+    width: 100%;
 }
