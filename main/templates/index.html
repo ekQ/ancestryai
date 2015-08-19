@@ -98,6 +98,7 @@
                                 <div class="triplet" ng-repeat="triplet in menu.search_triplets">
                                     <select ng-model="triplet.relation" ng-change="menu.check_if_remove_triplet(triplet)">
                                         <option value="self">self</option>
+                                        <option value="parent" translate>Parent</option>
                                         <option value="remove" translate ng-if="menu.search_triplets.length > 1">remove</option>
                                     </select>
                                     <select ng-model="triplet.search_type">
