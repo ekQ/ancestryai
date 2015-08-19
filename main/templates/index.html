@@ -93,30 +93,35 @@
                         <!-- #map will be moved here, as only one such can exist at a time -->
                     </div>
                     <div id="{{ menu.search_id }}" class="search viewtab" ng-show="menu.mode == 'search'">
-                        <div class="tripets">
-                            <div class="triplet" ng-repeat="triplet in menu.search_triplets">
-                                <select ng-model="triplet.relation" ng-change="menu.check_if_remove_triplet(triplet)">
-                                    <option value="self">self</option>
-                                    <option value="remove" translate ng-if="menu.search_triplets.length > 1">remove</option>
-                                </select>
-                                <select ng-model="triplet.search_type">
-                                    <option value="firstname" translate>First name</option>
-                                    <option value="familyname" translate>Family name</option>
-                                    <option value="birthyear" translate>Birth year</option>
-                                    <option value="xref">xref</option>
-                                </select>
-                                <input type="text" ng-model="triplet.search_term"></input>
+                        <form ng-submit="menu.do_multi_search()">
+                            <div class="tripets">
+                                <div class="triplet" ng-repeat="triplet in menu.search_triplets">
+                                    <select ng-model="triplet.relation" ng-change="menu.check_if_remove_triplet(triplet)">
+                                        <option value="self">self</option>
+                                        <option value="remove" translate ng-if="menu.search_triplets.length > 1">remove</option>
+                                    </select>
+                                    <select ng-model="triplet.search_type">
+                                        <option value="firstname" translate>First name</option>
+                                        <option value="familyname" translate>Family name</option>
+                                        <option value="birthyear" translate>Birth year</option>
+                                        <option value="xref">xref</option>
+                                    </select>
+                                    <input type="text" ng-model="triplet.search_term"></input>
+                                </div>
+                                <button type="button" ng-click="menu.add_search_triplet()" translate>Add term</button>
                             </div>
-                            <button type="button" ng-click="menu.add_search_triplet()" translate>Add term</button>
-                        </div>
-                        <div>
-                            <button type="button" ng-click="menu.do_multi_search()" translate>Search</button>
-                        </div>
+                            <div>
+                                <button type="submit" translate>Search</button>
+                            </div>
+                        </form>
                         <div class="searchresults">
                             <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
                             <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex }})</div>
                             <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
                                 {{ ind.name }}
+                            </div>
+                            <div ng-if="menu.search_result_list == null" translate>
+                                No results
                             </div>
                         </div>
                     </div>
