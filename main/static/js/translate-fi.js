@@ -71,6 +71,7 @@ translations.fi = {
     "Add term": "Lisää termi",
     "Birth year": "Syntymävuosi",
     "remove": "poista",
+    "self": "Haettava henkilö",
 
     // language selection
     "Finnish": "Suomi",

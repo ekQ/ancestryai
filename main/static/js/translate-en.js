@@ -67,6 +67,7 @@ translations.en = {
     "Add term": "Add term",
     "Birth year": "Birth year",
     "remove": "remove",
+    "self": "self",
 
     // language selection
     "Finnish": "Suomi",
