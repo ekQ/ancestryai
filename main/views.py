@@ -346,48 +346,70 @@ def json_multi_search():
     data = request.get_json()
     # construct queries
     self_query_terms = []
+    other_queries = []
     for d in data:
-        if d["relation"] == "self":
-            if d["search_type"] not in conversions:
-                mes = "no such conversion: {}".format(d["search_type"])
+        if d["search_type"] not in conversions:
+            mes = "no such conversion: {}".format(d["search_type"])
+            print mes
+            return jsonify({
+                "result": False,
+                "soundex": "",
+                "message": mes,
+            })
+        con = conversions[d["search_type"]]
+        if "between" in con and con["between"] in d["search_term"]:
+            if len(d["search_term"].split(con["between"])) > 2:
+                mes = "multiple between separators present"
                 print mes
                 return jsonify({
                     "result": False,
                     "soundex": "",
                     "message": mes,
                 })
-            con = conversions[d["search_type"]]
-            if "between" in con and con["between"] in d["search_term"]:
-                if len(d["search_term"].split(con["between"])) > 2:
-                    mes = "multiple between separators present"
-                    print mes
-                    return jsonify({
-                        "result": False,
-                        "soundex": "",
-                        "message": mes,
-                    })
-                begin, end = [x.strip() for x in d["search_term"].split(con["between"])]
-                self_query_terms.append(getattr(Individual, con["field"]).between(begin, end))
-            else:
-                self_query_terms.append(getattr(Individual, con["field"]) == con["function"](d["search_term"]))
+            begin, end = [x.strip() for x in d["search_term"].split(con["between"])]
+            query_term = getattr(Individual, con["field"]).between(begin, end)
+        else:
+            query_term = getattr(Individual, con["field"]) == con["function"](d["search_term"])
+        if d["relation"] == "self":
+            self_query_terms.append(query_term)
+        else:
+            other_queries.append((d["relation"], query_term))
 
-    t = Timer()
+    t.measure("queries constructed")
     # query database
-    inds = Individual.query.filter(*self_query_terms).limit(50).all()
-    if not inds:
-        print "No matches"
-        return jsonify({
-            "soundex": "",
-            "result": False,
-        })
+    if other_queries:
+        sets = []
+        if self_query_terms:
+            sets.append(("self", set(Individual.query.filter(*self_query_terms).all())))
+        for relation, oq in other_queries:
+            query_result = Individual.query.filter(oq).all()
+            set_inds = set([])
+            if relation == "parent":
+                for ind in query_result:
+                    for sub_family in ind.sub_families:
+                        for child in sub_family.children:
+                            set_inds.add(child)
+            sets.append((relation, set_inds))
+        s = sets[0][1]
+        for s2 in sets[1:]:
+            s = s.intersection(s2[1])
+        inds = list(s)
+        print len(inds), "people"
+    else:
+        inds = Individual.query.filter(*self_query_terms).limit(50).all()
+        if not inds:
+            print "No matches"
+            return jsonify({
+                "soundex": "",
+                "result": False,
+            })
     t.measure("Database queried")
 #    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
 #    t.measure("Candidates sorted with jaro distance")
     # convert to dictionaries
     ind_dict = [x.as_dict() for x in inds]
     t.measure("Converted individuals to dicts")
-    if app.debug:
-        t.print_all()
+    t.print_total()
     return jsonify({
         "soundex": "",
         "result": True,

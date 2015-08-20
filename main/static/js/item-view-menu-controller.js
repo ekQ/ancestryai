@@ -206,8 +206,10 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             });
         };
         menu.check_if_remove_triplet = function(triplet) {
-            var index = menu.search_triplets.indexOf(triplet);
-            menu.search_triplets.splice(index, 1);
+            if(triplet.relation == "remove") {
+                var index = menu.search_triplets.indexOf(triplet);
+                menu.search_triplets.splice(index, 1);
+            }
         };
 
 
