@@ -382,7 +382,7 @@ def json_multi_search():
         if self_query_terms:
             sets.append(("self", set(Individual.query.filter(*self_query_terms).all())))
         for relation, oq in other_queries:
-            query_result = Individual.query.filter(oq).all()
+            query_result = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).all()
             set_inds = set([])
             if relation == "parent":
                 for ind in query_result:
