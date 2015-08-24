@@ -121,7 +121,7 @@
                             <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
                                 {{ ind.name }}
                             </div>
-                            <div ng-if="menu.search_result_list == null" translate>
+                            <div ng-if="menu.search_result_list == null || menu.search_result_list.length == 0" translate>
                                 No results
                             </div>
                         </div>

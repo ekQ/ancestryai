@@ -355,6 +355,7 @@ def json_multi_search():
                 "result": False,
                 "soundex": "",
                 "message": mes,
+                "inds": [],
             })
         con = conversions[d["search_type"]]
         if "between" in con and con["between"] in d["search_term"]:
@@ -365,6 +366,7 @@ def json_multi_search():
                     "result": False,
                     "soundex": "",
                     "message": mes,
+                    "inds": [],
                 })
             begin, end = [x.strip() for x in d["search_term"].split(con["between"])]
             query_term = getattr(Individual, con["field"]).between(begin, end)
@@ -402,6 +404,7 @@ def json_multi_search():
             return jsonify({
                 "soundex": "",
                 "result": False,
+                "inds": [],
             })
     t.measure("Database queried")
 #    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
