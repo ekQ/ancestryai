@@ -99,6 +99,8 @@
                                     <select ng-model="triplet.relation" ng-change="menu.check_if_remove_triplet(triplet)">
                                         <option value="self" translate>self</option>
                                         <option value="parent" translate>Parent</option>
+                                        <option value="child" translate>Child</option>
+                                        <option value="sibling" translate>Sibling</option>
                                         <option value="remove" translate ng-if="menu.search_triplets.length > 1">remove</option>
                                     </select>
                                     <select ng-model="triplet.search_type">
@@ -115,7 +117,7 @@
                                 <button type="submit" translate>Search</button>
                             </div>
                         </form>
-                        <div class="searchresults">
+                        <div class="searchresults" ng-if="menu.search_state == 'idle'">
                             <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
                             <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex }})</div>
                             <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
@@ -124,6 +126,9 @@
                             <div ng-if="menu.search_result_list == null || menu.search_result_list.length == 0" translate>
                                 No results
                             </div>
+                        </div>
+                        <div ng-if="menu.search_state == 'loading'" translate>
+                            Loading
                         </div>
                     </div>
                     <div class="pathsearch viewtab" ng-show="menu.mode == 'pathsearch'">
