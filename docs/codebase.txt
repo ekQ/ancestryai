@@ -1,0 +1,197 @@
+
+manage.py
+---------
+Commandline tool for managing the program, its database and running a
+development server.
+
+
+soundexpy/soundex.py
+--------------------
+Implementation of soundex. Can be run as standalone to run tests of correct
+result.
+
+
+gedcom/*
+--------
+Gedcom parser that returns a hierarchical object representing the input
+gedcom. The parser is not a complete implementation and only parts that were
+required during the project are implemented.
+
+http://homepages.rootsweb.ancestry.com/~pmcbride/gedcom/55gctoc.htm
+
+
+instrumenting/instrumenting.py
+------------------------------
+Instrumentation timer that simplifies timing parts of a function.
+
+
+main/database.py
+----------------
+Connecting to the database and setting up declarative base for models.
+
+
+main/models.py
+--------------
+Database object specification.
+
+
+main/commenttools.py
+--------------------
+Tools for comment managing and exporting. Usable through manage.py.
+
+
+main/populate.py
+----------------
+Populates the database from a source
+
+def populate_from_gedcom()
+- - - - - - - - - - - - -
+Populate the database from a gedcom source.
+
+def populate_from_recons()
+- - - - - - - - - - - - -
+Populate the database from a custom automatically recons* source.
+
+def populate_component_ids()
+- - - - - - - - - - - - - -
+Populate the component ids for individuals for fast detection when people are
+in the same connected component. Should be run after populating the database
+from some source.
+
+
+main/views.py
+-------------
+Views for the program, the initial page and routes returning json data.
+
+def json_load()
+- - - - - - - -
+Returns an individual corresponding to a given xref as a json object.
+
+def json_people_path()
+- - - - - - - - - - -
+Returns a path between two people. Uses a A* search with heuristic function
+calculating the difference between birthtimes.
+
+def json_multi_search()
+- - - - - - - - - - - -
+Takes search terms as a json object in post query.
+
+
+main/templates/*
+----------------
+html of the project. Splitting the html to two files ended up not being an
+optimal choice. Could have placed into just one file or split further based on
+subviews.
+
+
+main/static/css/generic.css
+---------------------------
+css styling for html. SVG of tree view is styled within creation in js,
+although it could be better to set classes for elements in js and styling them
+in css.
+
+
+main/static/i18n/*
+------------------
+Probably not needed, as translation seems to have ended up being done on js
+side.
+
+
+main/static/img/*
+-----------------
+Images seen in the program.
+
+
+main/static/jslibs/*
+--------------------
+Javascript libraries.
+
+
+main/static/js/*
+----------------
+Custom javascript of the program.
+
+hiski-object.js
+- - - - - - - -
+Contains the main object of the program, which represents the program state
+and related functions. Couple notable functions listed below.
+
+load: loads an individual or family by xref and proceeds to add them through
+add_entry.
+
+calc_layout: Calculates layout positions for individual and relation nodes.
+
+
+tree-individuals.js
+- - - - - - - - - -
+Object representing an individual and stored into the Hiski-object. Also
+contains the functions defining colours of nodes in different colouring modes
+and functions for updating a fuzzy index of an individual to figure out the
+relative order of two individuals.
+
+
+tree-family.js
+- - - - - - -
+Object representing a family.
+
+
+tree-family.js
+- - - - - - -
+Object representing a family
+
+
+view-map.js
+- - - - - -
+Code required for map subview.
+
+
+view-tree.js
+- - - - - -
+Functions for tree subview.
+
+function tree_init(): Initializes tree view and creates layers for different
+objects to the svg of that view.
+
+function enter(): Enters new objects into the view and sets their attributes
+and styling values.
+
+function render(): renders the new state of the objects and sets their
+attributes and styles accordingly.
+
+
+tree-links.js
+- - - - - - -
+Object representing a link between an individual and a family.
+
+
+translate-*.js
+- - - - - - -
+Files containing translation dictionaries for different languages.
+
+
+multi-view-controller.js
+- - - - - - - - - - - -
+Controller for handling having multiple subviews and resizing them. The
+subviews themselves are handled by item-view-menu-controller.js. The identity
+linking between multi-view and item-views is not as elegant as it could be,
+but seems to work.
+
+
+item-view-menu-controller.js
+- - - - - - - - - - - - - -
+Controller for a single subview. Contains functions for the actions defined in
+the html.
+
+
+init-for-ng.js
+- - - - - - -
+Setting up Angular controllers. Also, contains the controller for the top bar
+of the program.
+
+
+hiski-visualizer.js
+- - - - - - - - - -
+Loading initial data for the program when the website has finished loading
+other resources.
+
+
