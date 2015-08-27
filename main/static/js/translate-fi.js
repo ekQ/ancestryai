@@ -72,6 +72,10 @@ translations.fi = {
     "Birth year": "Syntymävuosi",
     "remove": "poista",
     "self": "Haettava henkilö",
+    "Parent": "Vanhempi",
+    "Child": "Lapsi",
+    "Sibling": "Sisarus",
+    "No results": "Ei tuloksia",
 
     // language selection
     "Finnish": "Suomi",

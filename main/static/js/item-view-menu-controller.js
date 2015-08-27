@@ -204,15 +204,24 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
                 d3.json(addr, function(json) {
                     if(json) {
                         var flat = [];
+                        // preload the nodes to assure the load order
+                        for(var i = 0; i < json.inds.length; i++) {
+                            var ind = json.inds[i];
+                            Hiski.preloaded_entries[ind.xref] = ind;
+                        }
+                        // load the nodes from the preloaded dictionary
                         for(var i = 0; i < json.xrefs.length; i++) {
-                            var fam = json.xrefs[i][0];
-                            var ind = json.xrefs[i][1];
-                            if(fam !== null) {
-                                Hiski.load(fam, null, Hiski.selected);
-                                flat.push(fam);
+                            var xref = json.xrefs[i][1];
+                            Hiski.load(xref, null, Hiski.selected);
+                            flat.push(xref);
+                        }
+                        // load the families and expand their surroundings
+                        for(var i = 0; i < json.xrefs.length; i++) {
+                            var xref = json.xrefs[i][0];
+                            if(xref !== null) {
+                                Hiski.load(xref, null, Hiski.selected);
+                                flat.push(xref);
                             }
-                            Hiski.load(ind, null, Hiski.selected);
-                            flat.push(ind);
                         }
                         Hiski.selected_path = flat;
                         Hiski.delayed_render();

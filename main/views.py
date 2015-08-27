@@ -174,7 +174,7 @@ def json_people_path(xref1, xref2):
     visited = set([])
     routing = {}
     routing_path_pieces = {}
-    buf = [(0, 0, ind1, None, (None, None))]
+    buf = [(0, 0, ind2, None, (None, None))]
     steps = 0
     adds = 0
     while buf:
@@ -185,18 +185,18 @@ def json_people_path(xref1, xref2):
         routing[cur] = source
         routing_path_pieces[cur] = path_piece
         steps += 1
-        if cur == ind2:
+        if cur == ind1:
             break
         for fam_id, nei_id in json.loads(cur.neighboring_ids):
             nei = ind_dict[nei_id]
             # the 50. means that if people get children at over 50 years age,
             # the path might not be optimal
-            prio = distance + abs(nei.birth_date_year - ind2.birth_date_year) / 50.
+            prio = distance + abs(nei.birth_date_year - ind1.birth_date_year) / 50.
             pos = bisect.bisect(buf, (prio,))
             buf[pos:pos] = [(prio, distance + 1, nei, cur, (fam_id, nei_id))]
             adds += 1
     t.submeasure("searching for node")
-    if not ind2 in routing:
+    if not ind1 in routing:
         return jsonify({
             "result": False,
             "xrefs": [],
@@ -206,7 +206,7 @@ def json_people_path(xref1, xref2):
         })
     path = []
     alt_path = []
-    cur = ind2
+    cur = ind1
     while cur:
         path.append(cur)
         if routing[cur]:
@@ -217,7 +217,7 @@ def json_people_path(xref1, xref2):
     t.submeasure("reconstructing path")
     t.measure("graph search for the path")
     out_xrefs = alt_path[::-1]
-    out_dicts = [x.as_dict() for x in path]
+    out_dicts = [x.as_dict() for x in path][::-1]
     t.measure("converting for output")
     t.print_total()
     print "visited {} unique nodes and added to buffer {} nodes".format(steps, adds)

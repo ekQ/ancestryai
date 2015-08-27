@@ -68,6 +68,10 @@ translations.en = {
     "Birth year": "Birth year",
     "remove": "remove",
     "self": "self",
+    "Parent": "Parent",
+    "Child": "Child",
+    "Sibling": "Sibling",
+    "No results": "No results",
 
     // language selection
     "Finnish": "Suomi",

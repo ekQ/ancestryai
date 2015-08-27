@@ -13,7 +13,7 @@ var Hiski = {
     // nodes in the order of the layout constraints
     node_order: [],
     // nodes that were loaded during search, but not yet added
-    preloaded_nodes: {},
+    preloaded_entries: {},
     add_node: function(node_data, reference, anchor) {
         /*
         Adds a node based on given json data. Places the node initially to the
@@ -364,7 +364,7 @@ var Hiski = {
     load: function(xref, reference, anchor) {
         /*
         Loads the node of given xref, if it didn't exist yet. Takes the data
-        from preloaded_nodes and adds that, if it was preloaded on for example
+        from preloaded_entries and adds that, if it was preloaded on for example
         a search.
         */
         if(xref in this.node_dict) {
@@ -376,8 +376,8 @@ var Hiski = {
         if(xref in this.relation_dict) {
             return;
         }
-        if(xref in this.preloaded_nodes) {
-            Hiski.add_entry(this.preloaded_nodes[xref], reference, anchor);
+        if(xref in this.preloaded_entries) {
+            Hiski.add_entry(this.preloaded_entries[xref], reference, anchor);
             Hiski.delayed_render();
             return;
         }
@@ -396,7 +396,7 @@ var Hiski = {
                     Hiski.delay_queue_count -= 1;
                     return;
                 }
-                Hiski.preloaded_nodes[json.entry.xref] = json.entry;
+                Hiski.preloaded_entries[json.entry.xref] = json.entry;
                 var entry = Hiski.add_entry(json.entry, reference, anchor);
                 if(reference === null) {
                     Hiski.zoom_to = entry;
@@ -412,7 +412,7 @@ var Hiski = {
     delay_running: false,
     delay_queue_count: 0,
     delay_queue_fallback_value: 0,
-    delay_render_delay: 200,
+    delay_render_delay: 500,
     delayed_render: function() {
         /*
         delayed rendering, which gives a bit time for other pending nodes to
@@ -773,7 +773,7 @@ var Hiski = {
         if(this.lastselected != this.selected)
             this.lastselected = this.selected;
         this.selected = node;
-        this.selected_path = [];
+//        this.selected_path = [];
         for(var i = 0; i < item_views.length; i++) {
             item_views[i].selected_node = node;
         }
@@ -868,7 +868,7 @@ var Hiski = {
     celebrity_nodes: [],
     set_celebrities: function(inds) {
         for(var i = 0; i < inds.length; i++) {
-            this.preloaded_nodes[inds[i].xref] = inds[i];
+            this.preloaded_entries[inds[i].xref] = inds[i];
         }
         this.celebrity_nodes = inds;
     },
