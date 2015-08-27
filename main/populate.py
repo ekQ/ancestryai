@@ -219,13 +219,21 @@ def populate_from_recons(fname):
                         parent = parent,
                         person = person,
                         probability = d["prob"],
+                        is_dad = d["dad"],
                         )
                 session.add(pp)
             t.submeasure("parent probabilities")
             family_candidates = {}
             of_len = {}
             for child, parents in parent_candidates.iteritems():
-                key = tuple([x["parent"] for x in parents])
+                dads = sorted([x for x in parents if x["dad"]], key = lambda x: x["prob"], reverse = True)
+                moms = sorted([x for x in parents if not x["dad"]], key = lambda x: x["prob"], reverse = True)
+                key = []
+                if dads:
+                    key.append(dads[0])
+                if moms:
+                    key.append(moms[0])
+                key = tuple([x["parent"] for x in key])
                 if not key in family_candidates:
                     family_candidates[key] = []
                 family_candidates[key].append(child)
@@ -247,7 +255,7 @@ def populate_from_recons(fname):
                     ind = Individual.query.filter_by(xref = child).first()
                     fam.children.append(ind)
             t.submeasure("families added and linked to individuals")
-            count_families = len(data)
+            count_families = i
     t.measure("{} families added".format(count_families))
     for ind in Individual.query.all():
         ind.pre_dicted = u(json.dumps(ind.as_dict()))
@@ -259,7 +267,10 @@ def populate_from_recons(fname):
 
 def populate_component_ids():
     t = Timer(True, 60)
-    inds = Individual.query.options(joinedload("*")).all()
+    # I'm not sure why the joinedload caused an exception, seemed like limit of
+    # how much sqlite or sqlalchemy can retrieve from a query.
+#    inds = Individual.query.options(joinedload("*")).all()
+    inds = Individual.query.all()
     fams = Family.query.options().all()
 #    dict_fams = {x.xref: x for x in fams}
     t.measure("queried to memory")

@@ -115,7 +115,12 @@ class Individual(Base):
             "sub_families": [x.xref for x in self.sub_families],
             "sup_families": [x.xref for x in self.sup_families],
             "soundex_family": self.soundex_family,
-            "parent_probabilities": [{"xref": x.parent.xref, "name": x.parent.name, "prob": x.probability} for x in self.parent_probabilities],
+            "parent_probabilities": [{
+                    "xref": x.parent.xref,
+                    "name": x.parent.name,
+                    "prob": x.probability,
+                    "is_dad": x.is_dad,
+                } for x in self.parent_probabilities],
             "location": location,
         }
 
@@ -132,6 +137,7 @@ class ParentProbability(Base):
             foreign_keys = "ParentProbability.parent_id",
             backref = "child_probabilities",
             )
+    is_dad = Column(Boolean)
     probability = Column(Float)
 
 class Family(Base):
