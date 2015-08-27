@@ -388,10 +388,12 @@ var Hiski = {
         var addr = this.url_root + "json/load/"+xref+"/";
         if(xref === null)
             addr = this.url_root + "json/load-any/";
+        Hiski.delay_queue_count += 1;
         d3.json(addr, function(json) {
             if(json && json.result == true) {
                 if(json.entry.xref in Hiski.node_dict || json.entry.xref in Hiski.relation_dict) {
                     console.warn("The node already existed, doing nothing.");
+                    Hiski.delay_queue_count -= 1;
                     return;
                 }
                 Hiski.preloaded_nodes[json.entry.xref] = json.entry;
@@ -399,30 +401,39 @@ var Hiski = {
                 if(reference === null) {
                     Hiski.zoom_to = entry;
                 }
+                Hiski.delay_queue_count -= 1;
                 Hiski.delayed_render();
             } else {
+                Hiski.delay_queue_count -= 1;
                 throw new Error("Loading data '"+xref+"' failed");
             }
         });
     },
     delay_running: false,
+    delay_queue_count: 0,
+    delay_queue_fallback_value: 0,
+    delay_render_delay: 200,
     delayed_render: function() {
         /*
         delayed rendering, which gives a bit time for other pending nodes to
         get loaded
         */
-        // XXX: could be better to just know which we are loading and wait
-        // until we have loaded those.
+        delay_queue_fallback_value = 20;
         var timed = function() {
-            Hiski.delay_running = false;
-            enter_all();
-            Hiski.calc_layout();
-            redraw_views();
-            render_all();
+            if(Hiski.delay_queue_count == 0 || Hiski.delay_queue_fallback_value == 0) {
+                Hiski.delay_running = false;
+                enter_all();
+                Hiski.calc_layout();
+                redraw_views();
+                render_all();
+            } else {
+                delay_queue_fallback_value -= 1;
+                setTimeout(timed, Hiski.delay_render_delay);
+            }
         };
         if(!Hiski.delay_running) {
             Hiski.delay_running = true;
-            setTimeout(timed, 500);
+            setTimeout(timed, Hiski.delay_render_delay);
         }
     },
 

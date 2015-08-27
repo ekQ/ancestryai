@@ -1,6 +1,7 @@
 
 import bisect
 import random
+import time
 import jellyfish
 import time
 from datetime import datetime
@@ -44,6 +45,9 @@ def json_individual(xref):
 @app.route("/json/load/<xref>/")
 @app.route("/json/load-any/")
 def json_load(xref = None):
+#    sleeptime = random.random()
+#    print "sleeping {}s".format(sleeptime)
+#    time.sleep(sleeptime)
     if xref and xref == "@first@":
         ind = Individual.query.filter_by(xref = xref).first()
         if not ind:
