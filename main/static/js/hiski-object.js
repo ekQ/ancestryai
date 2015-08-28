@@ -720,7 +720,7 @@ var Hiski = {
             }
         }
         // every second in the list is an individual
-        for(var i = 0; i < this.selected_path.length; i += 2) {
+        for(var i = 0; i < this.selected_path.length / 2; i++) {
             var node = this.node_dict[this.selected_path[i]];
             node.fold = 0;
             node.visible = true;
