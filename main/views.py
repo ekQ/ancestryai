@@ -137,6 +137,10 @@ def json_load_comments(xref):
     })
 
 
+##########################################
+# Searching
+##########################################
+
 @app.route("/json/people-path/<xref1>/<xref2>/")
 def json_people_path(xref1, xref2):
     t = Timer(True, 40)
@@ -338,6 +342,41 @@ def json_multi_search():
                             if child == ind:
                                 continue
                             set_inds.add(child)
+            if relation == "grandparent":
+                query_result = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).all()
+                for ind in query_result:
+                    for sub_family in ind.sub_families:
+                        for child in sub_family.children:
+                            for sub_family2 in child.sub_families:
+                                for child2 in sub_family2.children:
+                                    set_inds.add(child2)
+            if relation == "grandchild":
+                query_result = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
+                for ind in query_result:
+                    for sup_family in ind.sup_families:
+                        for parent in sup_family.parents:
+                            for sup_family2 in parent.sup_families:
+                                for parent2 in sup_family2.parents:
+                                    set_inds.add(parent2)
+            if relation == "cousin":
+                group = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
+                path = ["up","up","down","down"]
+                while path:
+                    cur = path.pop()
+                    newgroup = set([])
+                    if cur == "up":
+                        for ind in group:
+                            for sup_family in ind.sup_families:
+                                for parent in sup_family.parents:
+                                    newgroup.add(parent)
+                    if cur == "down":
+                        for ind in group:
+                            for sub_family in ind.sub_families:
+                                for child in sub_family.children:
+                                    newgroup.add(child)
+                    group = newgroup
+                set_inds = group
+
             sets.append((relation, set_inds))
             t.submeasure("query for {}".format(relation))
         s = sets[0][1]

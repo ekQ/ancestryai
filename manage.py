@@ -31,6 +31,9 @@ commands
         export          - print all comments in a json format
         print <id>      - print comment of the given id
         delete <id>     - delete comment of the given id
+    toggle_celebrity  - toggles individuals' celebrity flag
+        <xref>          - xref of the individual to toggle
+
 """.format(sys.argv[0])
     sys.exit(0)
 
@@ -101,6 +104,7 @@ if command == "toggle_celebrity":
     import main
     from main.models import *
     from main.database import session
-    ind = Individual.query.filter_by(xref = subs[0]).first()
-    ind.is_celebrity = not ind.is_celebrity
+    for xref in subs:
+        ind = Individual.query.filter_by(xref = unicode(xref)).first()
+        ind.is_celebrity = not ind.is_celebrity
     session.commit()
