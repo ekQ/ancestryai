@@ -76,6 +76,11 @@ translations.fi = {
     "Child": "Lapsi",
     "Sibling": "Sisarus",
     "No results": "Ei tuloksia",
+    "Grandparent": "Isovanhempi",
+    "Grandchild": "Lapsenlapsi",
+    "Cousin": "Serkku",
+    "Aunt": "Täti",
+    "Uncle": "Setä",
 
     // language selection
     "Finnish": "Suomi",

@@ -342,38 +342,49 @@ def json_multi_search():
                             if child == ind:
                                 continue
                             set_inds.add(child)
+            relationpath = None
             if relation == "grandparent":
-                query_result = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).all()
-                for ind in query_result:
-                    for sub_family in ind.sub_families:
-                        for child in sub_family.children:
-                            for sub_family2 in child.sub_families:
-                                for child2 in sub_family2.children:
-                                    set_inds.add(child2)
+                relationpath = ["up","up"]
             if relation == "grandchild":
-                query_result = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
-                for ind in query_result:
-                    for sup_family in ind.sup_families:
-                        for parent in sup_family.parents:
-                            for sup_family2 in parent.sup_families:
-                                for parent2 in sup_family2.parents:
-                                    set_inds.add(parent2)
+                relationpath = ["down","down"]
             if relation == "cousin":
-                group = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
-                path = ["up","up","down","down"]
-                while path:
-                    cur = path.pop()
+                relationpath = ["up","up","down","down"]
+            if relation == "aunt":
+                relationpath = ["up","up","down","female"]
+            if relation == "uncle":
+                relationpath = ["up","up","down","male"]
+            if relationpath:
+                if relationpath[-1] == "up":
+                    group = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).all()
+                elif relationpath[-1] == "down":
+                    group = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
+                else:
+                    group = Individual.query.filter(oq).all()
+                gender = None
+                while relationpath:
+                    cur = relationpath.pop()
                     newgroup = set([])
-                    if cur == "up":
+                    # these directions are reversed, because we are following the path in opposite direction
+                    if cur == "down":
                         for ind in group:
                             for sup_family in ind.sup_families:
                                 for parent in sup_family.parents:
+                                    if gender and parent.sex != gender:
+                                        continue
                                     newgroup.add(parent)
-                    if cur == "down":
+                    elif cur == "up":
                         for ind in group:
                             for sub_family in ind.sub_families:
                                 for child in sub_family.children:
+                                    if gender and child.sex != gender:
+                                        continue
                                     newgroup.add(child)
+                    elif cur == "male":
+                        gender = "M"
+                        continue
+                    elif cur == "female":
+                        gender = "F"
+                        continue
                     group = newgroup
                 set_inds = group
 

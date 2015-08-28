@@ -87,6 +87,9 @@ class Individual(Base):
     pre_dicted = Column(UnicodeText)
     neighboring_ids = Column(UnicodeText)
 
+    # sup_family from Family
+    # sub_family from Family
+
     loaded_gedcom = Column(UnicodeText)
     def as_dict(self):
         if self.pre_dicted:

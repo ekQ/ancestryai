@@ -72,6 +72,11 @@ translations.en = {
     "Child": "Child",
     "Sibling": "Sibling",
     "No results": "No results",
+    "Grandparent": "Grandparent",
+    "Grandchild": "Grandchild",
+    "Cousin": "Cousin",
+    "Aunt": "Aunt",
+    "Uncle": "Uncle",
 
     // language selection
     "Finnish": "Suomi",
