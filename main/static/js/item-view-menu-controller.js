@@ -178,6 +178,9 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
             if(triplet.relation == "remove") {
                 var index = menu.search_triplets.indexOf(triplet);
                 menu.search_triplets.splice(index, 1);
+                if(menu.search_triplets.length == 0) {
+                    menu.add_search_triplet();
+                }
             }
         };
 
