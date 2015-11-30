@@ -141,38 +141,100 @@ function enter(view) {
             .append("g")
                 .classed("node", true)
                 .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
+                .style("cursor", "pointer")
                 .on("click", function(d) {
                     Hiski.select_node(d, true);
                     d.expand_surroundings();
                 })
             ;
     var dropshadow = "url(\"#"+view.tree_id+"-dropshadow\")";
+    newnodes.append("svg:text")
+            .attr("y", -7)
+            .text(function(d) {
+                return d.first_name;
+            })
+            .style("stroke", "#000000")
+            .style("stroke-width", "8")
+            .style("stroke-linecap", "round")
+            .style("stroke-linejoin", "round")
+            ;
+    newnodes.append("svg:text")
+            .attr("y", 7)
+            .text(function(d) {
+                return d.family_name;
+            })
+            .style("stroke", "#000000")
+            .style("stroke-width", "8")
+            .style("stroke-linecap", "round")
+            .style("stroke-linejoin", "round")
+            ;
     newnodes.append("circle")
             .attr("r", 25)
             .style("fill", Hiski.node_color_function)
             ;
-    newnodes.append("svg:text")
+    /*newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", -18)
+            .attr("y", -7)
             .attr("dominant-baseline", "central")
             .text(function(d) {
                 return d.first_name;
             })
             .style("filter", dropshadow)
             .style("font-weight", "bold")
-            .style("font-size", "60%")
+            .style("font-size", "70%")
             ;
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
-            .attr("y", -5)
+            .attr("y", 7)
             .attr("dominant-baseline", "central")
             .text(function(d) {
                 return d.family_name;
             })
             .style("filter", dropshadow)
             .style("font-weight", "bold")
-            .style("font-size", "60%")
+            .style("font-size", "70%")
+            ;*/
+    // create outlines
+    newnodes.append("svg:text")
+            .attr("y", -7)
+            .text(function(d) {
+                return d.first_name;
+            })
+            .style("stroke", "#ffffff")
+            .style("stroke-width", "6")
+            .style("stroke-linecap", "round")
+            .style("stroke-linejoin", "round")
             ;
+    newnodes.append("svg:text")
+            .attr("y", 7)
+            .text(function(d) {
+                return d.family_name;
+            })
+            .style("stroke", "#ffffff")
+            .style("stroke-width", "6")
+            .style("stroke-linecap", "round")
+            .style("stroke-linejoin", "round")
+            ;
+    //create actual texts
+    newnodes.append("svg:text")
+            .attr("y", -7)
+            .text(function(d) {
+                return d.first_name;
+            })
+            ;
+    newnodes.append("svg:text")
+            .attr("y", 7)
+            .text(function(d) {
+                return d.family_name;
+            })
+            ;
+    newnodes.selectAll("text")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "central")
+            .style("font-weight", "bold")
+            .style("font-size", "70%")
+            ;
+            /*
     newnodes.append("svg:text")
             .attr("text-anchor", "middle")
             .attr("y", 10)
@@ -195,6 +257,7 @@ function enter(view) {
             .style("font-weight", "normal")
             .style("font-size", "50%")
             ;
+            */
 
 
     view.relationsvg = view.relationsvg
@@ -204,13 +267,35 @@ function enter(view) {
             .append("g")
                 .classed("relation", true)
                 .attr("transform", function(d) { return "translate("+d.get_x()+","+d.get_y()+") scale(0.01)"})
+                .style("cursor", "pointer")
+                .on("click", function(d) {
+                    if(d.next_to_hidden()) {
+                        d.expand_surroundings();
+                    } else if(d.next_to_selected()) {
+                        Hiski.hide_relative(Hiski.selected, d);
+                    }
+                })
             ;
     newrelations.append("circle")
             .attr("r", 5)
-            .on("click", function(d) { d.expand_surroundings(); })
+            .style("cursor", "pointer")
+            ;
+    newrelations.append("svg:text")
+            .attr("text-anchor", "middle")
+            .attr("dominany-baseline", "central")
+            .attr("y", 4)
+            .text(function(d) {
+                return d.next_to_hidden() ? "+" : "";
+            })
+            .style("font-weight", "bold")
+            .style("font-size", "80%")
+            .style("fill", function(d) { return d.next_to_selected() ? "#000000" : "#ffffff" })
             ;
 }
+
+
 function render_all() {
+    Hiski.update_selection_relations();
     for(var i = 0; i < item_views.length; i++) {
         if(item_views[i].mode != "tree")
             continue;
@@ -220,7 +305,6 @@ function render_all() {
     if(Hiski.map) {
         update_map();
     }
-    Hiski.lastselected = Hiski.selected;
 }
 function render(view) {
     var duration = 2200;
@@ -236,9 +320,16 @@ function render(view) {
             ;
     view.linksvg
             .style("stroke", function(d) {
-                    return d.node == Hiski.selected ? "#ffffff" : d.get_color();
+                    if(_.contains(Hiski.selected_path, d.relation.xref) && _.contains(Hiski.selected_path, d.node.xref))
+                        //return "#ffeeee";
+                        return "#880000";
+                    if(d.relation.selection_relation == "next-to-selected")
+                        return "#ffffff";
+                    return d.get_color();
                 })
             .style("stroke-width", function(d) {
+                    if(_.contains(Hiski.selected_path, d.relation.xref) && _.contains(Hiski.selected_path, d.node.xref))
+                        return 5;
                     return d.node == Hiski.selected ? 4 : 2;
                 })
             ;
@@ -246,7 +337,9 @@ function render(view) {
         elem.parentNode.appendChild(elem);
     }
     view.linksvg.each(function(d) {
-        if(d.node == Hiski.selected)
+        if(d.relation.selection_relation == "next-to-selected")
+            move_to_front(this);
+        else if(_.contains(Hiski.selected_path, d.relation.xref) && _.contains(Hiski.selected_path, d.node.xref))
             move_to_front(this);
     })
 
@@ -260,7 +353,13 @@ function render(view) {
 //            .transition()
 //            .duration(short_duration)
             .style("fill", Hiski.node_color_function)
-            .style("stroke", function(d) { return d == Hiski.selected ? "#ffffff" : "#000000" })
+            .style("stroke", function(d) {
+                if(d == Hiski.selected)
+                    return "#ffffff";
+                if(_.contains(Hiski.selected_path, d.xref))
+                    return "#ffffff";
+                return "#000000";
+            })
             .style("stroke-width", function(d) { return d == Hiski.selected ? 3 : 1 })
             ;
     view.nodesvg.each(function(d) {
@@ -268,15 +367,6 @@ function render(view) {
             move_to_front(this);
     })
 
-    var next_to_selected = function(d) {
-        if(Hiski.selected === null)
-            return false;
-        for(var i = 0; i < Hiski.selected.relations.length; i++) {
-            if(Hiski.selected.relations[i] == d)
-                return true;
-        }
-        return false;
-    }
     if(Hiski.lastselected != Hiski.selected) {
         view.relationsvg.selectAll("circle")
                 .style("stroke", "#ffffff")
@@ -284,7 +374,10 @@ function render(view) {
                 ;
     }
     view.relationsvg.selectAll("circle")
-            .attr("r", 5)
+//            .attr("r", 5)
+            .attr("r", function(d) {
+                return d.next_to_hidden() ? 8 : 5;
+            })
             ;
     view.relationsvg
             .transition()
@@ -297,9 +390,31 @@ function render(view) {
 //            .duration(short_duration)
             ;
     view.relationsvg.selectAll("circle")
-            .style("fill", function(d) { return next_to_selected(d) ? "#ffffff" : "#000000" })
-            .style("stroke", function(d) { return next_to_selected(d) ? "#000000" : "#ffffff" })
+            .style("fill", function(d) {
+                if(_.contains(Hiski.selected_path, d.xref))
+                    return "#ffeeee";
+                if(d.next_to_selected())
+                    return "#ffffff";
+                return "#000000";
+            })
+            .style("stroke", function(d) {
+                if(_.contains(Hiski.selected_path, d.xref))
+                    return "#000000";
+                if(d.next_to_selected())
+                    return "#000000";
+                return "#ffffff";
+            })
 //            .attr("r", function(d) { return next_to_selected(d) ? 8 : 5 })
+            ;
+    view.relationsvg.selectAll("text")
+            .text(function(d) {
+                if(d.next_to_hidden())
+                    return "+";
+                if(d.next_to_selected())
+                    return "-";
+                return "";
+            })
+            .style("fill", function(d) { return d.next_to_selected() ? "#000000" : "#ffffff" })
             ;
 }
 

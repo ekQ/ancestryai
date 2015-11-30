@@ -1,5 +1,7 @@
 
+import bisect
 import random
+import time
 import jellyfish
 import time
 from datetime import datetime
@@ -14,6 +16,7 @@ from flask import (
     request,
 )
 from flask.ext.babel import refresh
+from instrumenting.instrumenting import Timer
 from soundexpy import soundex
 from . import app
 from gedcom import gedcom
@@ -42,6 +45,9 @@ def json_individual(xref):
 @app.route("/json/load/<xref>/")
 @app.route("/json/load-any/")
 def json_load(xref = None):
+#    sleeptime = random.random()
+#    print "sleeping {}s".format(sleeptime)
+#    time.sleep(sleeptime)
     if xref and xref == "@first@":
         ind = Individual.query.filter_by(xref = xref).first()
         if not ind:
@@ -76,71 +82,6 @@ def language(lang):
     refresh()
     return redirect(url_for("index"))
 
-
-@app.route("/json/search/firstname/<term>/")
-def json_search_firstname(term):
-    t0 = time.time()
-    soundex6term = soundex.soundex(term, 6)
-    soundex3term = soundex.soundex(term, 3)
-    inds = None
-    if not inds:
-        inds = Individual.query.filter_by(soundex6first = soundex6term).all()
-    if not inds:
-        inds = Individual.query.filter_by(soundex3first = soundex3term).all()
-    if not inds:
-        return jsonify({
-            "soundex6": soundex6term,
-            "result": False,
-        })
-    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
-    t1 = time.time()
-    return jsonify({
-        "soundex6": soundex6term,
-        "result": True,
-        "count": len(inds),
-        "inds": [x.as_dict() for x in inds],
-        "time": t1 - t0,
-    })
-
-@app.route("/json/search/familyname/<term>/")
-def json_search_familyname(term):
-    t0 = time.time()
-    soundex6term = soundex.soundex(term, 6)
-    soundex3term = soundex.soundex(term, 3)
-    inds = None
-    if not inds:
-        inds = Individual.query.filter_by(soundex6family = soundex6term).all()
-    if not inds:
-        inds = Individual.query.filter_by(soundex3family = soundex3term).all()
-    if not inds:
-        return jsonify({
-            "soundex6": soundex6term,
-            "result": False,
-        })
-    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_family, term), reverse=True)
-    t1 = time.time()
-    return jsonify({
-        "soundex6": soundex6term,
-        "result": True,
-        "count": len(inds),
-        "inds": [x.as_dict() for x in inds],
-        "time": t1 - t0,
-    })
-
-@app.route("/json/search/pure-python-family/<term>/")
-def json_search_pure_python_family(term):
-    t0 = time.time()
-    inds = Individual.query.all()
-    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_family, term), reverse=True)
-    inds = inds[:25]
-    t1 = time.time()
-    return jsonify({
-        "soundex6": "-",
-        "result": True,
-        "count": len(inds),
-        "inds": [x.as_dict() for x in inds],
-        "time": t1 - t0,
-    })
 
 @app.route("/json/setting/<key>/")
 def json_setting(key):
@@ -195,3 +136,287 @@ def json_load_comments(xref):
         "comments": [x.as_dict() for x in comments],
     })
 
+
+##########################################
+# Searching
+##########################################
+
+@app.route("/json/people-path/<xref1>/<xref2>/")
+def json_people_path(xref1, xref2):
+    t = Timer(True, 40)
+    ind1 = Individual.query.filter_by(xref = xref1).first()
+    ind2 = Individual.query.filter_by(xref = xref2).first()
+    if ind1 == None or ind2 == None:
+        return jsonify({
+            "result": False,
+            "xrefs": [],
+            "exists": False,
+            "message": "some non-existing individual selected {}, {}".format(xref1, xref2),
+            "error": "no-such-individual",
+        })
+    if ind1.component_id == 0 or ind1.component_id == None:
+        return jsonify({
+            "result": False,
+            "xrefs": [],
+            "exists": False,
+            "message": "components not populated; cannot search paths",
+            "error": "no-component-info",
+        })
+    if ind1.component_id != ind2.component_id:
+        return jsonify({
+            "result": False,
+            "xrefs": [],
+            "exists": False,
+            "message": "individuals in different components",
+        })
+    cid = ind1.component_id
+    t.measure("endpoints queried")
+    # takes about a second to load them all
+    inds = Individual.query.filter_by(component_id = cid).all()
+    ind_dict = {x.xref: x for x in inds}
+    t.measure("loaded everything")
+    visited = set([])
+    routing = {}
+    routing_path_pieces = {}
+    buf = [(0, 0, ind2, None, (None, None))]
+    steps = 0
+    adds = 0
+    while buf:
+        priority, distance, cur, source, path_piece = buf.pop(0)
+        if cur.xref in visited:
+            continue
+        visited.add(cur.xref)
+        routing[cur] = source
+        routing_path_pieces[cur] = path_piece
+        steps += 1
+        if cur == ind1:
+            break
+        for fam_id, nei_id in json.loads(cur.neighboring_ids):
+            nei = ind_dict[nei_id]
+            # the 50. means that if people get children at over 50 years age,
+            # the path might not be optimal
+            prio = distance + abs(nei.birth_date_year - ind1.birth_date_year) / 50.
+            pos = bisect.bisect(buf, (prio,))
+            buf[pos:pos] = [(prio, distance + 1, nei, cur, (fam_id, nei_id))]
+            adds += 1
+    t.submeasure("searching for node")
+    if not ind1 in routing:
+        return jsonify({
+            "result": False,
+            "xrefs": [],
+            "exists": False,
+            "message": "even though they were in the same component",
+            "error": "unexpected-error",
+        })
+    path = []
+    alt_path = []
+    cur = ind1
+    while cur:
+        path.append(cur)
+        if routing[cur]:
+            alt_path.append(routing_path_pieces[cur])
+        else:
+            alt_path.append([None, cur.xref])
+        cur = routing[cur]
+    t.submeasure("reconstructing path")
+    t.measure("graph search for the path")
+    out_xrefs = alt_path[::-1]
+    out_dicts = [x.as_dict() for x in path][::-1]
+    t.measure("converting for output")
+    t.print_total()
+    print "visited {} unique nodes and added to buffer {} nodes".format(steps, adds)
+    return jsonify({
+        "result": True,
+        "xrefs": out_xrefs,
+        "inds": out_dicts,
+        "exists": True,
+        "component_id": ind1.component_id,
+        "length": len(path),
+        "time": t.full_duration(),
+        "visited_count": steps,
+    })
+
+@app.route("/json/celebrities/")
+def json_celebrities():
+    t = Timer(True, 40)
+    inds = Individual.query.filter_by(is_celebrity = True).all()
+    t.measure("loading celebrities")
+    inds = sorted(inds, key=lambda x: (x.name_family, x.name_first))
+    t.measure("sorting")
+    ind_dicts = [x.as_dict() for x in inds]
+    t.measure("converting to dictionaries")
+    t.print_total()
+    return jsonify({
+        "result": True,
+        "inds": ind_dicts,
+        "time": t.full_duration(),
+    })
+
+
+@app.route("/json/multi-search/", methods=["POST"])
+def json_multi_search():
+    def soundex_upper(s):
+        return soundex.soundex(s.upper())
+    def nop(s):
+        return s
+    conversions = {
+        "firstname": {
+            "field": "soundex_first",
+            "function": soundex_upper,
+        },
+        "familyname": {
+            "field": "soundex_family",
+            "function": soundex_upper,
+        },
+        "xref": {
+            "field": "xref",
+            "function": nop,
+        },
+        "birthyear": {
+            "field": "birth_date_year",
+            "function": nop,
+            "between": "-",
+        },
+    }
+    t = Timer(True, 40)
+    data = request.get_json()
+    # construct queries
+    self_query_terms = []
+    other_queries = []
+    for d in data:
+        if d["search_type"] not in conversions:
+            mes = "no such conversion: {}".format(d["search_type"])
+            print mes
+            return jsonify({
+                "result": False,
+                "soundex": "",
+                "message": mes,
+                "inds": [],
+            })
+        con = conversions[d["search_type"]]
+        if "between" in con and con["between"] in d["search_term"]:
+            if len(d["search_term"].split(con["between"])) > 2:
+                mes = "multiple between separators present"
+                print mes
+                return jsonify({
+                    "result": False,
+                    "soundex": "",
+                    "message": mes,
+                    "inds": [],
+                })
+            begin, end = [x.strip() for x in d["search_term"].split(con["between"])]
+            query_term = getattr(Individual, con["field"]).between(begin, end)
+        else:
+            query_term = getattr(Individual, con["field"]) == con["function"](d["search_term"])
+        if d["relation"] == "self":
+            self_query_terms.append(query_term)
+        else:
+            other_queries.append((d["relation"], query_term))
+
+    t.measure("queries constructed")
+    # query database
+    if other_queries:
+        sets = []
+        if self_query_terms:
+            sets.append(("self", set(Individual.query.filter(*self_query_terms).all())))
+            t.submeasure("query for self")
+        for relation, oq in other_queries:
+            set_inds = set([])
+            if relation == "parent":
+                query_result = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).all()
+                for ind in query_result:
+                    for sub_family in ind.sub_families:
+                        for child in sub_family.children:
+                            set_inds.add(child)
+            if relation == "child":
+                query_result = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
+                for ind in query_result:
+                    for sup_family in ind.sup_families:
+                        for parent in sup_family.parents:
+                            set_inds.add(parent)
+            if relation == "sibling":
+                query_result = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
+                for ind in query_result:
+                    for sup_family in ind.sup_families:
+                        for child in sup_family.children:
+                            if child == ind:
+                                continue
+                            set_inds.add(child)
+            relationpath = None
+            if relation == "grandparent":
+                relationpath = ["up","up"]
+            if relation == "grandchild":
+                relationpath = ["down","down"]
+            if relation == "cousin":
+                relationpath = ["up","up","down","down"]
+            if relation == "aunt":
+                relationpath = ["up","up","down","female"]
+            if relation == "uncle":
+                relationpath = ["up","up","down","male"]
+            if relationpath:
+                if relationpath[-1] == "up":
+                    group = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).all()
+                elif relationpath[-1] == "down":
+                    group = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
+                else:
+                    group = Individual.query.filter(oq).all()
+                gender = None
+                while relationpath:
+                    cur = relationpath.pop()
+                    newgroup = set([])
+                    # these directions are reversed, because we are following the path in opposite direction
+                    if cur == "down":
+                        for ind in group:
+                            for sup_family in ind.sup_families:
+                                for parent in sup_family.parents:
+                                    if gender and parent.sex != gender:
+                                        continue
+                                    newgroup.add(parent)
+                    elif cur == "up":
+                        for ind in group:
+                            for sub_family in ind.sub_families:
+                                for child in sub_family.children:
+                                    if gender and child.sex != gender:
+                                        continue
+                                    newgroup.add(child)
+                    elif cur == "male":
+                        gender = "M"
+                        continue
+                    elif cur == "female":
+                        gender = "F"
+                        continue
+                    group = newgroup
+                set_inds = group
+
+            sets.append((relation, set_inds))
+            t.submeasure("query for {}".format(relation))
+        s = sets[0][1]
+        for s2 in sets[1:]:
+            s = s.intersection(s2[1])
+        if len(sets) > 1:
+            t.submeasure("set intersection")
+        inds = list(s)
+        print len(inds), "people"
+    else:
+        inds = Individual.query.filter(*self_query_terms).limit(50).all()
+        if not inds:
+            print "No matches"
+            return jsonify({
+                "soundex": "",
+                "result": False,
+                "inds": [],
+            })
+    t.measure("Database queried")
+#    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
+#    t.measure("Candidates sorted with jaro distance")
+    # convert to dictionaries
+    ind_dict = [x.as_dict() for x in inds]
+    t.measure("Converted individuals to dicts")
+    t.print_total()
+    return jsonify({
+        "soundex": "",
+        "result": True,
+        "count": len(inds),
+        "inds": ind_dict,
+        "time": t.full_duration(),
+    })

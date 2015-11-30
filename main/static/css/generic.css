@@ -1,6 +1,10 @@
 
 * {
-    font-family: Arial;
+    font-family: 'Cabin', sans-serif;
+}
+
+ul {
+    list-style-type: none;
 }
 
 html,
@@ -66,11 +70,15 @@ body,
 }
 .topmenu select {
     display: block;
-    padding: 4px 10px 4px 20px;
+/*    padding: 4px 10px 4px 20px;*/
+    padding: 2px 8px 2px 18px;
+    margin: 2px;
 }
 .topmenu button {
     display: block;
-    padding: 4px 20px;
+/*    padding: 4px 20px;*/
+    padding: 2px 18px;
+    margin: 2px;
 }
 
 svg .node circle {
@@ -158,6 +166,9 @@ div#map {
     min-width: 20px;
     min-height: 20px;
 }
+.add-row:hover, .add-column:hover, .close-column:hover {
+    background: #e6e6e6;
+}
 .add-row, .add-column, .close-column, .resizer {
     position: relative;
     background: #cccccc;
@@ -171,7 +182,8 @@ div#map {
     align-items: center;
 
     box-sizing: border-box;
-    border: 1px solid black;
+    /* border: 1px solid black;*/
+    outline: none;
 }
 .resizer:active {
     border: 1px solid white;
@@ -179,11 +191,13 @@ div#map {
 .resizer.horizontal {
     height: 8px;
     vertical-align: middle;
-    padding: 3px;
+    padding: 4px;
+    border: none;
 }
 .resizer.vertical {
     width: 8px;
-    padding: 3px;
+    padding: 4px;
+    border: none;
 }
 .resizer.horizontal .wrap {
     display: inline-block;
@@ -191,7 +205,7 @@ div#map {
 }
 .resizer.vertical .wrap {
     display: inline-block;
-    margin-left: -3px;
+    margin-left: -2.5px;
     line-height: 0.4em;
 }
 .resizer:focus {
@@ -215,11 +229,15 @@ div#map {
 }
 .itemheader select {
     display: block;
-    padding: 2px 5px 2px 10px;
+/*    padding: 2px 5px 2px 10px;*/
+    padding: 0px 3px 0px 8px;
+    margin: 2px;
 }
 .itemheader button {
     display: block;
-    padding: 2px 10px;
+/*    padding: 2px 10px;*/
+    padding: 0px 8px;
+    margin: 2px;
 }
 select,
 button.toggled:hover,
@@ -252,14 +270,22 @@ button:focus {
 select,
 button.toggled:active,
 button {
-    border: 2px outset #888888;
+/*    border: 2px outset #888888;*/
+    border: 1px solid #888888;
+    border-radius: 10px;
+}
+button.resizer {
+    border-radius: 0px;
 }
 select:active,
 button.toggled,
 button:active {
-    border: 2px inset #888888;
+/*    border: 2px inset #888888;*/
+    border: 1px solid white;
 }
-.itemheader,
+select {
+    padding-left: 4px;
+}
 .topmenu {
     background: #fefefe;
     background-image: -webkit-linear-gradient(top, #fefefe, #d1d1d1);
@@ -267,6 +293,9 @@ button:active {
     background-image: -ms-linear-gradient(top, #fefefe, #d1d1d1);
     background-image: -o-linear-gradient(top, #fefefe, #d1d1d1);
     background-image: linear-gradient(to bottom, #fefefe, #d1d1d1);
+}
+.itemheader {
+    background: #d1d1d1;
 }
 
 .viewtab {
@@ -294,7 +323,8 @@ button:active {
 
 
 .info.viewtab,
-.search.viewtab {
+.search.viewtab,
+.pathsearch.viewtab {
     padding: 5px;
 }
 
@@ -326,7 +356,7 @@ label span {
     width: 100%;
 }
 .entrance .banner {
-    height: 150px;
+/*    height: 150px;*/
     width: 800px;
 }
 .entrance .topmenu {
@@ -421,4 +451,35 @@ label span {
 }
 .comments .comment-body {
     margin: 5px 0px;
+}
+
+
+.pathsearch-celebrity-selection {
+    text-align: right;
+}
+
+
+.triplet > * {
+    -webkit-flex-grow: 1;
+    flex-grow: 1;
+    width: 31%;
+    box-sizing: border-box;
+}
+.triplet {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+}
+
+
+.smalllogo {
+    height: 23px;
+    display: block;
+}
+#smalllogobutton {
+    padding: 1px 5px;
+}
+.bannerlogo {
+    width: 100%;
 }

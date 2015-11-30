@@ -24,6 +24,7 @@
                                 <option value="tree" translate>Tree</option>
                                 <option value="info" translate>Info</option>
                                 <option value="search" translate>Search</option>
+                                <option value="pathsearch" translate>Pathsearch</option>
                                 <option value="map" translate>Map</option>
                                 <option value="testnote" ng-show="menu.testnote !== null" translate>Testnote</option>
                                 <option value="comments" translate>Comments</option>
@@ -43,20 +44,6 @@
                         </div>
                     </div>
                     <svg id="{{menu.tree_id}}" class="tree viewtab" ng-show="menu.mode == 'tree'">
-                        <filter id="{{menu.tree_id}}-dropshadow" height="130%">
-                            <feGaussianBlur in="SourceAlpha" stdDeviation="1"/> <!-- how much to blur -->
-                            <feColorMatrix
-                                type="matrix"
-                                values="0.0  0.0  0.0  0.0  1.0
-                                        0.0  0.0  0.0  0.0  1.0
-                                        0.0  0.0  0.0  0.0  1.0
-                                        0.0  0.0  0.0 10.0  0.0" />
-                            <feOffset dx="0" dy="0" result="offsetblur"/> <!-- how much to offset -->
-                            <feMerge> 
-                                <feMergeNode/> <!-- the offset blurred image -->
-                                <feMergeNode in="SourceGraphic"/> <!-- the element that the filter is applied to -->
-                            </feMerge>
-                        </filter>
                     </svg>
                     <div class="info viewtab" ng-show="menu.mode == 'info'">
                         <dl>
@@ -72,13 +59,15 @@
                                 <dd ng-if="menu.Hiski.selected.data.sex == 'M'" translate>Male</dd>
                                 <dd ng-if="menu.Hiski.selected.data.sex == 'F'" translate>Female</dd>
                                 <dd ng-if="menu.Hiski.selected.data.sex == '?'" translate>Unknown</dd>
+                            <dt translate ng-if="menu.Hiski.selected.has_probabilities">Parent probabilities</dt>
+                                <dd class="search-result" ng-click="menu.load(p.xref)" ng-repeat="p in menu.Hiski.selected.parent_probabilities">{{ p.name }}: {{p.prob | number:6 }}</dd>
                         </dl>
                         <button ng-click="menu.Hiski.toggle_hide_selected()" ng-if="menu.Hiski.selected !== null" translate>
-                            Hide
+                            Hide descendants
                         </button>
                         <dl ng-if="menu.Hiski.debug_mode">
-                            <dt>soundex6family</dt>
-                                <dd>{{ menu.Hiski.selected.data.soundex6family }}</dd>
+                            <dt>soundex_family</dt>
+                                <dd>{{ menu.Hiski.selected.data.soundex_family }}</dd>
                             <dt>fuzzy index</dt>
                                 <dd>{{ menu.Hiski.selected.order_fuzzy_index }}</dd>
                             <dt>order reason</dt>
@@ -104,27 +93,114 @@
                         <!-- #map will be moved here, as only one such can exist at a time -->
                     </div>
                     <div id="{{ menu.search_id }}" class="search viewtab" ng-show="menu.mode == 'search'">
-                        <form ng-submit="menu.do_search()">
-                            <label><span translate>Search by</span>
-                                <select class="search-by" ng-model="menu.search_by">
-                                    <option value="firstname" translate>First name</option>
-                                    <option value="familyname" translate>Family name</option>
-                                    <option value="xref">xref</option>
-                                    <option value="ppfamily" ng-if="menu.Hiski.debug_mode">PPFamily</option>
-                                </select>
-                            </label>
-                            <label><span translate>Search term</span>
-                                <input class="search-term" type="text" ng-model="menu.search_term"></input>
-                            </label>
-                            <button type="submit" translate>Search</button>
-                            <div class="searchresults">
-                                <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
-                                <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex6 }})</div>
-                                <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
-                                    {{ ind.name }}
+                        <form ng-submit="menu.do_multi_search()">
+                            <div class="tripets">
+                                <div class="triplet" ng-repeat="triplet in menu.search_triplets">
+                                    <select ng-model="triplet.relation" ng-change="menu.check_if_remove_triplet(triplet)">
+                                        <option value="self" translate>self</option>
+                                        <option value="parent" translate>Parent</option>
+                                        <option value="child" translate>Child</option>
+                                        <option value="sibling" translate>Sibling</option>
+                                        <option value="grandparent" translate>Grandparent</option>
+                                        <option value="grandchild" translate>Grandchild</option>
+                                        <option value="cousin" translate>Cousin</option>
+                                        <option value="aunt" translate>Aunt</option>
+                                        <option value="uncle" translate>Uncle</option>
+                                        <option value="remove" translate>remove</option>
+                                    </select>
+                                    <select ng-model="triplet.search_type">
+                                        <option value="firstname" translate>First name</option>
+                                        <option value="familyname" translate>Family name</option>
+                                        <option value="birthyear" translate>Birth year</option>
+                                        <option value="xref">xref</option>
+                                    </select>
+                                    <input type="text" ng-model="triplet.search_term"></input>
                                 </div>
+                                <button type="button" ng-click="menu.add_search_triplet()" translate>Add term</button>
+                            </div>
+                            <div>
+                                <button type="submit" translate>Search</button>
                             </div>
                         </form>
+                        <div class="searchresults" ng-if="menu.search_state == 'idle'">
+                            <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
+                            <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex }})</div>
+                            <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
+                                {{ ind.name }}
+                            </div>
+                            <div ng-if="menu.search_result_list == null || menu.search_result_list.length == 0" translate>
+                                No results
+                            </div>
+                        </div>
+                        <div ng-if="menu.search_state == 'loading'" translate>
+                            Loading
+                        </div>
+                    </div>
+                    <div class="pathsearch viewtab" ng-show="menu.mode == 'pathsearch'">
+                        <form ng-submit="menu.do_pathsearch()">
+                            <div>
+                                <label>
+                                    <span translate>From selected:</span>
+                                    <span class="search-result" ng-show="menu.Hiski.selected != null"
+                                                ng-click="menu.load(menu.Hiski.selected.xref)">
+                                        {{ menu.Hiski.selected.name }}
+                                    </span>
+                                    <span ng-show="menu.Hiski.selected == null" translate>Select someone</span>
+                                </label>
+                                <label><span translate>To:</span>
+                                    <select class="path-search-mode" ng-model="menu.pathsearch_mode">
+                                        <option value="last-selection" translate>Last selection</option>
+                                        <option value="xref">xref</option>
+                                        <option value="celebrity" ng-if="menu.Hiski.celebrity_nodes.length > 0" translate>Celebrity</option>
+                                    </select>
+                                </label>
+                                <label ng-show="menu.pathsearch_mode == 'celebrity'">
+                                    <div ng-repeat="ind in menu.Hiski.celebrity_nodes">
+                                        <span class="pathsearch-celebrity-selection">
+                                            <input type="radio" name="pathsearch-celebrity-selection-{{menu.id}}" value="{{ ind.xref }}" ng-model="menu.pathsearch_celebrity_xref">
+                                            </input>
+                                        </span>
+                                        <span class="search-result"
+                                                ng-click="menu.celebrity_select_and_load(ind.xref)">
+                                            {{ ind.name }}
+                                        </span>
+                                    </div>
+                                </label>
+                                <label ng-show="menu.pathsearch_mode != 'celebrity'">
+                                    <span class="intentionally-empty"></span>
+                                        <span class="search-result"
+                                                    ng-show="menu.pathsearch_mode == 'last-selection' && menu.Hiski.lastselected != null"
+                                                    ng-click="menu.load(menu.Hiski.lastselected.xref)">
+                                            {{ menu.Hiski.lastselected.name }}
+                                        </span>
+                                        <span ng-show="menu.pathsearch_mode == 'last-selection' && menu.Hiski.lastselected == null" translate>Select nodes</span>
+                                        <input type="text" ng-show="menu.pathsearch_mode == 'xref'" ng-model="menu.pathsearch_xref"></input>
+                                </label>
+                                <button type="submit" translate>Search path</button>
+                                <button type="button" translate ng-click="menu.Hiski.hide_besides_path()">Hide others</button>
+                            </div>
+                        </form>
+                        <div class="searchresults" ng-if="menu.pathsearch_state == 'idle'">
+                            <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.pathsearch_time | number:3 }}</div>
+                            <div ng-show="menu.pathsearch_list.length > 0">
+                                <span translate>Found path between:</span>
+                                <span>{{ menu.pathsearch_from.name }}</span>
+                                <span translate>and</span>
+                                <span>{{ menu.pathsearch_to.name }}</span>
+                            </div>
+                            <div class="search-result" ng-repeat="ind in menu.pathsearch_list" ng-click="menu.load(ind.xref)">
+                                {{ ind.name }}
+                            </div>
+                            <div ng-show="menu.pathsearch_list.length == 0" translate>
+                                No path
+                            </div>
+                            <div ng-if="menu.pathsearch_error != null" translate>
+                                {{ "::" + menu.pathsearch_error }}
+                            </div>
+                        </div>
+                        <div ng-if="menu.pathsearch_state == 'loading'" translate>
+                            Loading
+                        </div>
                     </div>
                     <div id="{{ menu.comments_id }}" class="comments viewtab" ng-show="menu.mode == 'comments'">
                         <section ng-if="menu.Hiski.selected != null">

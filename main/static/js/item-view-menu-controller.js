@@ -101,10 +101,25 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
 
         menu.search_by = "firstname";
         menu.search_term = "";
-        menu.search_soundex6 = "";
+        menu.search_soundex = "";
         menu.search_result_term = "";
         menu.search_result_list = [];
         menu.search_time = "-";
+        menu.search_triplets = [{
+            relation: "self",
+            search_type: "firstname",
+            search_term: "",
+        }];
+        menu.search_state = "idle";
+
+        menu.pathsearch_mode = "last-selection";
+        menu.pathsearch_state = "idle";
+        menu.pathsearch_xref = "";
+        menu.pathsearch_time = "-";
+        menu.pathsearch_from = null;
+        menu.pathsearch_to = null;
+        menu.pathsearch_list = [];
+        menu.pathsearch_celebrity_xref = null;
 
         menu.comment_type = "other";
         menu.comment_body = "";
@@ -125,42 +140,113 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         menu.load = function(xref) {
             Hiski.load_or_focus(xref, null);
         };
+        menu.celebrity_select_and_load = function(xref) {
+            this.pathsearch_celebrity_xref = xref;
+            Hiski.load_or_focus(xref, null);
+        };
         menu.show_search = function(json, term) {
             menu.search_result_list = json["inds"];
             menu.search_result_term = term;
-            menu.search_soundex6 = json["soundex6"];
+            menu.search_soundex = json["soundex"];
             menu.search_time = json["time"];
             menu._redraw();
         };
-        menu.do_search = function() {
-            var term = menu.search_term;
-            if(menu.search_by == "xref") {
-                Hiski.load(term, null);
-            } else if(menu.search_by == "firstname") {
-                var addr = Hiski.url_root + "json/search/firstname/"+term+"/";
-                d3.json(addr, function(json) {
+        menu.do_multi_search = function() {
+            var search_json = JSON.stringify(menu.search_triplets);
+            var addr = Hiski.url_root + "json/multi-search/";
+            menu.search_state = "loading";
+            d3.json(addr, function(json) {
+                    menu.search_state = "idle";
                     if(json) {
-                        menu.show_search(json, term);
+                        menu.show_search(json, "");
                     } else {
                         throw new Error("Loading firstname search '"+term+"' failed");
                     }
-                });
-            } else if(menu.search_by == "familyname") {
-                var addr = Hiski.url_root + "json/search/familyname/"+term+"/";
+                })
+                .header("Content-Type","application/json")
+                .send("POST", search_json)
+                ;
+        };
+        menu.add_search_triplet = function() {
+            menu.search_triplets.push({
+                relation: "self",
+                search_type: "firstname",
+                search_term: "",
+            });
+        };
+        menu.check_if_remove_triplet = function(triplet) {
+            if(triplet.relation == "remove") {
+                var index = menu.search_triplets.indexOf(triplet);
+                menu.search_triplets.splice(index, 1);
+                if(menu.search_triplets.length == 0) {
+                    menu.add_search_triplet();
+                }
+            }
+        };
+
+
+        menu.do_pathsearch = function() {
+            var xref = null;
+            if(menu.pathsearch_mode == "last-selection") {
+                if(Hiski.lastselected == null) {
+                    menu.pathsearch_error = "no-selection";
+                } else {
+                    xref = Hiski.lastselected.xref;
+                }
+            } else if(menu.pathsearch_mode == "xref") {
+                xref = menu.pathsearch_xref;
+            } else if(menu.pathsearch_mode == "celebrity") {
+                xref = menu.pathsearch_celebrity_xref;
+            }
+            if(Hiski.selected == null) {
+                console.warn("No nodes selected");
+                menu.pathsearch_error = "no-selection";
+            } else if(xref != null) {
+                var addr = Hiski.url_root + "json/people-path/"+xref+"/"+Hiski.selected.xref+"/";
+                menu.pathsearch_state = "loading";
                 d3.json(addr, function(json) {
                     if(json) {
-                        menu.show_search(json, term);
+                        var flat = [];
+                        // preload the nodes to assure the load order
+                        for(var i = 0; i < json.inds.length; i++) {
+                            var ind = json.inds[i];
+                            Hiski.preloaded_entries[ind.xref] = ind;
+                        }
+                        // load the nodes from the preloaded dictionary
+                        for(var i = 0; i < json.xrefs.length; i++) {
+                            var xref = json.xrefs[i][1];
+                            Hiski.load(xref, null, Hiski.selected);
+                            flat.push(xref);
+                        }
+                        // load the families and expand their surroundings
+                        for(var i = 0; i < json.xrefs.length; i++) {
+                            var xref = json.xrefs[i][0];
+                            if(xref !== null) {
+                                Hiski.load(xref, null, Hiski.selected);
+                                flat.push(xref);
+                            }
+                        }
+                        Hiski.selected_path = flat;
+                        Hiski.delayed_render();
+                        menu.pathsearch_results = json["inds"];
+                        menu.pathsearch_time = json["time"];
+                        if(json["result"]) {
+                            menu.pathsearch_from = json["inds"][0];
+                            menu.pathsearch_to = json["inds"][json["inds"].length - 1];
+                            menu.pathsearch_list = json["inds"];
+                            menu.pathsearch_error = null;
+                        } else {
+                            menu.pathsearch_from = null;
+                            menu.pathsearch_to = null;
+                            menu.pathsearch_list = [];
+                            menu.pathsearch_error = json["error"];
+                        }
+                        if(json["message"]) {
+                            console.warn(json["message"]);
+                        }
+                        menu.pathsearch_state = "idle";
                     } else {
-                        throw new Error("Loading familyname search '"+term+"' failed");
-                    }
-                });
-            } else if(menu.search_by == "ppfamily") {
-                var addr = Hiski.url_root + "json/search/pure-python-family/"+term+"/";
-                d3.json(addr, function(json) {
-                    if(json) {
-                        menu.show_search(json, term);
-                    } else {
-                        throw new Error("Loading ppfamily search '"+term+"' failed");
+                        throw new Error("Loading path search '"+term+"' '"+Hiski.selected.xref+"' failed");
                     }
                 });
             }

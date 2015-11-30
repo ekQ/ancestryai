@@ -24,8 +24,28 @@ function Relation(data) {
             if(this.nodes[i].is_visible())
                 return true;
         return false;
-    }
+    };
+    this.next_to_hidden = function() {
+        for(var i = 0; i < this.nodes.length; i++)
+            if(!this.nodes[i].is_visible())
+                return true;
+        return false;
+    };
 
+    this.next_to_selected = function() {
+        if(Hiski.selected === null)
+            return false;
+        for(var i = 0; i < Hiski.selected.relations.length; i++) {
+            if(Hiski.selected.relations[i] == this)
+                return true;
+        }
+        return false;
+    };
+    this.selection_relation = "";
+    this.set_selection_relation = function(value, force) {
+        if(this.selection_relation == "" || force == true)
+            this.selection_relation = value;
+    };
 
     this.get_x = function() {
         return this.x;
@@ -43,10 +63,14 @@ function Relation(data) {
         var sumchildren = 0.0;
         var numchildren = 0;
         for(var i = 0; i < this.children.length; i++) {
+            if(!this.children[i].is_visible())
+                continue;
             sumchildren += this.children[i].get_x();
             numchildren += 1;
         }
         for(var i = 0; i < this.parents.length; i++) {
+            if(!this.parents[i].is_visible())
+                continue;
             sumspouse += this.parents[i].get_x();
             numspouse += 1;
         }
@@ -67,16 +91,21 @@ function Relation(data) {
         var minchild = null;
         var maxspouse = null;
         for(var i = 0; i < this.children.length; i++) {
+            if(!this.children[i].is_visible())
+                continue;
             minchild = Math.min(minchild === null ? 2000000000 : minchild,
                     this.children[i].get_y());
         }
         for(var i = 0; i < this.parents.length; i++) {
+            if(!this.parents[i].is_visible())
+                continue;
             maxspouse = Math.max(maxspouse === null ? -2000000000 : maxspouse,
                     this.parents[i].get_y());
         }
-        if(minchild === null && maxspouse === null)
+        this.y_space = 40;
+        if(minchild === null && maxspouse === null) {
             return this.y;
-        if(maxspouse === null) {
+        } else if(maxspouse === null) {
             return minchild - 50;
         } else if(minchild === null) {
             return maxspouse + 50;
@@ -107,6 +136,13 @@ function Relation(data) {
             var value = arr[i][0];
             Hiski.load(value, this);
         }
+    };
+
+    this.parent_fuzzy_index_sum = function() {
+        var sum = 0;
+        for(var i = 0; i < this.parents.length; i++)
+            sum += this.parents[i].order_fuzzy_index;
+        return sum;
     };
 
     this.x = this.get_preferred_x();

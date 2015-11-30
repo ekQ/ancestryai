@@ -1,14 +1,20 @@
 
+import os
 import time
+import json
+from instrumenting.instrumenting import Timer
 from gedcom import gedcom
 from soundexpy import soundex
 from .models import *
 from .database import session
 
 def ensure_unicode(s):
+    if isinstance(s, unicode):
+        return s
     if isinstance(s, str):
         return s.decode("utf8")
-    return s
+    return unicode(s)
+u = ensure_unicode
 
 # todo: use the gedcom.py implementation instead
 def get_chain(root, chain):
@@ -71,10 +77,8 @@ def populate_from_gedcom(fname, store_gedcom=False):
                     death_date_year = get_chain(entry, "DEAT.DATE.year"),
                     # death_date
                     # soundex encodings
-                    soundex6first = ensure_unicode(soundex.soundex(name_first, 6)),
-                    soundex6family = ensure_unicode(soundex.soundex(name_family, 6)),
-                    soundex3first = ensure_unicode(soundex.soundex(name_first, 3)),
-                    soundex3family = ensure_unicode(soundex.soundex(name_family, 3)),
+                    soundex_first = u(soundex.soundex(name_first.upper())),
+                    soundex_family = u(soundex.soundex(name_family.upper())),
                     # loaded gedcom
                     loaded_gedcom = ensure_unicode(gedcom.reform(entry)) if store_gedcom else None,
                     )
@@ -131,3 +135,172 @@ def reform_gedcom():
             entry = gedcom.Entry(0, "@F{}@".format(nextid), "FAM", None)
 
 
+
+def populate_from_recons(fname):
+    t = Timer(True, 48)
+    base = os.path.dirname(fname)
+    f = open(fname)
+    lines = f.readlines()
+    f.close()
+    sources = {}
+    for line in lines:
+        source, sourcefile = [x.strip() for x in line.split(":")]
+        sources[source] = os.path.join(base, sourcefile)
+    t.measure("header processed")
+    count_parishes = None
+    count_villages = None
+    count_individuals = None
+    count_families = None
+    if "parishes" in sources:
+        with open(sources["parishes"]) as f:
+            data = json.load(f)
+            for d in data:
+                parish = Parish(**d)
+                session.add(parish)
+            count_parishes = len(data)
+    t.measure("{} parishes added".format(count_parishes))
+    if "villages" in sources:
+        with open(sources["villages"]) as f:
+            data = json.load(f)
+            for d in data:
+                village = Village(**d)
+                session.add(village)
+            count_villages = len(data)
+    session.flush()
+    t.measure("{} villages added".format(count_villages))
+    if "individuals" in sources:
+        with open(sources["individuals"]) as f:
+            data = json.load(f)
+            for d in data:
+                name_first = u(" ".join(d["name"].split()[:-1]))
+                name_family = u(d["name"].split()[-1] if d["name"].strip() else "")
+                ind = Individual(
+                        xref = u(d["hiski_id"]),
+                        name = u(d["name"]),
+                        name_first = name_first,
+                        name_family = name_family,
+                        tag = u"INDI",
+                        sex = u"?",
+                        is_celebrity = d.get("is_celebrity", False),
+                        birth_date_string = u"{}.{}.{}".format(d["day"], d["month"], d["year"]),
+                        birth_date_year = d["year"],
+                        death_date_string = None,
+                        death_date_year = None,
+                        # todo: revise soundex storing to be more sensible
+                        soundex_first = u(soundex.soundex(name_first.upper())),
+                        soundex_family = u(soundex.soundex(name_family.upper())),
+                        )
+                session.add(ind)
+            t.submeasure("individual objects created")
+            session.flush()
+            for d in data:
+                if d["village_id"] == None and d["parish_id"] == None:
+                    continue
+                ind = Individual.query.filter_by(xref = d["hiski_id"]).first()
+                ind.village = Village.query.filter_by(id = d["village_id"]).first()
+                ind.parish = Parish.query.filter_by(id = d["parish_id"]).first()
+            t.submeasure("villages and parishes linked")
+            count_individuals = len(data)
+    session.flush()
+    t.measure("{} individuals added".format(count_individuals))
+    if "edges" in sources:
+        with open(sources["edges"]) as f:
+            data = json.load(f)
+            parent_candidates = {}
+            for d in data:
+                if not d["child"] in parent_candidates:
+                    parent_candidates[d["child"]] = []
+                parent_candidates[d["child"]].append(d)
+            t.submeasure("edges to parent_candidates")
+            for d in data:
+                parent = Individual.query.filter_by(xref = d["parent"]).first()
+                person = Individual.query.filter_by(xref = d["child"]).first()
+                pp = ParentProbability(
+                        parent = parent,
+                        person = person,
+                        probability = d["prob"],
+                        is_dad = d["dad"],
+                        )
+                session.add(pp)
+            t.submeasure("parent probabilities")
+            family_candidates = {}
+            of_len = {}
+            for child, parents in parent_candidates.iteritems():
+                dads = sorted([x for x in parents if x["dad"]], key = lambda x: x["prob"], reverse = True)
+                moms = sorted([x for x in parents if not x["dad"]], key = lambda x: x["prob"], reverse = True)
+                key = []
+                if dads:
+                    key.append(dads[0])
+                if moms:
+                    key.append(moms[0])
+                key = tuple([x["parent"] for x in key])
+                if not key in family_candidates:
+                    family_candidates[key] = []
+                family_candidates[key].append(child)
+                of_len[len(parents)] = of_len.get(len(parents), 0) + 1
+            t.submeasure("parent_candidates to family_candidates")
+            i = 0
+            for parents, children in family_candidates.iteritems():
+                i += 1
+                fam_id = u"F{}".format(i)
+                fam = Family(
+                        xref = fam_id,
+                        tag = u"FAM",
+                        )
+                session.add(fam)
+                for parent in parents:
+                    ind = Individual.query.filter_by(xref = parent).first()
+                    fam.parents.append(ind)
+                for child in children:
+                    ind = Individual.query.filter_by(xref = child).first()
+                    fam.children.append(ind)
+            t.submeasure("families added and linked to individuals")
+            count_families = i
+    t.measure("{} families added".format(count_families))
+    for ind in Individual.query.all():
+        ind.pre_dicted = u(json.dumps(ind.as_dict()))
+    t.measure("{} individuals pre dicted".format(count_individuals))
+    session.commit()
+    t.measure("commit")
+    t.print_total()
+
+
+def populate_component_ids():
+    t = Timer(True, 60)
+    # I'm not sure why the joinedload caused an exception, seemed like limit of
+    # how much sqlite or sqlalchemy can retrieve from a query.
+#    inds = Individual.query.options(joinedload("*")).all()
+    inds = Individual.query.all()
+    fams = Family.query.options().all()
+#    dict_fams = {x.xref: x for x in fams}
+    t.measure("queried to memory")
+    for ind in inds:
+        ind.component_id = 0
+    t.measure("resetted component ids")
+    next_id = 0
+    max_size = 0
+    for ind in inds:
+        if ind.component_id > 0:
+            continue
+        next_id += 1
+        buf = [ind]
+        size = 0
+        while buf:
+            cur = buf.pop()
+            if cur.component_id > 0:
+                continue
+            cur.component_id = next_id
+            size += 1
+            n_ids = []
+            for fam in cur.sub_families + cur.sup_families:
+                fam.component_id = next_id
+                for ind2 in fam.parents + fam.children:
+                    buf.append(ind2)
+                    n_ids.append([fam.xref, ind2.xref])
+            cur.neighboring_ids = u(json.dumps(n_ids))
+#        t.submeasure("floodfill component {}".format(next_id))
+        max_size = max(max_size, size)
+    t.measure("floodfill {} components for {} people, max size {}".format(next_id, len(inds), max_size))
+    session.commit()
+    t.measure("commit")
+    t.print_total()

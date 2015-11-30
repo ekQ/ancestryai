@@ -12,8 +12,8 @@ function map_node_transform(d) {
 
 function map_init() {
     Hiski.map = new google.maps.Map(d3.select("#map").node(), {
-            zoom: 8,
-            center: new google.maps.LatLng(37., 12.),
+            zoom: 7,
+            center: new google.maps.LatLng(62.9, 27.7),
             mapTypeId: google.maps.MapTypeId.TERRAIN,
             });
     var overlay = new google.maps.OverlayView();
@@ -67,12 +67,14 @@ function map_init() {
                     newlinedata.push({
                         p: Hiski.selected.parents[i],
                         c: Hiski.selected,
+                        rel: "parent",
                     });
                 }
                 for(var i = 0; i < Hiski.selected.children.length; i++) {
                     newlinedata.push({
                         p: Hiski.selected.children[i],
                         c: Hiski.selected,
+                        rel: "child",
                     });
                 }
             }
@@ -88,7 +90,15 @@ function map_init() {
                         ;
                 lines
                         .attr("d", function(d) { return linefunction([d.p, d.c]) })
+                        .style("stroke", function(d) { return color_selection_relation(d.rel, 1); })
                         ;
+                var move_to_front = function(elem) {
+                    elem.parentNode.appendChild(elem);
+                }
+                nodes.each(function(d) {
+                    if(d == Hiski.selected)
+                        move_to_front(this);
+                })
             }
         };
     };

@@ -1,10 +1,12 @@
 
+import json
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from main.database import Base, session
 from pbkdf2 import crypt
 
 class User(Base):
+    # this is not really used in any way, as the site doesn't have a login feature
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     username = Column(Unicode(64))
@@ -29,6 +31,32 @@ family_child_link = Table("family_child_link", Base.metadata,
     Column("family_id", Integer, ForeignKey("family.id")),
 )
 
+class Parish(Base):
+    __tablename__ = "parish"
+    id = Column(Integer, primary_key=True)
+    lat = Column(Float)
+    lon = Column(Float)
+    def as_dict(self):
+        return {
+            "type": "parish",
+            "id": self.id,
+            "lat": self.lat,
+            "lon": self.lon,
+        }
+
+class Village(Base):
+    __tablename__ = "village"
+    id = Column(Integer, primary_key=True)
+    lat = Column(Float)
+    lon = Column(Float)
+    def as_dict(self):
+        return {
+            "type": "village",
+            "id": self.id,
+            "lat": self.lat,
+            "lon": self.lon,
+        }
+
 class Individual(Base):
     __tablename__ = "individual"
     id = Column(Integer, primary_key=True)
@@ -44,17 +72,41 @@ class Individual(Base):
     death_date_string = Column(Unicode(64))
     death_date_year = Column(Integer)
     death_date = Column(Date)
+    component_id = Column(Integer)
+    is_celebrity = Column(Boolean)
 
-    soundex6first = Column(Unicode(6))
-    soundex6family = Column(Unicode(6))
-    soundex3first = Column(Unicode(3))
-    soundex3family = Column(Unicode(3))
+    parish_id = Column(Integer, ForeignKey("parish.id"))
+    parish = relationship("Parish", backref="individuals")
+
+    village_id = Column(Integer, ForeignKey("village.id"))
+    village = relationship("Village", backref="individuals")
+
+    soundex_first = Column(Unicode(16))
+    soundex_family = Column(Unicode(16))
+
+    pre_dicted = Column(UnicodeText)
+    neighboring_ids = Column(UnicodeText)
+
+    # sup_family from Family
+    # sub_family from Family
 
     loaded_gedcom = Column(UnicodeText)
     def as_dict(self):
+        if self.pre_dicted:
+            d = json.loads(self.pre_dicted)
+            # because at least currently this is calculated after the pre dicting
+            d["component_id"] = self.component_id
+            return d
+        location = {"lat": None, "lon": None, "type": "none"}
+        if self.village:
+            location = self.village.as_dict()
+        elif self.parish:
+            location = self.parish.as_dict()
         return {
             "xref": self.xref,
             "name": self.name,
+            "name_first": self.name_first,
+            "name_family": self.name_family,
             "tag": self.tag,
             "sex": self.sex,
             "birth_date_string": self.birth_date_string,
@@ -65,14 +117,38 @@ class Individual(Base):
             "death_date": self.death_date,
             "sub_families": [x.xref for x in self.sub_families],
             "sup_families": [x.xref for x in self.sup_families],
-            "soundex6family": self.soundex6family,
+            "soundex_family": self.soundex_family,
+            "parent_probabilities": [{
+                    "xref": x.parent.xref,
+                    "name": x.parent.name,
+                    "prob": x.probability,
+                    "is_dad": x.is_dad,
+                } for x in self.parent_probabilities],
+            "location": location,
         }
+
+class ParentProbability(Base):
+    __tablename__ = "parent_probability"
+    id = Column(Integer, primary_key=True)
+    person_id = Column(Integer, ForeignKey("individual.id"))
+    person = relationship("Individual",
+            foreign_keys = "ParentProbability.person_id",
+            backref = "parent_probabilities",
+            )
+    parent_id = Column(Integer, ForeignKey("individual.id"))
+    parent = relationship("Individual",
+            foreign_keys = "ParentProbability.parent_id",
+            backref = "child_probabilities",
+            )
+    is_dad = Column(Boolean)
+    probability = Column(Float)
 
 class Family(Base):
     __tablename__ = "family"
     id = Column(Integer, primary_key=True)
     xref = Column(Unicode(16), index=True, unique=True)
     tag = Column(Unicode(4))
+    component_id = Column(Integer)
 
     loaded_gedcom = Column(UnicodeText)
 
@@ -118,4 +194,11 @@ class Comment(Base):
             "type": self.comment_type,
             "isodate": self.written_on.isoformat(),
         }
-
+    def as_privileged_dict(self):
+        d = self.as_dict()
+        d.update({
+            "email": self.author_email,
+            "ip": self.author_ip_address,
+            "id": self.id,
+        })
+        return d

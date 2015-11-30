@@ -20,9 +20,20 @@ commands
         gedcom <fname>  - populate from a gedcom file
         store-gedcom    - store full gedcom data for nodes in database. Useful
                           if writing out is desired later on.
+        recons <fname>  - populate from a recons file, where the given file is
+                          a header file.
+        components      - populate connected components for people path search
     write             - write gedcom out from the database
         reform          - reform the gedcom data in database
         gedcom <fname>  - write the gedcom data to the given file
+    comments          - manage comments
+        printall        - print all comments
+        export          - print all comments in a json format
+        print <id>      - print comment of the given id
+        delete <id>     - delete comment of the given id
+    toggle_celebrity  - toggles individuals' celebrity flag
+        <xref>          - xref of the individual to toggle
+
 """.format(sys.argv[0])
     sys.exit(0)
 
@@ -60,11 +71,16 @@ if command == "db":
         print "* database exported"
 if command == "populate":
     import main
-    from main.populate import populate_from_gedcom
+    from main.populate import populate_from_gedcom, populate_from_recons, populate_component_ids
     for i,sub in enumerate(subs):
         if sub == "gedcom":
             fname = subs[i+1]
             populate_from_gedcom(fname, "store-gedcom" in subs)
+        if sub == "recons":
+            fname = subs[i+1]
+            populate_from_recons(fname)
+        if sub == "components":
+            populate_component_ids()
 if command == "write":
     import main
     from main.populate import reform_gedcom
@@ -80,3 +96,15 @@ if command == "write":
             for fam in Family.query.all():
                 f.write(fam.loaded_gedcom)
             f.close()
+if command == "comments":
+    import main
+    from main.commenttools import handlecommands
+    handlecommands(subs)
+if command == "toggle_celebrity":
+    import main
+    from main.models import *
+    from main.database import session
+    for xref in subs:
+        ind = Individual.query.filter_by(xref = unicode(xref)).first()
+        ind.is_celebrity = not ind.is_celebrity
+    session.commit()

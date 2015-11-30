@@ -13,8 +13,8 @@ var Hiski = {
     // nodes in the order of the layout constraints
     node_order: [],
     // nodes that were loaded during search, but not yet added
-    preloaded_nodes: {},
-    add_node: function(node_data, reference) {
+    preloaded_entries: {},
+    add_node: function(node_data, reference, anchor) {
         /*
         Adds a node based on given json data. Places the node initially to the
         coordinates of the reference from where it will be animated to its
@@ -29,6 +29,9 @@ var Hiski = {
             if(reference !== null) {
                 node.x = reference.x;
                 node.y = reference.y;
+            } else if(anchor !== null && anchor !== undefined) {
+                node.x = anchor.x;
+                node.y = anchor.y;
             }
             this.nodes.push(node);
             this.node_dict[node.xref] = node;
@@ -265,7 +268,7 @@ var Hiski = {
     relations: [],
     // xref to relation dictionary
     relation_dict: {},
-    add_relation: function(relation_data, reference) {
+    add_relation: function(relation_data, reference, anchor) {
         /*
         Add a relation based on given json data. Returns the relation in
         question.
@@ -279,6 +282,9 @@ var Hiski = {
             if(reference !== null) {
                 relation.x = reference.x;
                 relation.y = reference.y;
+            } else if(anchor != null && anchor != undefined) {
+                relation.x = anchor.x;
+                relation.y = anchor.y;
             }
             this.relations.push(relation);
             this.relation_dict[relation.xref] = relation;
@@ -333,14 +339,14 @@ var Hiski = {
         }
     },
     /* other */
-    add_entry: function(entry, reference) {
+    add_entry: function(entry, reference, anchor) {
         /*
         Adds a relation or node depending on which kind of json is given.
         */
         if(entry.tag == "FAM") {
-            return this.add_relation(entry, reference);
+            return this.add_relation(entry, reference, anchor);
         } else if(entry.tag == "INDI") {
-            return this.add_node(entry, reference);
+            return this.add_node(entry, reference, anchor);
         } else {
             throw new Error("Unhandled tag '"+entry.tag+"'");
         }
@@ -355,69 +361,85 @@ var Hiski = {
             this.delayed_render();
         }
     },
-    load: function(xref, reference) {
+    load: function(xref, reference, anchor) {
         /*
         Loads the node of given xref, if it didn't exist yet. Takes the data
-        from preloaded_nodes and adds that, if it was preloaded on for example
+        from preloaded_entries and adds that, if it was preloaded on for example
         a search.
         */
-        if(xref in this.node_dict)
+        if(xref in this.node_dict) {
+            if(!this.node_dict[xref].is_visible()) {
+                this.open_fold(this.node_dict[xref]);
+            }
             return;
-        if(xref in this.relation_dict)
+        }
+        if(xref in this.relation_dict) {
             return;
-        if(xref in this.preloaded_nodes) {
-            Hiski.add_entry(this.preloaded_nodes[xref], reference);
+        }
+        if(xref in this.preloaded_entries) {
+            Hiski.add_entry(this.preloaded_entries[xref], reference, anchor);
             Hiski.delayed_render();
             return;
         }
         if(xref == "@first@") {
             // replace xref here to set first node to something specific
-            xref = "@I0523@";
+            xref = "3840691";
         }
         var addr = this.url_root + "json/load/"+xref+"/";
         if(xref === null)
             addr = this.url_root + "json/load-any/";
+        Hiski.delay_queue_count += 1;
         d3.json(addr, function(json) {
             if(json && json.result == true) {
                 if(json.entry.xref in Hiski.node_dict || json.entry.xref in Hiski.relation_dict) {
                     console.warn("The node already existed, doing nothing.");
+                    Hiski.delay_queue_count -= 1;
                     return;
                 }
-                Hiski.preloaded_nodes[json.entry.xref] = json.entry;
-                var entry = Hiski.add_entry(json.entry, reference);
+                Hiski.preloaded_entries[json.entry.xref] = json.entry;
+                var entry = Hiski.add_entry(json.entry, reference, anchor);
                 if(reference === null) {
                     Hiski.zoom_to = entry;
                 }
+                Hiski.delay_queue_count -= 1;
                 Hiski.delayed_render();
             } else {
+                Hiski.delay_queue_count -= 1;
                 throw new Error("Loading data '"+xref+"' failed");
             }
         });
     },
     delay_running: false,
+    delay_queue_count: 0,
+    delay_queue_fallback_value: 0,
+    delay_render_delay: 500,
     delayed_render: function() {
         /*
         delayed rendering, which gives a bit time for other pending nodes to
         get loaded
         */
-        // XXX: could be better to just know which we are loading and wait
-        // until we have loaded those.
+        delay_queue_fallback_value = 20;
         var timed = function() {
-            Hiski.delay_running = false;
-            enter_all();
-            Hiski.calc_layout();
-            redraw_views();
-            render_all();
+            if(Hiski.delay_queue_count == 0 || Hiski.delay_queue_fallback_value == 0) {
+                Hiski.delay_running = false;
+                enter_all();
+                Hiski.calc_layout();
+                redraw_views();
+                render_all();
+            } else {
+                delay_queue_fallback_value -= 1;
+                setTimeout(timed, Hiski.delay_render_delay);
+            }
         };
         if(!Hiski.delay_running) {
             Hiski.delay_running = true;
-            setTimeout(timed, 500);
+            setTimeout(timed, Hiski.delay_render_delay);
         }
     },
 
     /* custom layout stuff */
     layout_mode: "compact",
-    year_pixel_ratio: 5,
+    year_pixel_ratio: 6,
     calc_and_render_layout: function() {
         /*
         Calculates node positions and renders all subviews showing the tree view.
@@ -450,9 +472,11 @@ var Hiski = {
         var pad = 80;
         var pad_years = 9;
         var years_x = [];
+        // initialize reservation buffer
         for(var i = 0; i < 3000; i++) {
             years_x.push(x);
         }
+        // position nodes
         this.reset_node_visited();
         var arr = this.node_order;
         for(var i = 0; i < arr.length; i++) {
@@ -504,22 +528,65 @@ var Hiski = {
                 this.nodes[i].x = i*60 + 80;
             }
         }
+        // position relations
         for(var i = 0; i < this.relations.length; i++) {
             var relation = this.relations[i];
             var pos = relation_preferred_position(relation);
             relation.x = pos[0];
             relation.y = pos[1];
         }
+        // separate overlapping relations
+        var relations_copy = [];
+        var i = this.relations.length;
+        while(i--) { relations_copy[i] = this.relations[i]; }
+        relations_copy.sort(function(a,b) {
+            if(a.y != b.y)
+                return a.y - b.y;
+            if(a.x != b.x)
+                return a.x - b.x;
+            var apfis = a.parent_fuzzy_index_sum();
+            var bpfis = b.parent_fuzzy_index_sum();
+            if(apfis != bpfis)
+                return apfis - bpfis;
+            if(a.children.length > 0 && b.children.length > 0)
+                return a.children[0].order_fuzzy_index - b.children[0].order_fuzzy_index;
+            if(b.children.length > 0)
+                return 1;
+            if(a.children.length > 0)
+                return -1;
+            return 0;
+        });
+        var lastx = null;
+        var lasty = null;
+        var lasti = 0;
+        var relation_separation_pad = 14;
+        for(var i = 0; i < relations_copy.length; i++) {
+            var x = relations_copy[i].x;
+            var y = relations_copy[i].y;
+            if(lastx === null || (Math.abs(x - lastx) > 10) || (Math.abs(y - lasty) > 10) || (i == relations_copy.length - 1)) {
+                var width = i - lasti + ((i == relations_copy.length - 1 && Math.abs(x - lastx) < 10 && Math.abs(y - lasty) < 10) ? 1 : 0);
+                if(width > 1) {
+                    for(var j = lasti; j < lasti + width; j++) {
+                        relations_copy[j].x = relations_copy[j].x + (j - lasti - (width - 1) / 2) * relation_separation_pad;
+                    }
+                }
+                lastx = x;
+                lasty = y;
+                lasti = i;
+            }
+        }
+
+        // if zooming to somewhere, do it
         if(this.zoom_to !== null) {
             locate_node_on_all(this.zoom_to);
             this.zoom_to = null;
         }
     },
-    color_mode: "sex",
-    next_color_mode: function() {
+    //next_color_mode: function() {
         // todo: use text based colouring keys
-        this.color_mode = (this.color_mode + 1) % 4;
-    },
+    //    this.color_mode = (this.color_mode + 1) % 4;
+    //},
+    color_mode: "expendability",
     node_color_function: function(d) {
         /*
         Returns the node colour depending on the corresponding setting.
@@ -532,14 +599,158 @@ var Hiski = {
             return d.color_by_sex;
         } else if(Hiski.color_mode == "expendability") {
             return d.expandable() ? "#ccffcc" : "#dddddd";
+        } else if(Hiski.color_mode == "family-relation") {
+            return d.selection_relation_color();
         }
         return "#ff0000";
     },
     toggle_hide_selected: function() {
+        this.hide_descendants(this.selected);
+        return;
         // todo: rethink
         if(this.selected) {
             if(this.selected.type == "node") {
                 this.selected.visible = !this.selected.visible;
+            }
+        }
+        this.calc_layout();
+        render_all();
+    },
+    next_fold: 1,
+    hide_descendants: function(node, family) {
+        this.reset_node_visited();
+        var buffer = [];
+        if(typeof family !== "undefined") {
+            for(var i = 0; i < family.children.length; i++)
+                buffer.push([family.children[i], false]);
+            for(var i = 0; i < node.children.length; i++)
+                buffer.push([node.children[i], true]);
+        }
+        buffer.push([node, false]);
+        var prebuffer = [node];
+        var fold_id = this.next_fold++;
+        while(prebuffer.length > 0) {
+            var cur = prebuffer.shift();
+            for(var i = 0; i < cur.parents.length; i++) {
+                buffer.push([cur.parents[i], true]);
+                prebuffer.push(cur.parents[i]);
+            }
+        }
+        while(buffer.length > 0) {
+            var arr = buffer.shift();
+            var cur = arr[0];
+            if(cur.visited)
+                continue;
+            if(!cur.is_visible())
+                continue;
+            var mode = arr[1];
+            for(var i = 0; i < cur.parents.length; i++) {
+                buffer.push([cur.parents[i], mode]);
+            }
+            for(var i = 0; i < cur.children.length; i++) {
+                buffer.splice(0, 0, [cur.children[i], mode]);
+            }
+            cur.visible = mode;
+            cur.visited = true;
+            if(mode == false)
+                cur.fold = fold_id;
+        }
+        node.visible = true;
+        node.fold = 0;
+        this.calc_layout();
+        render_all();
+    },
+    hide_ancestors: function(node, family) {
+        this.reset_node_visited();
+        var buffer = [];
+        if(typeof family !== "undefined") {
+            for(var i = 0; i < family.parents.length; i++)
+                buffer.push([family.parents[i], false]);
+            for(var i = 0; i < node.parents.length; i++)
+                buffer.push([node.parents[i], true]);
+        }
+        buffer.push([node, false]);
+        var prebuffer = [node];
+        var fold_id = this.next_fold++;
+        while(prebuffer.length > 0) {
+            var cur = prebuffer.shift();
+            for(var i = 0; i < cur.children.length; i++) {
+                buffer.push([cur.children[i], true]);
+                prebuffer.push(cur.children[i]);
+            }
+        }
+        while(buffer.length > 0) {
+            var arr = buffer.shift();
+            var cur = arr[0];
+            if(cur.visited)
+                continue;
+            if(!cur.is_visible())
+                continue;
+            var mode = arr[1];
+            for(var i = 0; i < cur.children.length; i++) {
+                buffer.push([cur.children[i], mode]);
+            }
+            for(var i = 0; i < cur.parents.length; i++) {
+                buffer.splice(0, 0, [cur.parents[i], mode]);
+            }
+            cur.visible = mode;
+            cur.visited = true;
+            if(mode == false)
+                cur.fold = fold_id;
+        }
+        node.visible = true;
+        node.fold = 0;
+        this.calc_layout();
+        render_all();
+    },
+    hide_relative: function(node, family) {
+        for(var i = 0; i < family.parents.length; i++) {
+            if(family.parents[i] == node)
+                return this.hide_descendants(node, family);
+        }
+        for(var i = 0; i < family.children.length; i++) {
+            if(family.children[i] == node)
+                return this.hide_ancestors(node, family);
+        }
+    },
+    hide_besides_path: function() {
+        if(this.selected_path.length < 3)
+            return;
+        var fold_id = this.next_fold++;
+        for(var i = 0; i < this.node_order.length; i++) {
+            if(this.node_order[i].fold == 0) {
+                this.node_order[i].fold = fold_id;
+                this.node_order[i].visible = false;
+            }
+        }
+        // every second in the list is an individual
+        for(var i = 0; i < this.selected_path.length / 2; i++) {
+            var node = this.node_dict[this.selected_path[i]];
+            node.fold = 0;
+            node.visible = true;
+        }
+        this.calc_layout();
+        render_all();
+    },
+    open_fold: function(node) {
+        var fold = node.fold;
+        if(fold == 0)
+            return;
+        this.reset_node_visited();
+        var buffer = [node];
+        while(buffer.length > 0) {
+            var cur = buffer.shift();
+            if(cur.visited)
+                continue;
+            if(cur.fold != fold)
+                continue;
+            cur.fold = 0;
+            cur.visible = true;
+            for(var i = 0; i < cur.parents.length; i++) {
+                buffer.push(cur.parents[i]);
+            }
+            for(var i = 0; i < cur.children.length; i++) {
+                buffer.push(cur.children[i]);
             }
         }
         this.calc_layout();
@@ -556,13 +767,17 @@ var Hiski = {
     /* selection */
     selected: null,
     lastselected: null,
+    selected_path: [],
     select_node: function(node, redraw) {
         /*
         selects the given node and redraws subviews if redraw is true. The
         redraw flag exists to be able to not trigger redraw during angular
         digest, which is followed by a redraw anyway.
         */
-        Hiski.selected = node;
+        if(this.lastselected != this.selected)
+            this.lastselected = this.selected;
+        this.selected = node;
+//        this.selected_path = [];
         for(var i = 0; i < item_views.length; i++) {
             item_views[i].selected_node = node;
         }
@@ -570,6 +785,59 @@ var Hiski = {
             redraw_views();
         }
         render_all();
+    },
+    update_selection_relations: function() {
+        for(var i = 0; i < this.nodes.length; i++) {
+            this.nodes[i].selection_relation = "";
+        }
+        for(var i = 0; i < this.relations.length; i++) {
+            this.relations[i].selection_relation = "";
+        }
+        if(this.selected == null)
+            return;
+        for(var i = 0; i < this.selected.relations.length; i++) {
+            this.selected.relations[i].set_selection_relation("next-to-selected");
+        }
+        var relation_terms = ["selected", {
+            children: ["child", {
+                children: ["grandchild", {
+                }],
+            }],
+            parents: ["parent", {
+                parents: ["grandparent", {
+                }],
+                children: ["sibling", {
+                }],
+            }],
+            spouses: ["spouse", {
+            }],
+        }];
+        this.reset_node_visited();
+        var buffer = [[this.selected, relation_terms]];
+        while(buffer.length > 0) {
+            var arr = buffer.shift();
+            var cur = arr[0];
+            if(cur.visited)
+                continue;
+            cur.visited = true;
+            var terms = arr[1][1];
+            cur.set_selection_relation(arr[1][0]);
+            if(terms.parents !== undefined) {
+                for(var i = 0; i < cur.parents.length; i++) {
+                    buffer.push([cur.parents[i], terms.parents]);
+                }
+            }
+            if(terms.children !== undefined) {
+                for(var i = 0; i < cur.children.length; i++) {
+                    buffer.push([cur.children[i], terms.children]);
+                }
+            }
+            if(terms.spouses !== undefined) {
+                for(var i = 0; i < cur.spouses.length; i++) {
+                    buffer.push([cur.spouses[i], terms.spouses]);
+                }
+            }
+        }
     },
     zoom_to: null,
 
@@ -598,6 +866,15 @@ var Hiski = {
                 throw new Error("Loading data '"+xref+"' failed");
             }
         });
+    },
+
+    /* Celebrities */
+    celebrity_nodes: [],
+    set_celebrities: function(inds) {
+        for(var i = 0; i < inds.length; i++) {
+            this.preloaded_entries[inds[i].xref] = inds[i];
+        }
+        this.celebrity_nodes = inds;
     },
 };
 

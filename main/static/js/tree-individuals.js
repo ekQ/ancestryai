@@ -9,7 +9,7 @@ function color_hash(str) {
     */
     var hash = 0;
     var chr;
-    if(str.length == 0)
+    if(str === undefined || str === null || str.length == 0)
         return "#000000";
     var len = str.length;
     for(var i = 0; i < len; i++) {
@@ -33,6 +33,23 @@ function color_sex(sex) {
 //    alert("unhandled sex: '"+sex+"'");
     return "#dddddd";
 }
+function color_selection_relation(rel, idx) {
+    idx = (typeof idx === "undefined") ? 0 : idx;
+    var colors = {
+        "selected":     ["#aaffaa", "#44aa44"],
+        "parent":       ["#ffaaaa", "#aa4444"],
+        "child":        ["#aaaaff", "#5555bb"],
+        "sibling":      ["#ffaaff", "#aa44bb"],
+        "spouse":       ["#ffffaa", "#aaaa44"],
+        "grandparent":  ["#ee4444", "#992222"],
+        "grandchild":   ["#4444ee", "#222299"],
+    };
+    if(rel in colors)
+        return colors[rel][idx];
+    if(rel == "")
+        return "#dddddd";
+    return "#eeeeee";
+}
 function endsWith(str, suffix) {
     /*
     Checks if a given string ends with a given suffix.
@@ -52,8 +69,10 @@ function Node(data) {
     this.data = data;
     this.xref = data.xref;
     this.name = data.name;
-    this.first_name = this.name.split("/")[0];
-    this.family_name = this.name.split("/")[1];
+    this.first_name = data.name_first;
+    this.family_name = data.name_family;
+    this.parent_probabilities = this.data.parent_probabilities;
+    this.has_probabilities = this.parent_probabilities.length > 0;
 
     /* graph and person relations */
     this.relations = [];
@@ -82,18 +101,32 @@ function Node(data) {
     this.color_by_soundex = color_hash(
             // because fooin and fooinen were mixed a lot in my sample data
             endsWith(this.family_name, "nen") ?
-                this.data.soundex6family.replace(/5(0*)$/, "0$1") :
-                this.data.soundex6family
+                this.data.soundex_family.replace(/5$/, "") :
+                this.data.soundex_family
             );
     this.color_by_sex = color_sex(this.data.sex);
+    this.selection_relation_color = function() {
+        return color_selection_relation(this.selection_relation);
+    };
     this.last_open_descendant_year = this.year;
     this.timetraveller = false;
     this.visible = true;
     this.is_visible = function() { return this.visible; }
+    this.fold = 0;
+    this.selection_relation = "";
+    this.set_selection_relation = function(value, force) {
+        if(this.selection_relation == "" || force == true)
+            this.selection_relation = value;
+    };
 
     /* map related */
     this.mapx = _.random(0, 400000) / 1000.0;
     this.mapy = _.random(0, 160000) / 1000.0 - 80.0;
+    if(data.location.lat && data.location.lon) {
+//        console.warn(data.location);
+        this.mapy = data.location.lat;
+        this.mapx = data.location.lon;
+    }
     this.map_projection_x = null;
     this.map_projection_y = null;
 
