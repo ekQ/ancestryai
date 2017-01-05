@@ -39,10 +39,7 @@ all:  ${PDF}
 	while ( grep -q '^LaTeX Warning: Label(s) may have changed' $*.log) \
 	do pdflatex $<; done
 
-#sample-sigconf.pdf \
-#sample-siggraph.pdf \
-#sample-sigplan.pdf \
-#sample-sigchi.pdf: samplebody-conf.tex
+sample-sigconf.pdf: defines.tex sigproc.bib
 
 
 .PRECIOUS:  $(PACKAGE).cfg $(PACKAGE).cls

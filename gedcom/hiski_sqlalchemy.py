@@ -50,12 +50,13 @@ class Person(Entity):
     mom_age = Field(String, colname="AIKA")
     
     def __init__(self):
-        first_name = self.name.split('\K')[0].lower().strip()
-        if len(first_name) > 0:
-            first_name = first_name.split()[0]
-        last_name = self.dad_last_name.split('\K')[0].lower().strip()
-        self.clean_name = first_name + ' ' + last_name
-    
+        self.first_name = clean_name_token(self.name)
+        if len(self.first_name) > 0:
+            self.first_first_name = self.first_name.split()[0]
+        else:
+            self.first_first_name = ''
+        self.last_name = clean_name_token(self.dad_last_name)
+        self.clean_name = self.first_first_name + ' ' + last_name
 
     def clean_name(self, first_name, last_name, patronymic=None):
         first_name = clean_name_token(first_name)
@@ -75,7 +76,7 @@ class Person(Entity):
         return clean_name_token(self.name)
 
     def get_clean_dad_name(self):
-        return self.clean_name(self.dad_first_name, self.dad_last_name, self.dad_patronymic)
+        return self.clean_name(self.dad_first_name, self.dad_last_name)
         
     def get_clean_mom_name(self):
         return self.clean_name(self.mom_first_name, self.mom_last_name)
