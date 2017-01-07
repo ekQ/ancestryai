@@ -383,7 +383,8 @@ var Hiski = {
         }
         if(xref == "@first@") {
             // replace xref here to set first node to something specific
-            //xref = "@I0523@";
+            xref = "3844380";
+            // xref = "@I0523@";
         }
         var addr = this.url_root + "json/load/"+xref+"/";
         if(xref === null)
@@ -469,8 +470,8 @@ var Hiski = {
             return [x, y];
         };
         var x = 100;
-        var pad = 80;
-        var pad_years = 9;
+        var pad = 60;  //80;
+        var pad_years = 5;  //9;
         var years_x = [];
         // initialize reservation buffer
         for(var i = 0; i < 3000; i++) {
@@ -582,7 +583,9 @@ var Hiski = {
             this.zoom_to = null;
         }
     },
-    color_mode: "family-name",
+    //color_mode: "family-name",
+    //color_mode: "sex",
+    color_mode: "expendability",
     node_color_function: function(d) {
         /*
         Returns the node colour depending on the corresponding setting.
