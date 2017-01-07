@@ -469,8 +469,8 @@ var Hiski = {
             return [x, y];
         };
         var x = 100;
-        var pad = 80;
-        var pad_years = 9;
+        var pad = 60;  //80;
+        var pad_years = 5;  //9;
         var years_x = [];
         // initialize reservation buffer
         for(var i = 0; i < 3000; i++) {
@@ -582,10 +582,8 @@ var Hiski = {
             this.zoom_to = null;
         }
     },
-    //next_color_mode: function() {
-        // todo: use text based colouring keys
-    //    this.color_mode = (this.color_mode + 1) % 4;
-    //},
+    //color_mode: "family-name",
+    //color_mode: "sex",
     color_mode: "expendability",
     node_color_function: function(d) {
         /*
