@@ -4,7 +4,7 @@ var Hiski = {
     Main object of the program. Contains state, data and layout calculation, as
     well as functions related to those.
     */
-    url_root: "/hiski-visualizer/",
+    url_root: "/ancestryai/",
     /* nodes / people */
     // nodes in the order of adding them
     nodes: [],

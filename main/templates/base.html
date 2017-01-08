@@ -83,7 +83,7 @@
                 {% raw %}
             </div>
             <ul class="topmenu">
-                <li><button ng-click="menu.go_to_app()">To app</button></li>
+                <li><button ng-click="menu.go_to_app()">Start</button></li>
                 <ul class="right-end">
                     <li><button ng-click="menu.set_language('fi')" translate>Finnish</button></li>
                     <li><button ng-click="menu.set_language('en')" translate>English</button></li>
@@ -91,10 +91,10 @@
             </ul>
             <div class="explanation">
                 <div class="lang en" ng-if="menu.language == 'en'">
-                    Explanation
+                    Click "Start" above to launch AncestryAI. More documentation will be added soon.
                 </div>
                 <div class="lang fi" ng-if="menu.language == 'fi'">
-                    Selitys
+                    Valitse "Start" yllä käynnistääksesi ohjelman AncestryAI. Käyttöohjeita tullaan lisäämään lähiaikoina.
                 </div>
                 <div ng-if="menu.Hiski.debug_mode">
                     <button title="and a tooltip for a button that does nothing">Does nothing</button>
