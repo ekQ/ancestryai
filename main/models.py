@@ -4,6 +4,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import *
 from main.database import Base, session
 from pbkdf2 import crypt
+from helper import *
 
 class User(Base):
     # this is not really used in any way, as the site doesn't have a login feature
@@ -23,13 +24,19 @@ class User(Base):
         return tryhash == self.passhash
 
 family_parent_link = Table("family_parent_link", Base.metadata,
-    Column("individual_id", Integer, ForeignKey("individual.id")),
-    Column("family_id", Integer, ForeignKey("family.id")),
+    Column("individual_id", Integer, ForeignKey("individual.id"), primary_key=True),
+    Column("family_id", Integer, ForeignKey("family.id"), primary_key=True),
 )
 family_child_link = Table("family_child_link", Base.metadata,
-    Column("individual_id", Integer, ForeignKey("individual.id")),
-    Column("family_id", Integer, ForeignKey("family.id")),
+    Column("individual_id", Integer, ForeignKey("individual.id"), primary_key=True),
+    Column("family_id", Integer, ForeignKey("family.id"), primary_key=True),
 )
+
+class FamilyParentLink(Base):
+    __table__ = family_parent_link
+
+class FamilyChildLink(Base):
+    __table__ = family_child_link
 
 class Parish(Base):
     __tablename__ = "parish"
@@ -102,7 +109,7 @@ class Individual(Base):
             location = self.village.as_dict()
         elif self.parish:
             location = self.parish.as_dict()
-        return {
+        ret = {
             "xref": self.xref,
             "name": self.name,
             "name_first": self.name_first,
@@ -126,6 +133,13 @@ class Individual(Base):
                 } for x in self.parent_probabilities],
             "location": location,
         }
+        try:
+            # Save dict for future calls.
+            self.pre_dicted = u(json.dumps(ret))
+            session.commit()
+        except:
+            print "Committing computed pre dict failed."
+        return ret
 
 class ParentProbability(Base):
     __tablename__ = "parent_probability"

@@ -8,15 +8,12 @@ from instrumenting.instrumenting import Timer
 from gedcom import gedcom
 from soundexpy import soundex
 from .models import *
-from .database import session
+from .database import session, engine
+from .helper import *
 
-def ensure_unicode(s):
-    if isinstance(s, unicode):
-        return s
-    if isinstance(s, str):
-        return s.decode("utf8")
-    return unicode(s)
-u = ensure_unicode
+
+BATCH_SIZE = 10000
+
 
 # todo: use the gedcom.py implementation instead
 def get_chain(root, chain):
@@ -137,20 +134,23 @@ def reform_gedcom():
             entry = gedcom.Entry(0, "@F{}@".format(nextid), "FAM", None)
 
 
-def yield_data_dicts(path, batch_idx=None, num_batches=None, is_one_json=False):
+def yield_data_dicts(path, batch_idx=None, num_batches=None):
     with open(path) as f:
-        if is_one_json:
-            data = json.load(f)
-            for d in data:
-                yield d
-        else:
+        if path.endswith('rows.json'):
             for i, line in enumerate(f):
-                #if i == 10000:
+                #if i == 20000:
                 #    break
                 if batch_idx is not None and num_batches is not None and i % num_batches != batch_idx:
                     continue
                 yield json.loads(line)
+        else:
+            data = json.load(f)
+            for d in data:
+                yield d
 
+
+def to_dict(**kwargs):
+    return kwargs
 
 def populate_from_recons(fname, batch_idx=None, num_batches=None):
     t = Timer(True, 48)
@@ -182,15 +182,17 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
                 village = Village(**d)
                 session.add(village)
             count_villages = len(data)
-    session.flush()
+    session.commit()
     t.measure("{} villages added".format(count_villages))
     if "individuals" in sources:
         count_individuals = 0
+        ind_inserts = []
         for didx, d in enumerate(yield_data_dicts(sources["individuals"], batch_idx=batch_idx,
                                                   num_batches=num_batches)):
             name_first = u(" ".join(d["name"].split()[:-1]))
             name_family = u(d["name"].split()[-1] if d["name"].strip() else "")
-            ind = Individual(
+            #ind = Individual(
+            ind_inserts.append(to_dict(
                     xref = u(d["hiski_id"]),
                     name = u(d["name"]),
                     name_first = name_first,
@@ -207,32 +209,45 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
                     soundex_family = u(soundex.soundex(name_family.upper())),
                     village_id = d["village_id"],
                     parish_id = d["parish_id"],
-                    )
-            session.add(ind)
+                    ))
+            #session.add(ind)
             count_individuals += 1
-            if didx % 10000 == 0:
+            if didx % BATCH_SIZE == 0:
                 print "\t{}\t(villages and parishes linked for {} individuals.)".format(
                         dt.datetime.now().isoformat()[:-7], didx)
                 sys.stdout.flush()
-                session.flush()
+                #session.flush()
+                engine.execute(Individual.__table__.insert(), ind_inserts)
+                ind_inserts = []
+        engine.execute(Individual.__table__.insert(), ind_inserts)
+        ind_inserts = []
         t.submeasure("individual objects created")
-    session.commit()
+    xref2id = {}
+    for id, xref in Individual.query.with_entities(Individual.id, Individual.xref).all():
+        xref2id[xref] = id
+    #session.commit()
     t.measure("{} individuals added".format(count_individuals))
     if "edges" in sources:
+        edge_inserts = []
         for didx, d in enumerate(yield_data_dicts(sources["edges"], batch_idx=batch_idx,
                                                   num_batches=num_batches)):
-            pp = ParentProbability(
-                    parent_id = d["parent"],
-                    person_id = d["child"],
+            #pp = ParentProbability(
+            edge_inserts.append(to_dict(
+                    parent_id = xref2id[u(d["parent"])],
+                    person_id = xref2id[u(d["child"])],
                     probability = d["prob"],
                     is_dad = d["dad"],
-                    )
-            session.add(pp)
-            if didx % 10000 == 0:
+                    ))
+            #session.add(pp)
+            if didx % BATCH_SIZE == 0:
                 print "\t{}\t({} edges processed.)".format(
                         dt.datetime.now().isoformat()[:-7], didx)
                 sys.stdout.flush()
-                session.flush()
+                #session.flush()
+                engine.execute(ParentProbability.__table__.insert(), edge_inserts)
+                edge_inserts = []
+        engine.execute(ParentProbability.__table__.insert(), edge_inserts)
+        edge_inserts = []
         t.submeasure("parent probabilities")
         parent_candidates = {}
         for didx, d in enumerate(yield_data_dicts(sources["edges"], batch_idx=batch_idx,
@@ -258,26 +273,63 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
             of_len[len(parents)] = of_len.get(len(parents), 0) + 1
         t.submeasure("parent_candidates to family_candidates")
         i = 0
+        fam_inserts = []
         for parents, children in family_candidates.iteritems():
             i += 1
             fam_id = u"F{}".format(i)
-            fam = Family(
+            #fam = Family(
+            fam_inserts.append(to_dict(
                     xref = fam_id,
                     tag = u"FAM",
-                    )
-            session.add(fam)
+                    ))
+            #session.add(fam)
+        #session.flush()
+        engine.execute(Family.__table__.insert(), fam_inserts)
+        del fam_inserts
+        t.submeasure("families added")
+        fam_xref2id = {}
+        for id, xref in Family.query.with_entities(Family.id, Family.xref).all():
+            fam_xref2id[xref] = id
+        i = 0
+        fp_inserts = []
+        fc_inserts = []
+        for parents, children in family_candidates.iteritems():
+            i += 1
+            fam_xref = u"F{}".format(i)
             for parent in parents:
-                ind = Individual.query.filter_by(xref = parent).first()
-                fam.parents.append(ind)
+                #parent_link = FamilyParentLink(
+                fp_inserts.append(to_dict(
+                        individual_id = xref2id[u(parent)],
+                        family_id = fam_xref2id[fam_xref],
+                        ))
+                #session.add(parent_link)
+                if len(fp_inserts) >= BATCH_SIZE:
+                    engine.execute(FamilyParentLink.__table__.insert(), fp_inserts)
+                    fp_inserts = []
             for child in children:
-                ind = Individual.query.filter_by(xref = child).first()
-                fam.children.append(ind)
-        t.submeasure("families added and linked to individuals")
+                #child_link = FamilyChildLink(
+                fc_inserts.append(to_dict(
+                        individual_id = xref2id[u(child)],
+                        family_id = fam_xref2id[fam_xref],
+                        ))
+                #session.add(child_link)
+                if len(fc_inserts) >= BATCH_SIZE:
+                    engine.execute(FamilyChildLink.__table__.insert(), fc_inserts)
+                    fc_inserts = []
+        engine.execute(FamilyParentLink.__table__.insert(), fp_inserts)
+        engine.execute(FamilyChildLink.__table__.insert(), fc_inserts)
+        del fp_inserts, fc_inserts
+        t.submeasure("families linked to individuals")
         count_families = i
+    #session.flush()
     t.measure("{} families added".format(count_families))
-    for ind in Individual.query.all():
+    '''
+    for ii, ind in enumerate(Individual.query.all()):
+        if ii % 1000 == 0:
+            print dt.datetime.now().isoformat()[:-7], ii
         ind.pre_dicted = u(json.dumps(ind.as_dict()))
-    t.measure("{} individuals pre dicted".format(count_individuals))
+    t.measure("individuals pre dicted")
+    '''
     session.commit()
     t.measure("commit")
     t.print_total()
