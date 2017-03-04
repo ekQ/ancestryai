@@ -66,7 +66,7 @@
                                             <th translate>Name</th>
                                             <th translate>Probability</th>
 <!--                                            <th translate>Birthday</th>
-                                            <th translate>HisKi</th>
+                                            <th>HisKi</th>
                                             <th translate>Mother</th>
                                             <th translate>Father</th>-->
                                         </thead>
@@ -133,9 +133,15 @@
                                         <option value="firstname" translate>First name</option>
                                         <option value="familyname" translate>Family name</option>
                                         <option value="birthyear" translate>Birth year</option>
+                                        <option value="parish" translate>Parish</option>
                                         <option value="xref">xref</option>
                                     </select>
-                                    <input type="text" ng-model="triplet.search_term"></input>
+                                    <input ng-if="triplet.search_type != 'parish'" type="text" ng-model="triplet.search_term"></input>
+                                    <select ng-if="triplet.search_type == 'parish'" ng-model="triplet.search_term">
+                                        <option ng-repeat="parish in menu.Hiski.parishes" value="{{parish.id}}">
+                                            {{ parish.name || parish.id }}
+                                        </option>
+                                    </select>
                                 </div>
                                 <button type="button" ng-click="menu.add_search_triplet()" translate>Add term</button>
                             </div>
@@ -152,7 +158,7 @@
                                         <th translate>First name</th>
                                         <th translate>Family name</th>
                                         <th translate>Birthday</th>
-                                        <th translate>HisKi</th>
+                                        <th>HisKi</th>
 <!--                                        <th translate>Mother</th>
                                         <th translate>Father</th>-->
                                     </tr>
@@ -236,9 +242,36 @@
                                 <span translate>and</span>
                                 <span>{{ menu.pathsearch_to.name }}</span>
                             </div>
-                            <div class="search-result" ng-repeat="ind in menu.pathsearch_list" ng-click="menu.load(ind.xref)">
-                                {{ ind.name }}
-                            </div>
+                            <table ng-show="menu.pathsearch_list.length > 0" class="search-result-table">
+                                <thead>
+                                    <tr>
+                                        <th translate>First name</th>
+                                        <th translate>Family name</th>
+                                        <th translate>Birthday</th>
+                                        <th>HisKi</th>
+<!--                                        <th translate>Mother</th>
+                                        <th translate>Father</th>-->
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="search-result" ng-repeat="ind in menu.pathsearch_list" ng-click="menu.load(ind.xref)">
+                                        <td>
+                                            {{ ind.name_first }}
+                                        </td>
+                                        <td>
+                                            {{ ind.name_family }}
+                                        </td>
+                                        <td>
+                                            {{ ind.birth_date_string }}
+                                        </td>
+                                        <td>
+                                            <a class="external" target="_blank" ng-href="http://hiski.genealogia.fi/hiski?{{ menu.Hiski.external_hiski_language }}+t{{ ind.xref }}">
+                                                {{ ind.xref }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                             <div ng-show="menu.pathsearch_list.length == 0" translate>
                                 No path
                             </div>

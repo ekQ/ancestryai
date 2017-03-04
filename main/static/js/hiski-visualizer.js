@@ -39,5 +39,12 @@ $(document).ready(function() {
             throw new Error("Loading celebrities failed");
         }
     });
+    d3.json(Hiski.url_root + "json/parishes/", function(json) {
+        if(json && json.result == true) {
+            Hiski.set_parishes(json.parishes);
+        } else {
+            throw new Error("Loading parishes failed");
+        }
+    });
     add_debug_toggle();
 });
