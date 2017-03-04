@@ -12,6 +12,11 @@ app.controller("TopMenuController", function($scope, $translate) {
         menu.set_language = function(lang) {
             $translate.use(lang);
             menu.language = lang;
+            if(lang == "fi") {
+                Hiski.external_hiski_language = "fi";
+            } else {
+                Hiski.external_hiski_language = "en";
+            }
         };
         menu.load_random = function() {
             Hiski.load(null, null);

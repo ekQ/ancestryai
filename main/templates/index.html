@@ -60,7 +60,28 @@
                                 <dd ng-if="menu.Hiski.selected.data.sex == 'F'" translate>Female</dd>
                                 <dd ng-if="menu.Hiski.selected.data.sex == '?'" translate>Unknown</dd>
                             <dt translate ng-if="menu.Hiski.selected.has_probabilities">Parent probabilities</dt>
-                                <dd class="search-result" ng-click="menu.load(p.xref)" ng-repeat="p in menu.Hiski.selected.parent_probabilities">{{ p.name }}: {{p.prob | number:6 }}</dd>
+                                <dd ng-if="menu.Hiski.selected.has_probabilities">
+                                    <table class="search-result-table">
+                                        <thead>
+                                            <th translate>Name</th>
+                                            <th translate>Probability</th>
+<!--                                            <th translate>Birthday</th>
+                                            <th translate>HisKi</th>
+                                            <th translate>Mother</th>
+                                            <th translate>Father</th>-->
+                                        </thead>
+                                        <tbody>
+                                            <tr class="search-result" ng-click="menu.load(p.xref)" ng-repeat="p in menu.Hiski.selected.parent_probabilities">
+                                                <td>
+                                                    {{ p.name }}
+                                                </td>
+                                                <td>
+                                                    {{ p.prob | number:6 }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </dd>
                         </dl>
                         <button ng-click="menu.Hiski.toggle_hide_selected()" ng-if="menu.Hiski.selected !== null" translate>
                             Hide descendants
@@ -125,9 +146,36 @@
                         <div class="searchresults" ng-if="menu.search_state == 'idle'">
                             <div ng-if="menu.Hiski.debug_mode">Time spent (s): {{ menu.search_time | number:3 }}</div>
                             <div><span translate>For search:</span> {{ menu.search_result_term }} ({{ menu.search_soundex }})</div>
-                            <div class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
-                                {{ ind.name }}
-                            </div>
+                            <table class="search-result-table">
+                                <thead>
+                                    <tr>
+                                        <th translate>First name</th>
+                                        <th translate>Family name</th>
+                                        <th translate>Birthday</th>
+                                        <th translate>HisKi</th>
+<!--                                        <th translate>Mother</th>
+                                        <th translate>Father</th>-->
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="search-result" ng-repeat="ind in menu.search_result_list" ng-click="menu.load(ind.xref)">
+                                        <td>
+                                            {{ ind.name_first }}
+                                        </td>
+                                        <td>
+                                            {{ ind.name_family }}
+                                        </td>
+                                        <td>
+                                            {{ ind.birth_date_string }}
+                                        </td>
+                                        <td>
+                                            <a class="external" ng-href="http://hiski.genealogia.fi/hiski?{{ menu.Hiski.external_hiski_language }}+t{{ ind.xref }}">
+                                                {{ ind.xref }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                             <div ng-if="menu.search_result_list == null || menu.search_result_list.length == 0" translate>
                                 No results
                             </div>

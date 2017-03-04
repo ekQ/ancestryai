@@ -77,6 +77,11 @@ translations.en = {
     "Cousin": "Cousin",
     "Aunt": "Aunt",
     "Uncle": "Uncle",
+    "Birthday": "Birthday",
+    "Mother": "Mother",
+    "Father": "Father",
+    "Probability": "Probability",
+    "HisKi": "HisKi",
 
     // language selection
     "Finnish": "Suomi",

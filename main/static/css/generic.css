@@ -13,6 +13,9 @@ body,
 .app {
     height: 100%;
     margin: 0px;
+/* Uncomment this to hide horizontal scrollbar from body when something is
+ * pushed past the right border.
+ * overflow: hidden;*/
 }
 .app {
     display: -webkit-flex;
@@ -388,6 +391,13 @@ label span {
 
 
 
+.search-result-table td,
+.search-result-table th {
+    padding: 0 5px;
+}
+.search-result-table tr:nth-child(2n) {
+    background: #eeeeee;
+}
 .search-result {
     color: #000044;
     cursor: pointer;
@@ -397,6 +407,19 @@ label span {
 }
 .search-result:active {
     color: #8888cc;
+}
+a.external {
+    color: #0000ee;
+    text-decoration: underline;
+}
+a.external:hover {
+    color: #4444f4;
+}
+a.external:active {
+    color: #8888f8;
+}
+a.external:visited {
+    color:  #551a8b;
 }
 
 

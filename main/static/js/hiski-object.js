@@ -5,6 +5,7 @@ var Hiski = {
     well as functions related to those.
     */
     url_root: "/",
+    external_hiski_language: "fi",
     /* nodes / people */
     // nodes in the order of adding them
     nodes: [],

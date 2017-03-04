@@ -82,6 +82,12 @@ translations.fi = {
     "Aunt": "Täti",
     "Uncle": "Setä",
 
+    "Birthday": "Syntymäpäivä",
+    "Mother": "Äiti",
+    "Father": "Isä",
+    "Probability": "Todennäköisyys",
+    "HisKi": "HisKi",
+
     // language selection
     "Finnish": "Suomi",
     "English": "English",
