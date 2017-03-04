@@ -21,7 +21,8 @@ commands
         store-gedcom    - store full gedcom data for nodes in database. Useful
                           if writing out is desired later on.
         recons <fname>  - populate from a recons file, where the given file is
-                          a header file.
+                          a header file. After <fname> you may additionally
+                          provide <batch_idx> <num_batches>.
         components      - populate connected components for people path search
     write             - write gedcom out from the database
         reform          - reform the gedcom data in database
@@ -78,7 +79,12 @@ if command == "populate":
             populate_from_gedcom(fname, "store-gedcom" in subs)
         if sub == "recons":
             fname = subs[i+1]
-            populate_from_recons(fname)
+            batch_idx=None
+            num_batches=None
+            if len(subs) > i+3:
+                batch_idx = int(subs[i+2])
+                num_batches = int(subs[i+3])
+            populate_from_recons(fname, batch_idx, num_batches)
         if sub == "components":
             populate_component_ids()
 if command == "write":

@@ -1,7 +1,9 @@
 
 import os
 import time
+import datetime as dt
 import json
+import sys
 from instrumenting.instrumenting import Timer
 from gedcom import gedcom
 from soundexpy import soundex
@@ -135,8 +137,22 @@ def reform_gedcom():
             entry = gedcom.Entry(0, "@F{}@".format(nextid), "FAM", None)
 
 
+def yield_data_dicts(path, batch_idx=None, num_batches=None, is_one_json=False):
+    with open(path) as f:
+        if is_one_json:
+            data = json.load(f)
+            for d in data:
+                yield d
+        else:
+            for i, line in enumerate(f):
+                #if i == 10000:
+                #    break
+                if batch_idx is not None and num_batches is not None and i % num_batches != batch_idx:
+                    continue
+                yield json.loads(line)
 
-def populate_from_recons(fname):
+
+def populate_from_recons(fname, batch_idx=None, num_batches=None):
     t = Timer(True, 48)
     base = os.path.dirname(fname)
     f = open(fname)
@@ -168,32 +184,54 @@ def populate_from_recons(fname):
             count_villages = len(data)
     session.flush()
     t.measure("{} villages added".format(count_villages))
+    xref2ind = {}
+    flog = open('temp_edges.log', 'w')
     if "individuals" in sources:
-        with open(sources["individuals"]) as f:
-            data = json.load(f)
-            for d in data:
-                name_first = u(" ".join(d["name"].split()[:-1]))
-                name_family = u(d["name"].split()[-1] if d["name"].strip() else "")
-                ind = Individual(
-                        xref = u(d["hiski_id"]),
-                        name = u(d["name"]),
-                        name_first = name_first,
-                        name_family = name_family,
-                        tag = u"INDI",
-                        sex = u"?",
-                        is_celebrity = d.get("is_celebrity", False),
-                        birth_date_string = u"{}.{}.{}".format(d["day"], d["month"], d["year"]),
-                        birth_date_year = d["year"],
-                        death_date_string = None,
-                        death_date_year = None,
-                        # todo: revise soundex storing to be more sensible
-                        soundex_first = u(soundex.soundex(name_first.upper())),
-                        soundex_family = u(soundex.soundex(name_family.upper())),
-                        )
-                session.add(ind)
-            t.submeasure("individual objects created")
-            session.flush()
-            for d in data:
+        count_individuals = 0
+        for didx, d in enumerate(yield_data_dicts(sources["individuals"], batch_idx=batch_idx,
+                                                  num_batches=num_batches)):
+            name_first = u(" ".join(d["name"].split()[:-1]))
+            name_family = u(d["name"].split()[-1] if d["name"].strip() else "")
+            ind = Individual(
+                    xref = u(d["hiski_id"]),
+                    name = u(d["name"]),
+                    name_first = name_first,
+                    name_family = name_family,
+                    tag = u"INDI",
+                    sex = u"?",
+                    is_celebrity = d.get("is_celebrity", False),
+                    birth_date_string = u"{}.{}.{}".format(d["day"], d["month"], d["year"]),
+                    birth_date_year = d["year"],
+                    death_date_string = None,
+                    death_date_year = None,
+                    # todo: revise soundex storing to be more sensible
+                    soundex_first = u(soundex.soundex(name_first.upper())),
+                    soundex_family = u(soundex.soundex(name_family.upper())),
+                    )
+            ind.village = Village.query.filter_by(id = d["village_id"]).first()
+            ind.parish = Parish.query.filter_by(id = d["parish_id"]).first()
+            session.add(ind)
+            count_individuals += 1
+            if didx % 10000 == 0:
+                print "\t{}\t(villages and parishes linked for {} individuals.)".format(
+                        dt.datetime.now().isoformat()[:-7], didx)
+                sys.stdout.flush()
+                try:
+                    flog.write("\t{}\t(villages and parishes linked for {} individuals.)\n".format(
+                            dt.datetime.now().isoformat()[:-7], didx))
+                    flog.flush()
+                except:
+                    pass
+                session.flush()
+            xref2ind[ind.xref] = ind
+        t.submeasure("individual objects created")
+        session.flush()
+        '''
+            session.commit()
+            for didx, d in enumerate(data):
+                if didx % 10000 == 0:
+                    print "\t{}\t(villages and parishes linked for {} individuals.)".format(
+                            dt.datetime.now().isoformat()[:-7], didx)
                 if d["village_id"] == None and d["parish_id"] == None:
                     continue
                 ind = Individual.query.filter_by(xref = d["hiski_id"]).first()
@@ -201,61 +239,89 @@ def populate_from_recons(fname):
                 ind.parish = Parish.query.filter_by(id = d["parish_id"]).first()
             t.submeasure("villages and parishes linked")
             count_individuals = len(data)
-    session.flush()
+        '''
+    session.commit()
     t.measure("{} individuals added".format(count_individuals))
     if "edges" in sources:
-        with open(sources["edges"]) as f:
-            data = json.load(f)
-            parent_candidates = {}
-            for d in data:
-                if not d["child"] in parent_candidates:
-                    parent_candidates[d["child"]] = []
-                parent_candidates[d["child"]].append(d)
-            t.submeasure("edges to parent_candidates")
-            for d in data:
-                parent = Individual.query.filter_by(xref = d["parent"]).first()
+        if len(xref2ind) == 0:
+            print "Starting to cache all individuals."
+            for ii, ind in enumerate(Individual.query.all()):
+                xref2ind[ind.xref] = ind
+            t.submeasure("Caching done.")
+            
+        parent_candidates = {}
+        for didx, d in enumerate(yield_data_dicts(sources["edges"], batch_idx=batch_idx,
+                                                  num_batches=num_batches)):
+            if not d["child"] in parent_candidates:
+                parent_candidates[d["child"]] = []
+            parent_candidates[d["child"]].append(d)
+        t.submeasure("edges to parent_candidates")
+        t_queries = 0
+        for didx, d in enumerate(yield_data_dicts(sources["edges"], batch_idx=batch_idx,
+                                                  num_batches=num_batches)):
+            t0 = time.time()
+            if d["parent"] in xref2ind:
+                parent = xref2ind[ind]
+            else:
+               parent = Individual.query.filter_by(xref = d["parent"]).first()
+            if d["child"] in xref2ind:
+                person = xref2ind[ind]
+            else:
                 person = Individual.query.filter_by(xref = d["child"]).first()
-                pp = ParentProbability(
-                        parent = parent,
-                        person = person,
-                        probability = d["prob"],
-                        is_dad = d["dad"],
-                        )
-                session.add(pp)
-            t.submeasure("parent probabilities")
-            family_candidates = {}
-            of_len = {}
-            for child, parents in parent_candidates.iteritems():
-                dads = sorted([x for x in parents if x["dad"]], key = lambda x: x["prob"], reverse = True)
-                moms = sorted([x for x in parents if not x["dad"]], key = lambda x: x["prob"], reverse = True)
-                key = []
-                if dads:
-                    key.append(dads[0])
-                if moms:
-                    key.append(moms[0])
-                key = tuple([x["parent"] for x in key])
-                if not key in family_candidates:
-                    family_candidates[key] = []
-                family_candidates[key].append(child)
-                of_len[len(parents)] = of_len.get(len(parents), 0) + 1
-            t.submeasure("parent_candidates to family_candidates")
-            i = 0
-            for parents, children in family_candidates.iteritems():
-                i += 1
-                fam_id = u"F{}".format(i)
-                fam = Family(
-                        xref = fam_id,
-                        tag = u"FAM",
-                        )
-                session.add(fam)
-                for parent in parents:
-                    ind = Individual.query.filter_by(xref = parent).first()
-                    fam.parents.append(ind)
-                for child in children:
-                    ind = Individual.query.filter_by(xref = child).first()
-                    fam.children.append(ind)
-            t.submeasure("families added and linked to individuals")
-            count_families = i
+            t_queries += time.time() - t0
+            pp = ParentProbability(
+                    parent = parent,
+                    person = person,
+                    probability = d["prob"],
+                    is_dad = d["dad"],
+                    )
+            session.add(pp)
+            if didx % 10000 == 0:
+                print "\t{}\t({} edges processed.)".format(
+                        dt.datetime.now().isoformat()[:-7], didx)
+                sys.stdout.flush()
+                try:
+                    flog.write("\t{}\t({} edges processed.)\n".format(
+                            dt.datetime.now().isoformat()[:-7], didx))
+                    flog.flush()
+                except:
+                    pass
+                session.flush()
+        t.submeasure("parent probabilities")
+        family_candidates = {}
+        of_len = {}
+        for child, parents in parent_candidates.iteritems():
+            dads = sorted([x for x in parents if x["dad"]], key = lambda x: x["prob"], reverse = True)
+            moms = sorted([x for x in parents if not x["dad"]], key = lambda x: x["prob"], reverse = True)
+            key = []
+            if dads:
+                key.append(dads[0])
+            if moms:
+                key.append(moms[0])
+            key = tuple([x["parent"] for x in key])
+            if not key in family_candidates:
+                family_candidates[key] = []
+            family_candidates[key].append(child)
+            of_len[len(parents)] = of_len.get(len(parents), 0) + 1
+        t.submeasure("parent_candidates to family_candidates")
+        #print "Time for queries:", t_queries
+        i = 0
+        for parents, children in family_candidates.iteritems():
+            i += 1
+            fam_id = u"F{}".format(i)
+            fam = Family(
+                    xref = fam_id,
+                    tag = u"FAM",
+                    )
+            session.add(fam)
+            for parent in parents:
+                ind = Individual.query.filter_by(xref = parent).first()
+                fam.parents.append(ind)
+            for child in children:
+                ind = Individual.query.filter_by(xref = child).first()
+                fam.children.append(ind)
+        t.submeasure("families added and linked to individuals")
+        count_families = i
     t.measure("{} families added".format(count_families))
     for ind in Individual.query.all():
         ind.pre_dicted = u(json.dumps(ind.as_dict()))
