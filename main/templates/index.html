@@ -59,8 +59,8 @@
                                 <dd ng-if="menu.Hiski.selected.data.sex == 'M'" translate>Male</dd>
                                 <dd ng-if="menu.Hiski.selected.data.sex == 'F'" translate>Female</dd>
                                 <dd ng-if="menu.Hiski.selected.data.sex == '?'" translate>Unknown</dd>
-                            <dt translate ng-if="menu.Hiski.selected.has_probabilities">Parent probabilities</dt>
-                                <dd ng-if="menu.Hiski.selected.has_probabilities">
+                            <dt translate>Father probabilities</dt>
+                                <dd>
                                     <table class="search-result-table">
                                         <thead>
                                             <th translate>Name</th>
@@ -71,7 +71,36 @@
                                             <th translate>Father</th>-->
                                         </thead>
                                         <tbody>
-                                            <tr class="search-result" ng-click="menu.load(p.xref)" ng-repeat="p in menu.Hiski.selected.parent_probabilities">
+                                            <tr class="search-result"
+                                                    ng-click="menu.load(p.xref)"
+                                                    ng-repeat="p in menu.Hiski.selected.parent_probabilities"
+                                                    ng-if="p.is_dad">
+                                                <td>
+                                                    {{ p.name }}
+                                                </td>
+                                                <td>
+                                                    {{ p.prob | number:6 }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </dd>
+                            <dt translate>Mother probabilities</dt>
+                                <dd>
+                                    <table class="search-result-table">
+                                        <thead>
+                                            <th translate>Name</th>
+                                            <th translate>Probability</th>
+<!--                                            <th translate>Birthday</th>
+                                            <th>HisKi</th>
+                                            <th translate>Mother</th>
+                                            <th translate>Father</th>-->
+                                        </thead>
+                                        <tbody>
+                                            <tr class="search-result"
+                                                    ng-click="menu.load(p.xref)"
+                                                    ng-repeat="p in menu.Hiski.selected.parent_probabilities"
+                                                    ng-if="!p.is_dad">
                                                 <td>
                                                     {{ p.name }}
                                                 </td>
