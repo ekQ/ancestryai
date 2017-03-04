@@ -184,8 +184,6 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
             count_villages = len(data)
     session.flush()
     t.measure("{} villages added".format(count_villages))
-    xref2ind = {}
-    flog = open('temp_edges.log', 'w')
     if "individuals" in sources:
         count_individuals = 0
         for didx, d in enumerate(yield_data_dicts(sources["individuals"], batch_idx=batch_idx,
@@ -207,71 +205,25 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
                     # todo: revise soundex storing to be more sensible
                     soundex_first = u(soundex.soundex(name_first.upper())),
                     soundex_family = u(soundex.soundex(name_family.upper())),
+                    village_id = d["village_id"],
+                    parish_id = d["parish_id"],
                     )
-            ind.village = Village.query.filter_by(id = d["village_id"]).first()
-            ind.parish = Parish.query.filter_by(id = d["parish_id"]).first()
             session.add(ind)
             count_individuals += 1
             if didx % 10000 == 0:
                 print "\t{}\t(villages and parishes linked for {} individuals.)".format(
                         dt.datetime.now().isoformat()[:-7], didx)
                 sys.stdout.flush()
-                try:
-                    flog.write("\t{}\t(villages and parishes linked for {} individuals.)\n".format(
-                            dt.datetime.now().isoformat()[:-7], didx))
-                    flog.flush()
-                except:
-                    pass
                 session.flush()
-            xref2ind[ind.xref] = ind
         t.submeasure("individual objects created")
-        session.flush()
-        '''
-            session.commit()
-            for didx, d in enumerate(data):
-                if didx % 10000 == 0:
-                    print "\t{}\t(villages and parishes linked for {} individuals.)".format(
-                            dt.datetime.now().isoformat()[:-7], didx)
-                if d["village_id"] == None and d["parish_id"] == None:
-                    continue
-                ind = Individual.query.filter_by(xref = d["hiski_id"]).first()
-                ind.village = Village.query.filter_by(id = d["village_id"]).first()
-                ind.parish = Parish.query.filter_by(id = d["parish_id"]).first()
-            t.submeasure("villages and parishes linked")
-            count_individuals = len(data)
-        '''
     session.commit()
     t.measure("{} individuals added".format(count_individuals))
     if "edges" in sources:
-        if len(xref2ind) == 0:
-            print "Starting to cache all individuals."
-            for ii, ind in enumerate(Individual.query.all()):
-                xref2ind[ind.xref] = ind
-            t.submeasure("Caching done.")
-            
-        parent_candidates = {}
         for didx, d in enumerate(yield_data_dicts(sources["edges"], batch_idx=batch_idx,
                                                   num_batches=num_batches)):
-            if not d["child"] in parent_candidates:
-                parent_candidates[d["child"]] = []
-            parent_candidates[d["child"]].append(d)
-        t.submeasure("edges to parent_candidates")
-        t_queries = 0
-        for didx, d in enumerate(yield_data_dicts(sources["edges"], batch_idx=batch_idx,
-                                                  num_batches=num_batches)):
-            t0 = time.time()
-            if d["parent"] in xref2ind:
-                parent = xref2ind[ind]
-            else:
-               parent = Individual.query.filter_by(xref = d["parent"]).first()
-            if d["child"] in xref2ind:
-                person = xref2ind[ind]
-            else:
-                person = Individual.query.filter_by(xref = d["child"]).first()
-            t_queries += time.time() - t0
             pp = ParentProbability(
-                    parent = parent,
-                    person = person,
+                    parent_id = d["parent"],
+                    person_id = d["child"],
                     probability = d["prob"],
                     is_dad = d["dad"],
                     )
@@ -280,14 +232,15 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
                 print "\t{}\t({} edges processed.)".format(
                         dt.datetime.now().isoformat()[:-7], didx)
                 sys.stdout.flush()
-                try:
-                    flog.write("\t{}\t({} edges processed.)\n".format(
-                            dt.datetime.now().isoformat()[:-7], didx))
-                    flog.flush()
-                except:
-                    pass
                 session.flush()
         t.submeasure("parent probabilities")
+        parent_candidates = {}
+        for didx, d in enumerate(yield_data_dicts(sources["edges"], batch_idx=batch_idx,
+                                                  num_batches=num_batches)):
+            if not d["child"] in parent_candidates:
+                parent_candidates[d["child"]] = []
+            parent_candidates[d["child"]].append(d)
+        t.submeasure("edges to parent_candidates")
         family_candidates = {}
         of_len = {}
         for child, parents in parent_candidates.iteritems():
@@ -304,7 +257,6 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
             family_candidates[key].append(child)
             of_len[len(parents)] = of_len.get(len(parents), 0) + 1
         t.submeasure("parent_candidates to family_candidates")
-        #print "Time for queries:", t_queries
         i = 0
         for parents, children in family_candidates.iteritems():
             i += 1

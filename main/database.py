@@ -3,7 +3,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import MetaData
-#from sqlalchemy.pool import SingletonThreadPool
 
 engine = None
 session = None
@@ -16,8 +15,6 @@ def init_database(app):
             app.config["DB_URI"],
             echo=False,
             convert_unicode=True,
-            #connect_args={'timeout': 6, 'check_same_thread':False},
-            #poolclass=SingletonThreadPool
             )
     session = scoped_session(sessionmaker(
             autocommit = False,
