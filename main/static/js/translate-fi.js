@@ -86,7 +86,9 @@ translations.fi = {
     "Mother": "Äiti",
     "Father": "Isä",
     "Probability": "Todennäköisyys",
-    "HisKi": "HisKi",
+    "Parish": "Seurakunta",
+    "Father probabilities": "Isien todennäköisyydet",
+    "Mother probabilities": "Äitien todennäköisyydet",
 
     // language selection
     "Finnish": "Suomi",

@@ -81,7 +81,9 @@ translations.en = {
     "Mother": "Mother",
     "Father": "Father",
     "Probability": "Probability",
-    "HisKi": "HisKi",
+    "Parish": "Parish",
+    "Father probabilities": "Father probabilities",
+    "Mother probabilities": "Mother probabilities",
 
     // language selection
     "Finnish": "Suomi",

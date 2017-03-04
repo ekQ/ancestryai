@@ -41,11 +41,13 @@ class FamilyChildLink(Base):
 class Parish(Base):
     __tablename__ = "parish"
     id = Column(Integer, primary_key=True)
+    name = Column(Unicode(256))
     lat = Column(Float)
     lon = Column(Float)
     def as_dict(self):
         return {
             "type": "parish",
+            "name": self.name,
             "id": self.id,
             "lat": self.lat,
             "lon": self.lon,
@@ -54,11 +56,13 @@ class Parish(Base):
 class Village(Base):
     __tablename__ = "village"
     id = Column(Integer, primary_key=True)
+    name = Column(Unicode(256))
     lat = Column(Float)
     lon = Column(Float)
     def as_dict(self):
         return {
             "type": "village",
+            "name": self.name,
             "id": self.id,
             "lat": self.lat,
             "lon": self.lon,

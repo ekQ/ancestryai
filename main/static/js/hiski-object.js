@@ -340,6 +340,10 @@ var Hiski = {
         }
     },
     /* other */
+    parishes: [],
+    set_parishes: function(parishes) {
+        this.parishes = parishes;
+    },
     add_entry: function(entry, reference, anchor) {
         /*
         Adds a relation or node depending on which kind of json is given.

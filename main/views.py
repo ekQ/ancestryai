@@ -96,6 +96,14 @@ def json_setting(key):
     })
 
 
+@app.route("/json/parishes/")
+def json_parishes():
+    parishes = Parish.query.all()
+    return jsonify({
+        "result": True,
+        "parishes": [x.as_dict() for x in parishes],
+    })
+
 
 ###########################################
 # Commenting
@@ -260,6 +268,8 @@ def json_multi_search():
         return soundex.soundex(s.upper())
     def nop(s):
         return s
+    def as_int(s):
+        return int(s)
     conversions = {
         "firstname": {
             "field": "soundex_first",
@@ -278,10 +288,16 @@ def json_multi_search():
             "function": nop,
             "between": "-",
         },
+        "parish": {
+            "field": "parish_id",
+            "function": as_int,
+        },
     }
     t = Timer(True, 40)
     data = request.get_json()
     # construct queries
+    query_limit = 5000
+    query_truncate = 1000
     self_query_terms = []
     other_queries = []
     for d in data:
@@ -324,19 +340,19 @@ def json_multi_search():
         for relation, oq in other_queries:
             set_inds = set([])
             if relation == "parent":
-                query_result = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).all()
+                query_result = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).limit(query_limit).all()
                 for ind in query_result:
                     for sub_family in ind.sub_families:
                         for child in sub_family.children:
                             set_inds.add(child)
             if relation == "child":
-                query_result = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
+                query_result = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).limit(query_limit).all()
                 for ind in query_result:
                     for sup_family in ind.sup_families:
                         for parent in sup_family.parents:
                             set_inds.add(parent)
             if relation == "sibling":
-                query_result = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
+                query_result = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).limit(query_limit).all()
                 for ind in query_result:
                     for sup_family in ind.sup_families:
                         for child in sup_family.children:
@@ -356,11 +372,11 @@ def json_multi_search():
                 relationpath = ["up","up","down","male"]
             if relationpath:
                 if relationpath[-1] == "up":
-                    group = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).all()
+                    group = Individual.query.filter(oq).options(joinedload(Individual.sub_families)).limit(query_limit).all()
                 elif relationpath[-1] == "down":
-                    group = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).all()
+                    group = Individual.query.filter(oq).options(joinedload(Individual.sup_families)).limit(query_limit).all()
                 else:
-                    group = Individual.query.filter(oq).all()
+                    group = Individual.query.filter(oq).limit(query_limit).all()
                 gender = None
                 while relationpath:
                     cur = relationpath.pop()
@@ -399,7 +415,7 @@ def json_multi_search():
         inds = list(s)
         print len(inds), "people"
     else:
-        inds = Individual.query.filter(*self_query_terms).limit(50).all()
+        inds = Individual.query.filter(*self_query_terms).limit(query_truncate).all()
         if not inds:
             print "No matches"
             return jsonify({
@@ -411,7 +427,7 @@ def json_multi_search():
 #    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
 #    t.measure("Candidates sorted with jaro distance")
     # convert to dictionaries
-    ind_dict = [x.as_dict() for x in inds]
+    ind_dict = [x.as_dict() for x in inds[:query_truncate]]
     t.measure("Converted individuals to dicts")
     t.print_total()
     return jsonify({
