@@ -293,32 +293,43 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
         i = 0
         fp_inserts = []
         fc_inserts = []
+        fp_set = set()
+        fc_set = set()
         for parents, children in family_candidates.iteritems():
             i += 1
             fam_xref = u"F{}".format(i)
+            fam_id = fam_xref2id[fam_xref]
             for parent in parents:
                 #parent_link = FamilyParentLink(
-                fp_inserts.append(to_dict(
-                        individual_id = xref2id[u(parent)],
-                        family_id = fam_xref2id[fam_xref],
-                        ))
+                ind_id = xref2id[u(parent)]
+                if (ind_id, fam_id) not in fp_set:
+                    fp_inserts.append(to_dict(
+                            individual_id = ind_id,
+                            family_id = fam_id,
+                            ))
+                    fp_set.add((ind_id, fam_id))
                 #session.add(parent_link)
                 if len(fp_inserts) >= BATCH_SIZE:
                     engine.execute(FamilyParentLink.__table__.insert(), fp_inserts)
                     fp_inserts = []
             for child in children:
                 #child_link = FamilyChildLink(
-                fc_inserts.append(to_dict(
-                        individual_id = xref2id[u(child)],
-                        family_id = fam_xref2id[fam_xref],
-                        ))
+                ind_id = xref2id[u(child)]
+                if (ind_id, fam_id) not in fc_set:
+                    fc_inserts.append(to_dict(
+                            individual_id = ind_id,
+                            family_id = fam_id,
+                            ))
+                    fc_set.add((ind_id, fam_id))
                 #session.add(child_link)
                 if len(fc_inserts) >= BATCH_SIZE:
                     engine.execute(FamilyChildLink.__table__.insert(), fc_inserts)
                     fc_inserts = []
-        engine.execute(FamilyParentLink.__table__.insert(), fp_inserts)
-        engine.execute(FamilyChildLink.__table__.insert(), fc_inserts)
-        del fp_inserts, fc_inserts
+        if len(fp_inserts) > 0:
+            engine.execute(FamilyParentLink.__table__.insert(), fp_inserts)
+        if len(fc_inserts) > 0:
+            engine.execute(FamilyChildLink.__table__.insert(), fc_inserts)
+        del fp_inserts, fc_inserts, fp_set, fc_set
         t.submeasure("families linked to individuals")
         count_families = i
     #session.flush()
