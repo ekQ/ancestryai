@@ -60,6 +60,9 @@ def json_load(xref = None):
         i = int(random.random() * count)
         ind = query.offset(i).first()
     if ind:
+        if not ind.pre_dicted:
+            ind.pre_dicted = u(json.dumps(ind.as_dict()))
+            session.commit()
         return jsonify({
             "result": True,
             "entry": ind.as_dict(),
