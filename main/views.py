@@ -16,12 +16,14 @@ from flask import (
     request,
 )
 from flask.ext.babel import refresh
+from sqlalchemy import func
 from instrumenting.instrumenting import Timer
 from soundexpy import soundex
 from . import app
 from gedcom import gedcom
 from .models import *
 from .helper import *
+from .database import session
 
 @app.route("/")
 def index():
@@ -56,12 +58,11 @@ def json_load(xref = None):
     if xref:
         t0 = time.time()
         ind = Individual.query.filter_by(xref = xref).first()
-        print "Querying took {} seconds.".format(time.time()-t0)
+        #print "Querying took {} seconds.".format(time.time()-t0)
     else:
-        query = Individual.query
-        count = int(query.count())
-        i = int(random.random() * count)
-        ind = query.offset(i).first()
+        count = session.query(func.max(Individual.id).label('max_id')).one()
+        i = int(random.random() * count.max_id)
+        ind = Individual.query.get(i)
     if ind:
         ind_dict = ind.as_dict()
         return jsonify({
@@ -70,7 +71,7 @@ def json_load(xref = None):
         })
     t0 = time.time()
     fam = Family.query.filter_by(xref = xref).first()
-    print "Family querying took {} seconds.".format(time.time()-t0)
+    #print "Family querying took {} seconds.".format(time.time()-t0)
     if fam:
         fam_dict = fam.as_dict()
         return jsonify({
