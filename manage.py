@@ -87,6 +87,11 @@ if command == "populate":
             populate_from_recons(fname, batch_idx, num_batches)
         if sub == "components":
             populate_component_ids()
+if command == "pre_dict":
+    import main
+    from main.populate import pre_dict
+    pre_dict()
+
 if command == "write":
     import main
     from main.populate import reform_gedcom

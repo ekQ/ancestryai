@@ -5,6 +5,7 @@ from sqlalchemy.orm import *
 from main.database import Base, session
 from pbkdf2 import crypt
 from helper import *
+import time
 
 class User(Base):
     # this is not really used in any way, as the site doesn't have a login feature
@@ -113,6 +114,7 @@ class Individual(Base):
             location = self.village.as_dict()
         elif self.parish:
             location = self.parish.as_dict()
+        t0 = time.time()
         ret = {
             "xref": self.xref,
             "name": self.name,
@@ -137,12 +139,7 @@ class Individual(Base):
                 } for x in self.parent_probabilities],
             "location": location,
         }
-        try:
-            # Save dict for future calls.
-            self.pre_dicted = u(json.dumps(ret))
-            session.commit()
-        except:
-            print "Committing computed pre dict failed."
+        #print "Dicting {} took {} seconds ({}, {}, {}).".format(self.xref, time.time()-t0, len(ret["sub_families"]), len(ret["sup_families"]), len(ret["parent_probabilities"]))
         return ret
 
 class ParentProbability(Base):
@@ -168,6 +165,8 @@ class Family(Base):
     tag = Column(Unicode(4))
     component_id = Column(Integer)
 
+    pre_dicted = Column(UnicodeText)
+
     loaded_gedcom = Column(UnicodeText)
 
     parents = relationship("Individual",
@@ -178,12 +177,20 @@ class Family(Base):
             backref = "sup_families")
 
     def as_dict(self):
-        return {
-            "xref": self.xref,
-            "tag": self.tag,
-            "parents": [x.xref for x in self.parents],
-            "children": [x.xref for x in self.children],
-        }
+        t0 = time.time()
+        if self.pre_dicted:
+            d = json.loads(self.pre_dicted)
+            return d
+        else:
+            ret = {
+                "xref": self.xref,
+                "tag": self.tag,
+                "parents": [x.xref for x in self.parents],
+                "children": [x.xref for x in self.children],
+            }
+            #print "\tDicting family {} took {} seconds ({}, {}).".format(
+            #        self.xref, time.time()-t0, len(ret["parents"]), len(ret["children"]))
+            return ret
 
 class Setting(Base):
     __tablename__ = "setting"

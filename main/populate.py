@@ -12,7 +12,7 @@ from .database import session, engine
 from .helper import *
 
 
-BATCH_SIZE = 10000
+BATCH_SIZE = 100000
 
 
 # todo: use the gedcom.py implementation instead
@@ -332,19 +332,60 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
         del fp_inserts, fc_inserts, fp_set, fc_set
         t.submeasure("families linked to individuals")
         count_families = i
-    #session.flush()
     t.measure("{} families added".format(count_families))
-    '''
-    for ii, ind in enumerate(Individual.query.all()):
-        if ii % 1000 == 0:
-            print dt.datetime.now().isoformat()[:-7], ii
-        ind.pre_dicted = u(json.dumps(ind.as_dict()))
-    t.measure("individuals pre dicted")
-    '''
+    # Pre-compute dict representations for individuals and families.
+    pre_dict()
     session.commit()
     t.measure("commit")
     t.print_total()
 
+
+def pre_dict():
+    from sqlalchemy.sql.expression import bindparam
+
+    print "Pre-dicting individuals."
+    ind_query = Individual.query
+    ind_query = ind_query.options(joinedload(Individual.sup_families))\
+                         .options(joinedload(Individual.sub_families))\
+                         .options(joinedload(Individual.parent_probabilities))
+    stmt = Individual.__table__.update().\
+        where(Individual.id == bindparam('_id')).\
+        values({
+            'pre_dicted': bindparam('pre_dicted'),
+        })
+    pre_dicts = []
+    for ii, ind in enumerate(ind_query.all()):
+        if ii % 1000 == 0:
+            print dt.datetime.now().isoformat()[:-7], ii
+            sys.stdout.flush()
+            #session.flush()
+            if len(pre_dicts) > 0:
+                engine.execute(stmt, pre_dicts)
+                pre_dicts = []
+        #ind.pre_dicted = u(json.dumps(ind.as_dict()))
+        pre_dicts.append({'pre_dicted': u(json.dumps(ind.as_dict())), '_id': ind.id})
+    if len(pre_dicts) > 0:
+        engine.execute(stmt, pre_dicts)
+
+    print "\nPre-dicting families."
+    fam_query = Family.query
+    fam_query = fam_query.options(joinedload(Family.parents))\
+                         .options(joinedload(Family.children))
+    stmt = Family.__table__.update().\
+        where(Family.id == bindparam('_id')).\
+        values({
+            'pre_dicted': bindparam('pre_dicted'),
+        })
+    pre_dicts = []
+    for ii, fam in enumerate(fam_query.all()):
+        if ii % 1000 == 0:
+            print dt.datetime.now().isoformat()[:-7], ii
+            if len(pre_dicts) > 0:
+                engine.execute(stmt, pre_dicts)
+                pre_dicts = []
+        pre_dicts.append({'pre_dicted': u(json.dumps(fam.as_dict())), '_id': fam.id})
+    if len(pre_dicts) > 0:
+        engine.execute(stmt, pre_dicts)
 
 def populate_component_ids():
     t = Timer(True, 60)
@@ -385,3 +426,7 @@ def populate_component_ids():
     session.commit()
     t.measure("commit")
     t.print_total()
+
+
+if __name__ == "__main__":
+    pre_dict()

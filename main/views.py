@@ -54,22 +54,28 @@ def json_load(xref = None):
         if not ind:
             xref = None
     if xref:
+        t0 = time.time()
         ind = Individual.query.filter_by(xref = xref).first()
+        print "Querying took {} seconds.".format(time.time()-t0)
     else:
         query = Individual.query
         count = int(query.count())
         i = int(random.random() * count)
         ind = query.offset(i).first()
     if ind:
+        ind_dict = ind.as_dict()
         return jsonify({
             "result": True,
-            "entry": ind.as_dict(),
+            "entry": ind_dict,
         })
+    t0 = time.time()
     fam = Family.query.filter_by(xref = xref).first()
+    print "Family querying took {} seconds.".format(time.time()-t0)
     if fam:
+        fam_dict = fam.as_dict()
         return jsonify({
             "result": True,
-            "entry": fam.as_dict(),
+            "entry": fam_dict,
         })
     return jsonify({
         "result": False,
