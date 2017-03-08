@@ -307,6 +307,8 @@ def json_multi_search():
     query_truncate = 1000
     self_query_terms = []
     other_queries = []
+    first_name_to_sort_by = None
+    last_name_to_sort_by = None
     for d in data:
         if d["search_type"] not in conversions:
             mes = "no such conversion: {}".format(d["search_type"])
@@ -334,6 +336,10 @@ def json_multi_search():
             query_term = getattr(Individual, con["field"]) == con["function"](d["search_term"])
         if d["relation"] == "self":
             self_query_terms.append(query_term)
+            if d["search_type"] == "firstname":
+                first_name_to_sort_by = d["search_term"].lower()
+            elif d["search_type"] == "familyname":
+                last_name_to_sort_by = d["search_term"].lower()
         else:
             other_queries.append((d["relation"], query_term))
 
@@ -431,8 +437,20 @@ def json_multi_search():
                 "inds": [],
             })
     t.measure("Database queried")
-#    inds = sorted(inds, key=lambda x: jellyfish.jaro_distance(x.name_first, term), reverse=True)
-#    t.measure("Candidates sorted with jaro distance")
+    # Sort the results.
+    if first_name_to_sort_by is not None and last_name_to_sort_by is not None:
+        inds = sorted(inds, key=lambda x: \
+                jellyfish.jaro_winkler(x.name_first, first_name_to_sort_by) + \
+                jellyfish.jaro_winkler(x.name_family, last_name_to_sort_by), reverse=True)
+        t.measure("Candidates sorted with jaro winkler")
+    elif first_name_to_sort_by is not None:
+        inds = sorted(inds, key=lambda x: \
+                jellyfish.jaro_winkler(x.name_first, first_name_to_sort_by), reverse=True)
+        t.measure("Candidates sorted with jaro winkler")
+    elif last_name_to_sort_by is not None:
+        inds = sorted(inds, key=lambda x: \
+                jellyfish.jaro_winkler(x.name_family, last_name_to_sort_by), reverse=True)
+        t.measure("Candidates sorted with jaro winkler")
     # convert to dictionaries
     ind_dict = [x.as_dict() for x in inds[:query_truncate]]
     t.measure("Converted individuals to dicts")

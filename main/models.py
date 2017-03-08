@@ -79,22 +79,22 @@ class Individual(Base):
     name_family = Column(Unicode(128))
     sex = Column(Unicode(1))
     birth_date_string = Column(Unicode(64))
-    birth_date_year = Column(Integer)
+    birth_date_year = Column(Integer, index=True)
     birth_date = Column(Date)
     death_date_string = Column(Unicode(64))
     death_date_year = Column(Integer)
     death_date = Column(Date)
-    component_id = Column(Integer)
-    is_celebrity = Column(Boolean)
+    component_id = Column(Integer, index=True)
+    is_celebrity = Column(Boolean, index=True)
 
-    parish_id = Column(Integer, ForeignKey("parish.id"))
+    parish_id = Column(Integer, ForeignKey("parish.id"), index=True)
     parish = relationship("Parish", backref="individuals")
 
     village_id = Column(Integer, ForeignKey("village.id"))
     village = relationship("Village", backref="individuals")
 
-    soundex_first = Column(Unicode(16))
-    soundex_family = Column(Unicode(16))
+    soundex_first = Column(Unicode(16), index=True)
+    soundex_family = Column(Unicode(16), index=True)
 
     pre_dicted = Column(UnicodeText)
     neighboring_ids = Column(UnicodeText)
