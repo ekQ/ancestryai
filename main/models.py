@@ -198,6 +198,18 @@ class Setting(Base):
     key = Column(String(32), index=True, unique=True)
     value = Column(UnicodeText)
 
+class NormalizedFirstName(Base):
+    __tablename__ = "normalized_fname"
+    id = Column(Integer, primary_key=True)
+    raw_name = Column(Unicode(64), index=True, unique=True)
+    norm_name = Column(Unicode(64))
+
+class NormalizedLastName(Base):
+    __tablename__ = "normalized_lname"
+    id = Column(Integer, primary_key=True)
+    raw_name = Column(Unicode(64), index=True, unique=True)
+    norm_name = Column(Unicode(64))
+
 
 
 class Comment(Base):
