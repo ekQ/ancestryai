@@ -77,6 +77,14 @@ class Individual(Base):
     name = Column(Unicode(256))
     name_first = Column(Unicode(128))
     name_family = Column(Unicode(128))
+    normalized_name_first = Column(Unicode(128), index=True)
+    normalized_name_family = Column(Unicode(128), index=True)
+    dad_first = Column(Unicode(128))
+    dad_family = Column(Unicode(128))
+    dad_patronym = Column(Unicode(64))
+    mom_first = Column(Unicode(128))
+    mom_family = Column(Unicode(128))
+    mom_patronym = Column(Unicode(64))
     sex = Column(Unicode(1))
     birth_date_string = Column(Unicode(64))
     birth_date_year = Column(Integer, index=True)
@@ -120,6 +128,12 @@ class Individual(Base):
             "name": self.name,
             "name_first": self.name_first,
             "name_family": self.name_family,
+            "dad_first": self.dad_first,
+            "dad_family": self.dad_family,
+            "dad_patronym": self.dad_patronym,
+            "mom_first": self.mom_first,
+            "mom_family": self.mom_family,
+            "mom_patronym": self.mom_patronym,
             "tag": self.tag,
             "sex": self.sex,
             "birth_date_string": self.birth_date_string,
@@ -156,6 +170,7 @@ class ParentProbability(Base):
             backref = "child_probabilities",
             )
     is_dad = Column(Boolean)
+    is_selected = Column(Boolean)
     probability = Column(Float)
 
 class Family(Base):

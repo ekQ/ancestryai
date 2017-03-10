@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import re
-from .models import NormalizedFirstName, NormalizedLastName
+#from .models import NormalizedFirstName, NormalizedLastName
+from .models import *
 
 def ensure_unicode(s):
     if isinstance(s, unicode):

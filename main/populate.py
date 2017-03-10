@@ -10,7 +10,7 @@ from soundexpy import soundex
 from .models import *
 from .database import session, engine
 from .helper import *
-
+from sqlalchemy import and_
 
 BATCH_SIZE = 100000
 
@@ -189,14 +189,20 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
         ind_inserts = []
         for didx, d in enumerate(yield_data_dicts(sources["individuals"], batch_idx=batch_idx,
                                                   num_batches=num_batches)):
-            name_first = u(" ".join(d["name"].split()[:-1]))
-            name_family = u(d["name"].split()[-1] if d["name"].strip() else "")
             #ind = Individual(
             ind_inserts.append(to_dict(
                     xref = u(d["hiski_id"]),
-                    name = u(d["name"]),
-                    name_first = name_first,
-                    name_family = name_family,
+                    name_first = u(d["first_name"]),
+                    name_family = u(d["last_name"]),
+                    name = u"{} {}".format(u(d["first_name"]), u(d["last_name"])).strip(),
+                    normalized_name_first = u(d["normalized_first_name"]),
+                    normalized_name_family = u(d["normalized_last_name"]),
+                    dad_first = u(d["dad_first_name"]),
+                    dad_family = u(d["dad_last_name"]),
+                    dad_patronym = u(d["dad_patronym"]),
+                    mom_first = u(d["mom_first_name"]),
+                    mom_family = u(d["mom_last_name"]),
+                    mom_patronym = u(d["mom_patronym"]),
                     tag = u"INDI",
                     sex = u"?",
                     is_celebrity = d.get("is_celebrity", False),
@@ -205,8 +211,8 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
                     death_date_string = None,
                     death_date_year = None,
                     # todo: revise soundex storing to be more sensible
-                    soundex_first = u(soundex.soundex(name_first.upper())),
-                    soundex_family = u(soundex.soundex(name_family.upper())),
+                    soundex_first = u(soundex.soundex(u(d["first_name"]).upper())),
+                    soundex_family = u(soundex.soundex(u(d["last_name"]).upper())),
                     village_id = d["village_id"],
                     parish_id = d["parish_id"],
                     ))
@@ -237,6 +243,7 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
                     person_id = xref2id[u(d["child"])],
                     probability = d["prob"],
                     is_dad = d["dad"],
+                    is_selected = d["selected"],
                     ))
             #session.add(pp)
             if didx % BATCH_SIZE == 0:
@@ -249,24 +256,18 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
         engine.execute(ParentProbability.__table__.insert(), edge_inserts)
         edge_inserts = []
         t.submeasure("parent probabilities")
-        parent_candidates = {}
+        selected_parents = {}
         for didx, d in enumerate(yield_data_dicts(sources["edges"], batch_idx=batch_idx,
                                                   num_batches=num_batches)):
-            if not d["child"] in parent_candidates:
-                parent_candidates[d["child"]] = []
-            parent_candidates[d["child"]].append(d)
+            if d['selected']:
+                if not d["child"] in selected_parents:
+                    selected_parents[d["child"]] = []
+                selected_parents[d['child']].append(d['parent'])
         t.submeasure("edges to parent_candidates")
         family_candidates = {}
         of_len = {}
-        for child, parents in parent_candidates.iteritems():
-            dads = sorted([x for x in parents if x["dad"]], key = lambda x: x["prob"], reverse = True)
-            moms = sorted([x for x in parents if not x["dad"]], key = lambda x: x["prob"], reverse = True)
-            key = []
-            if dads:
-                key.append(dads[0])
-            if moms:
-                key.append(moms[0])
-            key = tuple([x["parent"] for x in key])
+        for child, parents in selected_parents.iteritems():
+            key = tuple(parents)
             if not key in family_candidates:
                 family_candidates[key] = []
             family_candidates[key].append(child)
@@ -335,39 +336,66 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
     t.measure("{} families added".format(count_families))
     # Pre-compute dict representations for individuals and families.
     pre_dict()
+    t.measure("pre-dicted individuals and families")
     session.commit()
     t.measure("commit")
     t.print_total()
 
+def yield_batch_limits(n, batch_size=1000):
+    limits = range(1, n+2, batch_size)
+    if limits[-1] <= n:
+        limits.append(limits[-1] + batch_size)
+    for i in range(len(limits) - 1):
+        yield limits[i], limits[i+1]
 
 def pre_dict():
     from sqlalchemy.sql.expression import bindparam
 
-    print "Pre-dicting individuals."
-    ind_query = Individual.query
-    ind_query = ind_query.options(joinedload(Individual.sup_families))\
-                         .options(joinedload(Individual.sub_families))\
-                         .options(joinedload(Individual.parent_probabilities))
+    pre_dict_batch = 15000
+    n_inds = session.query(Individual).count()
+    print "Pre-dicting {} individuals.".format(n_inds)
     stmt = Individual.__table__.update().\
         where(Individual.id == bindparam('_id')).\
         values({
             'pre_dicted': bindparam('pre_dicted'),
         })
     pre_dicts = []
-    for ii, ind in enumerate(ind_query.all()):
-        if ii % 1000 == 0:
-            print dt.datetime.now().isoformat()[:-7], ii
-            sys.stdout.flush()
-            #session.flush()
-            if len(pre_dicts) > 0:
-                engine.execute(stmt, pre_dicts)
-                pre_dicts = []
-        #ind.pre_dicted = u(json.dumps(ind.as_dict()))
-        pre_dicts.append({'pre_dicted': u(json.dumps(ind.as_dict())), '_id': ind.id})
-    if len(pre_dicts) > 0:
-        engine.execute(stmt, pre_dicts)
+    for batch_i, (lo, hi) in enumerate(yield_batch_limits(n_inds, pre_dict_batch)):
+        print dt.datetime.now().isoformat()[:-7], "Batch from {} to {}".format(lo, hi-1)
+        sys.stdout.flush()
+        t0 = time.time()
+        ind_query = Individual.query.filter(and_(Individual.id >= lo, Individual.id < hi))
+        ind_query = ind_query.options(joinedload(Individual.sup_families)).\
+                              options(joinedload(Individual.sub_families)).\
+                              options(joinedload(Individual.village)).\
+                              options(joinedload(Individual.parish)).\
+                              options(subqueryload(Individual.parent_probabilities).
+                                      subqueryload(ParentProbability.person)).\
+                              options(subqueryload(Individual.parent_probabilities).
+                                      subqueryload(ParentProbability.parent))
+                                       #                ParentProbability.parent))
+                             #options(joinedload(Individual.parent_probabilities).\
+                             #             joinedload(person).\
+                             #             joinedload(parent))
+        inds = ind_query.all()
+        print "  Querying {} individuals took {:.4f} seconds.".format(len(inds), time.time()-t0)
+        t0 = time.time()
+        for ii, ind in enumerate(inds):
+            #if ii % 1000 == 0:
+            #    print dt.datetime.now().isoformat()[:-7], ii
+            #    sys.stdout.flush()
+            pre_dicts.append({'pre_dicted': u(json.dumps(ind.as_dict())), '_id': ind.id})
+        print "  Pre-dicting took {:.4f} seconds.".format(time.time()-t0)
+        if len(pre_dicts) > 0:
+            t0 = time.time()
+            engine.execute(stmt, pre_dicts)
+            pre_dicts = []
+            print "  Executing took {:.4f} seconds.".format(time.time()-t0)
+    #if len(pre_dicts) > 0:
+    #    engine.execute(stmt, pre_dicts)
 
-    print "\nPre-dicting families."
+    n_fams = session.query(Family).count()
+    print "\nPre-dicting {} families.".format(n_fams)
     fam_query = Family.query
     fam_query = fam_query.options(joinedload(Family.parents))\
                          .options(joinedload(Family.children))
@@ -377,15 +405,15 @@ def pre_dict():
             'pre_dicted': bindparam('pre_dicted'),
         })
     pre_dicts = []
-    for ii, fam in enumerate(fam_query.all()):
-        if ii % 1000 == 0:
-            print dt.datetime.now().isoformat()[:-7], ii
-            if len(pre_dicts) > 0:
-                engine.execute(stmt, pre_dicts)
-                pre_dicts = []
-        pre_dicts.append({'pre_dicted': u(json.dumps(fam.as_dict())), '_id': fam.id})
-    if len(pre_dicts) > 0:
-        engine.execute(stmt, pre_dicts)
+    for batch_i, (lo, hi) in enumerate(yield_batch_limits(n_fams, pre_dict_batch)):
+        print dt.datetime.now().isoformat()[:-7], "Batch from {} to {}".format(lo, hi-1)
+        sys.stdout.flush()
+        #for ii, fam in enumerate(fam_query.all()):
+        for ii, fam in enumerate(fam_query.filter(and_(Family.id >= lo, Family.id < hi)).all()):
+            pre_dicts.append({'pre_dicted': u(json.dumps(fam.as_dict())), '_id': fam.id})
+        if len(pre_dicts) > 0:
+            engine.execute(stmt, pre_dicts)
+            pre_dicts = []
 
 def populate_component_ids():
     t = Timer(True, 60)
