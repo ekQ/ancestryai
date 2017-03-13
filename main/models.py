@@ -58,6 +58,7 @@ class Village(Base):
     __tablename__ = "village"
     id = Column(Integer, primary_key=True)
     name = Column(Unicode(256))
+    parish_name = Column(Unicode(256))
     lat = Column(Float)
     lon = Column(Float)
     def as_dict(self):
@@ -150,6 +151,10 @@ class Individual(Base):
                     "name": x.parent.name,
                     "prob": x.probability,
                     "is_dad": x.is_dad,
+                    # Newly added.
+                    "birth_date_string": x.parent.birth_date_string,
+                    "parish": x.parent.location.name,
+                    "is_selected": x.is_selected,
                 } for x in self.parent_probabilities],
             "location": location,
         }
