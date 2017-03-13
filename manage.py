@@ -92,6 +92,12 @@ if command == "pre_dict":
     from main.populate import pre_dict
     pre_dict()
 
+if command == "relatives":
+    import main
+    from main.populate import store_precomputed_relatives
+    store_precomputed_relatives("recons_data/precomputed_relatives_rows.json",
+                                "child")
+
 if command == "write":
     import main
     from main.populate import reform_gedcom

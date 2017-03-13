@@ -32,12 +32,19 @@ family_child_link = Table("family_child_link", Base.metadata,
     Column("individual_id", Integer, ForeignKey("individual.id"), primary_key=True),
     Column("family_id", Integer, ForeignKey("family.id"), primary_key=True),
 )
+child_link = Table("child_link", Base.metadata,
+    Column("xref", Unicode(16), ForeignKey("individual.xref"), primary_key=True),
+    Column("relative_xref", Unicode(16), ForeignKey("individual.xref"), primary_key=True),
+)
 
 class FamilyParentLink(Base):
     __table__ = family_parent_link
 
 class FamilyChildLink(Base):
     __table__ = family_child_link
+
+class ChildLink(Base):
+    __table__ = child_link
 
 class Parish(Base):
     __tablename__ = "parish"
@@ -109,6 +116,13 @@ class Individual(Base):
 
     # sup_family from Family
     # sub_family from Family
+
+    children = relationship("Individual",
+	    secondary=child_link,
+	    primaryjoin=xref==child_link.c.xref,
+	    secondaryjoin=xref==child_link.c.relative_xref,
+	    backref="parents"
+    )
 
     loaded_gedcom = Column(UnicodeText)
     def as_dict(self):
