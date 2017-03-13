@@ -64,7 +64,7 @@ translations.en = {
     "::no-such-individual": "One of the provided individuals doesn't exist on server.",
     "::no-component-info": "Component information was not populated on server.",
     "Hide others": "Hide others",
-    "Add term": "Add term",
+    "Add search term": "Add search term",
     "Birth year": "Birth year",
     "remove": "remove",
     "self": "self",

@@ -68,7 +68,7 @@ translations.fi = {
     "::no-such-individual": "Joku haetuista henkilöistä ei löydy palvelimelta.",
     "::no-component-info": "Komponentti informaatiota ei ole populoitu palvelimelle.",
     "Hide others": "Piilota muut",
-    "Add term": "Lisää termi",
+    "Add search term": "Lisää hakuehto",
     "Birth year": "Syntymävuosi",
     "remove": "poista",
     "self": "Haettava henkilö",

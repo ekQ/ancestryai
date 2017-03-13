@@ -342,7 +342,10 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
     t.print_total()
 
 def yield_batch_limits(n, batch_size=1000):
-    limits = range(1, n+2, batch_size)
+    if n <= batch_size:
+        limits = [0, n+1]
+    else:
+        limits = range(1, n+2, batch_size)
     if limits[-1] <= n:
         limits.append(limits[-1] + batch_size)
     for i in range(len(limits) - 1):
@@ -351,7 +354,7 @@ def yield_batch_limits(n, batch_size=1000):
 def pre_dict():
     from sqlalchemy.sql.expression import bindparam
 
-    pre_dict_batch = 15000
+    pre_dict_batch = 100000
     n_inds = session.query(Individual).count()
     print "Pre-dicting {} individuals.".format(n_inds)
     stmt = Individual.__table__.update().\
@@ -364,21 +367,29 @@ def pre_dict():
         print dt.datetime.now().isoformat()[:-7], "Batch from {} to {}".format(lo, hi-1)
         sys.stdout.flush()
         t0 = time.time()
-        ind_query = Individual.query.filter(and_(Individual.id >= lo, Individual.id < hi))
-        ind_query = ind_query.options(joinedload(Individual.sup_families)).\
-                              options(joinedload(Individual.sub_families)).\
-                              options(joinedload(Individual.village)).\
-                              options(joinedload(Individual.parish)).\
-                              options(subqueryload(Individual.parent_probabilities).
-                                      subqueryload(ParentProbability.person)).\
-                              options(subqueryload(Individual.parent_probabilities).
-                                      subqueryload(ParentProbability.parent))
+        if pre_dict_batch < n_inds:
+            ind_query = Individual.query.filter(and_(Individual.id >= lo, Individual.id < hi))
+            ind_query = ind_query.options(joinedload(Individual.sup_families)).\
+                                  options(joinedload(Individual.sub_families)).\
+                                  options(joinedload(Individual.village)).\
+                                  options(joinedload(Individual.parish)).\
+                                  options(subqueryload(Individual.parent_probabilities).
+                                          subqueryload(ParentProbability.person)).\
+                                  options(subqueryload(Individual.parent_probabilities).
+                                          subqueryload(ParentProbability.parent))
                                        #                ParentProbability.parent))
                              #options(joinedload(Individual.parent_probabilities).\
                              #             joinedload(person).\
                              #             joinedload(parent))
+        else:
+            ind_query = Individual.query
+            ind_query = ind_query.options(joinedload(Individual.sup_families)).\
+                                  options(joinedload(Individual.sub_families)).\
+                                  options(joinedload(Individual.village)).\
+                                  options(joinedload(Individual.parish))#.\
         inds = ind_query.all()
         print "  Querying {} individuals took {:.4f} seconds.".format(len(inds), time.time()-t0)
+        sys.stdout.flush()
         t0 = time.time()
         for ii, ind in enumerate(inds):
             #if ii % 1000 == 0:
