@@ -147,7 +147,8 @@
                             <div class="tripets">
                                 <div class="triplet" ng-repeat="triplet in menu.search_triplets">
                                     <select ng-model="triplet.relation" ng-change="menu.check_if_remove_triplet(triplet)">
-                                        <option value="self" translate>self</option>
+                                        <option value="self" translate>Search criterion</option>
+                                        <!--
                                         <option value="parent" translate>Parent</option>
                                         <option value="child" translate>Child</option>
                                         <option value="sibling" translate>Sibling</option>
@@ -156,6 +157,7 @@
                                         <option value="cousin" translate>Cousin</option>
                                         <option value="aunt" translate>Aunt</option>
                                         <option value="uncle" translate>Uncle</option>
+                                        -->
                                         <option value="remove" translate>remove</option>
                                     </select>
                                     <select ng-model="triplet.search_type">
@@ -163,7 +165,7 @@
                                         <option value="familyname" translate>Family name</option>
                                         <option value="birthyear" translate>Birth year</option>
                                         <option value="parish" translate>Parish</option>
-                                        <option value="xref">xref</option>
+                                        <option value="xref" translate>HisKi ID</option>
                                     </select>
                                     <input ng-if="triplet.search_type != 'parish'" type="text" ng-model="triplet.search_term"></input>
                                     <select ng-if="triplet.search_type == 'parish'" ng-model="triplet.search_term">

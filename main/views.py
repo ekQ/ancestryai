@@ -345,7 +345,7 @@ def json_multi_search():
 
     t.measure("queries constructed")
     # query database
-    if other_queries:
+    if False: #other_queries: # NOTE Other than self queries disabled atm.
         sets = []
         if self_query_terms:
             sets.append(("self", set(Individual.query.filter(*self_query_terms).all())))

@@ -72,6 +72,7 @@ translations.fi = {
     "Birth year": "Syntymävuosi",
     "remove": "poista",
     "self": "Haettava henkilö",
+    "Search criterion": "Hakuehto",
     "Parent": "Vanhempi",
     "Child": "Lapsi",
     "Sibling": "Sisarus",
@@ -82,6 +83,7 @@ translations.fi = {
     "Aunt": "Täti",
     "Uncle": "Setä",
 
+    "HisKi ID": "HisKi ID",
     "Birthday": "Syntymäpäivä",
     "Mother": "Äiti",
     "Father": "Isä",
