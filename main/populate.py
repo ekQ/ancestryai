@@ -419,9 +419,13 @@ def pre_dict():
     for batch_i, (lo, hi) in enumerate(yield_batch_limits(n_fams, pre_dict_batch)):
         print dt.datetime.now().isoformat()[:-7], "Batch from {} to {}".format(lo, hi-1)
         sys.stdout.flush()
-        #for ii, fam in enumerate(fam_query.all()):
-        for ii, fam in enumerate(fam_query.filter(and_(Family.id >= lo, Family.id < hi)).all()):
-            pre_dicts.append({'pre_dicted': u(json.dumps(fam.as_dict())), '_id': fam.id})
+        if n_fams <= pre_dict_batch:
+            for ii, fam in enumerate(fam_query.all()):
+                pre_dicts.append({'pre_dicted': u(json.dumps(fam.as_dict())), '_id': fam.id})
+        else:
+            for ii, fam in enumerate(fam_query.filter(and_(Family.id >= lo, Family.id < hi)).all()):
+                pre_dicts.append({'pre_dicted': u(json.dumps(fam.as_dict())), '_id': fam.id})
+
         if len(pre_dicts) > 0:
             engine.execute(stmt, pre_dicts)
             pre_dicts = []
