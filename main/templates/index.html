@@ -48,9 +48,11 @@
                     <div class="info viewtab" ng-show="menu.mode == 'info'">
                         <dl>
                             <dt>HisKi ID</dt>
-                                <dd>{{ menu.Hiski.selected.xref }}</dd>
+                                <dd>
+                                <a class="external" target="_blank" ng-href="http://hiski.genealogia.fi/hiski?{{ menu.Hiski.external_hiski_language }}+t{{ menu.Hiski.selected.xref }}">{{ menu.Hiski.selected.xref }}</a>
+                                 </dd>
                             <dt translate>Name</dt>
-                                <dd>{{ menu.Hiski.selected.name }}</dd>
+                                <dd>{{ menu.Hiski.selected.name || "--" }}</dd>
                             <dt translate>Birth date</dt>
                                 <dd>{{ menu.Hiski.selected.data.birth_date_string || "--" }}</dd>
                             <dt translate>Parish</dt>
