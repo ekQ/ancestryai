@@ -280,20 +280,15 @@ def json_people_path(xref1, xref2):
     out_dicts = []
     prev_x = None
     for pi, xref in enumerate(path[::-1]):
-        x = Individual.query.filter_by(xref = xref).first()
+        x = Individual.query.filter_by(xref = xref).\
+                options(joinedload(Individual.sup_families)).\
+                options(joinedload(Individual.sub_families)).first()
         out_dicts.append(x.as_dict())
         if prev_x is None:
             out_xrefs.append([None, xref])
         else:
-            matching_fam_xref = None
-            neigh_ids = prev_x.neighboring_ids
-            print "Neigh ids:", neigh_ids
-            print "prev_x.xref:", prev_x.xref
-            for fam_xref, nei_xref in json.loads(neigh_ids):
-                if nei_xref == xref:
-                    matching_fam_xref = fam_xref
-                    break
-            if matching_fam_xref is None:
+            matching_fam_xref = get_family_xref(x, prev_x)
+            if not matching_fam_xref:
                 msg = u"Next xref {} not found among {}.".format(xref, prev_x.neighboring_ids)
                 print msg
                 return jsonify({

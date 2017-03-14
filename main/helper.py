@@ -54,3 +54,15 @@ def normalize_name(name, is_first, name_dict=None):
             return res.norm_name
         else:
             return name
+
+def get_family_xref(ind, neigh):
+    for fam in ind.sub_families:
+        for fam2 in neigh.sup_families:
+            if fam.id == fam2.id:
+                return fam.xref
+    for fam in ind.sup_families:
+        for fam2 in neigh.sub_families:
+            if fam.id == fam2.id:
+                return fam.xref
+    print "Shared family not found for {} and {}.".format(ind.xref, neigh.xref)
+    return False

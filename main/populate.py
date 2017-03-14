@@ -358,14 +358,13 @@ def yield_batch_limits(n, batch_size=1000):
 def pre_dict():
     from sqlalchemy.sql.expression import bindparam
 
-    pre_dict_batch = 10000000
+    pre_dict_batch = 1000
     n_inds = session.query(Individual).count()
     print "Pre-dicting {} individuals.".format(n_inds)
     stmt = Individual.__table__.update().\
         where(Individual.id == bindparam('_id')).\
         values({
             'pre_dicted': bindparam('pre_dicted'),
-            'neighboring_ids': bindparam('neighboring_ids'),
         })
     pre_dicts = []
     for batch_i, (lo, hi) in enumerate(yield_batch_limits(n_inds, pre_dict_batch)):
@@ -398,15 +397,10 @@ def pre_dict():
         sys.stdout.flush()
         t0 = time.time()
         for ii, ind in enumerate(inds):
-            if ii % 10000 == 0:
+            if pre_dict_batch >= n_inds and ii % 10000 == 0:
                 print dt.datetime.now().isoformat()[:-7], ii
                 sys.stdout.flush()
-            n_ids = []
-            for fam in ind.sub_families + ind.sup_families:
-                for ind2 in fam.parents + fam.children:
-                    n_ids.append([fam.xref, ind2.xref])
             pre_dicts.append({'pre_dicted': u(json.dumps(ind.as_dict())),
-                              'neighboring_ids': u(json.dumps(n_ids)),
                               '_id': ind.id})
         print "  Pre-dicting took {:.4f} seconds.".format(time.time()-t0)
         if len(pre_dicts) > 0:
@@ -414,8 +408,6 @@ def pre_dict():
             engine.execute(stmt, pre_dicts)
             pre_dicts = []
             print "  Executing took {:.4f} seconds.".format(time.time()-t0)
-    #if len(pre_dicts) > 0:
-    #    engine.execute(stmt, pre_dicts)
 
     n_fams = session.query(Family).count()
     print "\nPre-dicting {} families.".format(n_fams)
