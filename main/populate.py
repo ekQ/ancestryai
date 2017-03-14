@@ -358,7 +358,7 @@ def yield_batch_limits(n, batch_size=1000):
 def pre_dict():
     from sqlalchemy.sql.expression import bindparam
 
-    pre_dict_batch = 1000
+    pre_dict_batch = 10000
     n_inds = session.query(Individual).count()
     print "Pre-dicting {} individuals.".format(n_inds)
     stmt = Individual.__table__.update().\
@@ -373,14 +373,14 @@ def pre_dict():
         t0 = time.time()
         if pre_dict_batch < n_inds:
             ind_query = Individual.query.filter(and_(Individual.id >= lo, Individual.id < hi))
-            ind_query = ind_query.options(joinedload(Individual.sup_families)).\
-                                  options(joinedload(Individual.sub_families)).\
-                                  options(joinedload(Individual.village)).\
-                                  options(joinedload(Individual.parish)).\
-                                  options(subqueryload(Individual.parent_probabilities).
-                                          subqueryload(ParentProbability.person)).\
-                                  options(subqueryload(Individual.parent_probabilities).
-                                          subqueryload(ParentProbability.parent))
+#            ind_query = ind_query.options(joinedload(Individual.sup_families)).\
+#                                  options(joinedload(Individual.sub_families)).\
+#                                  options(joinedload(Individual.village)).\
+#                                  options(joinedload(Individual.parish)).\
+#                                  options(joinedload(Individual.parent_probabilities))#.\
+#                                          joinedload(ParentProbability.person)).\
+#                                  options(joinedload(Individual.parent_probabilities).
+#                                          joinedload(ParentProbability.parent))
                                        #                ParentProbability.parent))
                              #options(joinedload(Individual.parent_probabilities).\
                              #             joinedload(person).\
