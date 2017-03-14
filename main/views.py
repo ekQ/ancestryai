@@ -24,6 +24,7 @@ from gedcom import gedcom
 from .models import *
 from .helper import *
 from .database import session
+from .family_tree_inference.path_search import bidirectional_search_path
 
 @app.route("/")
 def index():
@@ -157,8 +158,8 @@ def json_load_comments(xref):
 # Searching
 ##########################################
 
-@app.route("/json/people-path/<xref1>/<xref2>/")
-def json_people_path(xref1, xref2):
+@app.route("/json/people-path-slow/<xref1>/<xref2>/")
+def json_people_path_slow(xref1, xref2):
     t = Timer(True, 40)
     ind1 = Individual.query.filter_by(xref = xref1).first()
     ind2 = Individual.query.filter_by(xref = xref2).first()
@@ -250,6 +251,72 @@ def json_people_path(xref1, xref2):
         "length": len(path),
         "time": t.full_duration(),
         "visited_count": steps,
+    })
+
+@app.route("/json/people-path/<xref1>/<xref2>/")
+def json_people_path(xref1, xref2):
+    t = Timer(True, 40)
+    ind1 = Individual.query.filter_by(xref = xref1).first()
+    ind2 = Individual.query.filter_by(xref = xref2).first()
+    t.measure("endpoints queried")
+    if ind1 == None or ind2 == None:
+        return jsonify({
+            "result": False,
+            "xrefs": [],
+            "exists": False,
+            "message": "some non-existing individual selected {}, {}".format(xref1, xref2),
+            "error": "no-such-individual",
+        })
+    path = bidirectional_search_path(xref1, xref2)
+    if not path:
+        return jsonify({
+            "result": False,
+            "xrefs": [],
+            "exists": False,
+            "message": "individuals in different components",
+        })
+    path = map(str, path)
+    out_xrefs = []
+    out_dicts = []
+    prev_x = None
+    for pi, xref in enumerate(path[::-1]):
+        x = Individual.query.filter_by(xref = xref).first()
+        out_dicts.append(x.as_dict())
+        if prev_x is None:
+            out_xrefs.append([None, xref])
+        else:
+            matching_fam_xref = None
+            neigh_ids = prev_x.neighboring_ids
+            print "Neigh ids:", neigh_ids
+            print "prev_x.xref:", prev_x.xref
+            for fam_xref, nei_xref in json.loads(neigh_ids):
+                if nei_xref == xref:
+                    matching_fam_xref = fam_xref
+                    break
+            if matching_fam_xref is None:
+                msg = u"Next xref {} not found among {}.".format(xref, prev_x.neighboring_ids)
+                print msg
+                return jsonify({
+                    "result": False,
+                    "xrefs": [],
+                    "exists": False,
+                    "message": msg,
+                    "error": msg,
+                })
+            else:
+                out_xrefs.append([matching_fam_xref, xref])
+        prev_x = x
+    out_xrefs = out_xrefs[::-1]
+    out_dicts = out_dicts[::-1]
+    return jsonify({
+        "result": True,
+        "xrefs": out_xrefs,
+        "inds": out_dicts,
+        "exists": True,
+        "component_id": -1,
+        "length": len(path),
+        "time": t.full_duration(),
+        "visited_count": -1,
     })
 
 @app.route("/json/celebrities/")

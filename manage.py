@@ -91,6 +91,11 @@ if command == "pre_dict":
     import main
     from main.populate import pre_dict
     pre_dict()
+if command == "neighboring_ids":
+    import main
+    from main.populate import neighboring_ids
+    neighboring_ids()
+
 
 if command == "write":
     import main

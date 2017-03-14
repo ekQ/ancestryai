@@ -112,17 +112,20 @@ class Individual(Base):
     # sub_family from Family
 
     loaded_gedcom = Column(UnicodeText)
+
+    def get_location(self):
+        location = {"lat": None, "lon": None, "type": "none", "name": None}
+        if self.village:
+            location = self.village.as_dict()
+        elif self.parish:
+            location = self.parish.as_dict()
+        return location
     def as_dict(self):
         if self.pre_dicted:
             d = json.loads(self.pre_dicted)
             # because at least currently this is calculated after the pre dicting
             d["component_id"] = self.component_id
             return d
-        location = {"lat": None, "lon": None, "type": "none"}
-        if self.village:
-            location = self.village.as_dict()
-        elif self.parish:
-            location = self.parish.as_dict()
         t0 = time.time()
         ret = {
             "xref": self.xref,
@@ -153,10 +156,10 @@ class Individual(Base):
                     "is_dad": x.is_dad,
                     # Newly added.
                     "birth_date_string": x.parent.birth_date_string,
-                    "parish": x.parent.location.name,
+                    "parish": x.parent.get_location()["name"],
                     "is_selected": x.is_selected,
                 } for x in self.parent_probabilities],
-            "location": location,
+            "location": self.get_location(),
         }
         #print "Dicting {} took {} seconds ({}, {}, {}).".format(self.xref, time.time()-t0, len(ret["sub_families"]), len(ret["sup_families"]), len(ret["parent_probabilities"]))
         return ret

@@ -235,16 +235,20 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
     t.measure("{} individuals added".format(count_individuals))
     if "edges" in sources:
         edge_inserts = []
+        prev_person = None
         for didx, d in enumerate(yield_data_dicts(sources["edges"], batch_idx=batch_idx,
                                                   num_batches=num_batches)):
+            person_id = xref2id[u(d["child"])]
+            is_selected = d.get('selected', person_id != prev_person)
             #pp = ParentProbability(
             edge_inserts.append(to_dict(
                     parent_id = xref2id[u(d["parent"])],
-                    person_id = xref2id[u(d["child"])],
+                    person_id = person_id,
                     probability = d["prob"],
                     is_dad = d["dad"],
-                    is_selected = d["selected"],
+                    is_selected = is_selected,
                     ))
+            prev_person = person_id
             #session.add(pp)
             if didx % BATCH_SIZE == 0:
                 print "\t{}\t({} edges processed.)".format(
@@ -335,7 +339,7 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
         count_families = i
     t.measure("{} families added".format(count_families))
     # Pre-compute dict representations for individuals and families.
-    pre_dict()
+    #pre_dict()
     t.measure("pre-dicted individuals and families")
     session.commit()
     t.measure("commit")
@@ -354,13 +358,14 @@ def yield_batch_limits(n, batch_size=1000):
 def pre_dict():
     from sqlalchemy.sql.expression import bindparam
 
-    pre_dict_batch = 100000
+    pre_dict_batch = 10000000
     n_inds = session.query(Individual).count()
     print "Pre-dicting {} individuals.".format(n_inds)
     stmt = Individual.__table__.update().\
         where(Individual.id == bindparam('_id')).\
         values({
             'pre_dicted': bindparam('pre_dicted'),
+            'neighboring_ids': bindparam('neighboring_ids'),
         })
     pre_dicts = []
     for batch_i, (lo, hi) in enumerate(yield_batch_limits(n_inds, pre_dict_batch)):
@@ -386,16 +391,23 @@ def pre_dict():
             ind_query = ind_query.options(joinedload(Individual.sup_families)).\
                                   options(joinedload(Individual.sub_families)).\
                                   options(joinedload(Individual.village)).\
-                                  options(joinedload(Individual.parish))#.\
+                                  options(joinedload(Individual.parish)).\
+                                  options(joinedload(Individual.parent_probabilities))
         inds = ind_query.all()
         print "  Querying {} individuals took {:.4f} seconds.".format(len(inds), time.time()-t0)
         sys.stdout.flush()
         t0 = time.time()
         for ii, ind in enumerate(inds):
-            #if ii % 1000 == 0:
-            #    print dt.datetime.now().isoformat()[:-7], ii
-            #    sys.stdout.flush()
-            pre_dicts.append({'pre_dicted': u(json.dumps(ind.as_dict())), '_id': ind.id})
+            if ii % 10000 == 0:
+                print dt.datetime.now().isoformat()[:-7], ii
+                sys.stdout.flush()
+            n_ids = []
+            for fam in ind.sub_families + ind.sup_families:
+                for ind2 in fam.parents + fam.children:
+                    n_ids.append([fam.xref, ind2.xref])
+            pre_dicts.append({'pre_dicted': u(json.dumps(ind.as_dict())),
+                              'neighboring_ids': u(json.dumps(n_ids)),
+                              '_id': ind.id})
         print "  Pre-dicting took {:.4f} seconds.".format(time.time()-t0)
         if len(pre_dicts) > 0:
             t0 = time.time()
@@ -470,6 +482,46 @@ def populate_component_ids():
     t.measure("commit")
     t.print_total()
 
+def neighboring_ids():
+    from sqlalchemy.sql.expression import bindparam
+
+    batch = 1000
+    n_inds = session.query(Individual).count()
+    print "Computing neighboring ids for {} individuals.".format(n_inds)
+    stmt = Individual.__table__.update().\
+        where(Individual.id == bindparam('_id')).\
+        values({
+            'neighboring_ids': bindparam('neighboring_ids'),
+        })
+    updates = []
+    for batch_i, (lo, hi) in enumerate(yield_batch_limits(n_inds, batch)):
+        print dt.datetime.now().isoformat()[:-7], "Batch from {} to {}".format(lo, hi-1)
+        sys.stdout.flush()
+        t0 = time.time()
+        if batch < n_inds:
+            ind_query = Individual.query.filter(and_(Individual.id >= lo, Individual.id < hi))
+            ind_query = ind_query.options(joinedload(Individual.sup_families)).\
+                                  options(joinedload(Individual.sub_families))
+        else:
+            ind_query = Individual.query
+            ind_query = ind_query.options(joinedload(Individual.sup_families)).\
+                                  options(joinedload(Individual.sub_families))
+        inds = ind_query.all()
+        print "  Querying {} individuals took {:.4f} seconds.".format(len(inds), time.time()-t0)
+        sys.stdout.flush()
+        t0 = time.time()
+        for ii, ind in enumerate(inds):
+            n_ids = []
+            for fam in ind.sub_families + ind.sup_families:
+                for ind2 in fam.parents + fam.children:
+                    n_ids.append([fam.xref, ind2.xref])
+            updates.append({'neighboring_ids': u(json.dumps(n_ids)), '_id': ind.id})
+        print "  Neighboring ids took {:.4f} seconds.".format(time.time()-t0)
+        if len(updates) > 0:
+            t0 = time.time()
+            engine.execute(stmt, updates)
+            updates = []
+            print "  Executing took {:.4f} seconds.".format(time.time()-t0)
 
 if __name__ == "__main__":
     pre_dict()
