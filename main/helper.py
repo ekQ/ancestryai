@@ -56,13 +56,26 @@ def normalize_name(name, is_first, name_dict=None):
             return name
 
 def get_family_xref(ind, neigh):
-    for fam in ind.sub_families:
-        for fam2 in neigh.sup_families:
-            if fam.id == fam2.id:
-                return fam.xref
+    print "Looking for a shared family."
+    sup_families1 = []
     for fam in ind.sup_families:
-        for fam2 in neigh.sub_families:
-            if fam.id == fam2.id:
-                return fam.xref
+        sup_families1.append(fam.xref)
+    sub_families2 = []
+    for fam in neigh.sub_families:
+        sub_families2.append(fam.xref)
+    for id1 in sup_families1:
+        for id2 in sub_families2:
+            if id1 == id2:
+                return id1
+    sup_families2 = []
+    for fam in neigh.sup_families:
+        sup_families2.append(fam.xref)
+    sub_families1 = []
+    for fam in ind.sub_families:
+        sub_families1.append(fam.xref)
+    for id1 in sup_families2:
+        for id2 in sub_families1:
+            if id1 == id2:
+                return id1
     print "Shared family not found for {} and {}.".format(ind.xref, neigh.xref)
     return False

@@ -275,14 +275,13 @@ def json_people_path(xref1, xref2):
             "exists": False,
             "message": "individuals in different components",
         })
-    path = map(str, path)
+    path = map(unicode, path)
     out_xrefs = []
     out_dicts = []
     prev_x = None
     for pi, xref in enumerate(path[::-1]):
-        x = Individual.query.filter_by(xref = xref).\
-                options(joinedload(Individual.sup_families)).\
-                options(joinedload(Individual.sub_families)).first()
+        x = Individual.query.filter_by(xref = xref).first()
+        #print "{} queried.".format(x.xref)
         out_dicts.append(x.as_dict())
         if prev_x is None:
             out_xrefs.append([None, xref])

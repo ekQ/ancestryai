@@ -3,7 +3,7 @@ import time
 
 print "Loading the graph..."
 t0 = time.time()
-nodes = {}#pickle.load(open('main/family_tree_inference/plain_graph3.pckl', 'rb'))
+nodes = pickle.load(open('main/family_tree_inference/plain_graph3.pckl', 'rb'))
 print "Loaded in {:.2f} seconds.".format(time.time() - t0)
 
 def search_path(xref1, xref2):
@@ -31,7 +31,7 @@ def search_path(xref1, xref2):
                 break
             buf.append(neigh)
             visited.add(neigh)
-    print "Path found:", path_found
+    #print "Path found:", path_found
     if not path_found:
         return False
 
@@ -111,7 +111,7 @@ def bidirectional_search_path(xref1, xref2):
         path.append(w)
         w=succ[w]
 
-    print "Found path:", path
+    #print "Found path:", path
     return path
 
 
