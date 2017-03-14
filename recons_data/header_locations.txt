@@ -1,0 +1,2 @@
+parishes:       parish_coords_with_names.json
+villages:       village_coords_with_names.json
