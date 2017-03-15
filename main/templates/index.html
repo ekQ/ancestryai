@@ -284,18 +284,18 @@
                         <form ng-submit="menu.do_pathsearch()">
                             <div>
                                 <label>
-                                    <span translate>From selected:</span>
+                                    <span translate>From:</span>
                                     <span class="search-result" ng-show="menu.Hiski.selected != null"
                                                 ng-click="menu.load(menu.Hiski.selected.xref)">
                                         {{ menu.Hiski.selected.name }}
                                     </span>
-                                    <span ng-show="menu.Hiski.selected == null" translate>Select someone</span>
+                                    <span ng-show="menu.Hiski.selected == null" translate>(Select source person on the map)</span>
                                 </label>
                                 <label><span translate>To:</span>
                                     <select class="path-search-mode" ng-model="menu.pathsearch_mode">
-                                        <option value="last-selection" translate>Last selection</option>
-                                        <option value="xref">xref</option>
                                         <option value="celebrity" ng-if="menu.Hiski.celebrity_nodes.length > 0" translate>Celebrity</option>
+                                        <option value="last-selection" translate>Last selection</option>
+                                        <option value="xref">HisKi ID</option>
                                     </select>
                                 </label>
                                 <label ng-show="menu.pathsearch_mode == 'celebrity'">

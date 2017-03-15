@@ -408,6 +408,7 @@ def pre_dict():
             engine.execute(stmt, pre_dicts)
             pre_dicts = []
             print "  Executing took {:.4f} seconds.".format(time.time()-t0)
+
     n_fams = session.query(Family).count()
     print "\nPre-dicting {} families.".format(n_fams)
     fam_query = Family.query

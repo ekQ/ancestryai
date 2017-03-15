@@ -52,9 +52,9 @@ translations.fi = {
 
     "Colour by relation": "Väritä suhteen mukaan",
     "Pathsearch": "Polkuhaku",
-    "From selected:": "Valitusta:",
-    "Select someone": "Valitse henkilö",
-    "To:": "Kohde:",
+    "From:": "Lähtöhenkilö:",
+    "(Select source person on the map)": "(Valitse lähtöhenkilö puunäkymästä)",
+    "To:": "Kohdehenkilö:",
     "Last selection": "Edellinen valinta",
     "Select nodes": "Valitse henkilöitä",
     "Parent probabilities": "Vanhempien todennäköisyydet",

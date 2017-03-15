@@ -112,7 +112,7 @@ app.controller("ItemViewMenuController", function($scope, $translate) {
         }];
         menu.search_state = "idle";
 
-        menu.pathsearch_mode = "last-selection";
+        menu.pathsearch_mode = "celebrity";
         menu.pathsearch_state = "idle";
         menu.pathsearch_xref = "";
         menu.pathsearch_time = "-";
