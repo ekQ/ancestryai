@@ -358,7 +358,7 @@ def yield_batch_limits(n, batch_size=1000):
 def pre_dict():
     from sqlalchemy.sql.expression import bindparam
 
-    pre_dict_batch = 10000
+    pre_dict_batch = 1000
     n_inds = session.query(Individual).count()
     print "Pre-dicting {} individuals.".format(n_inds)
     stmt = Individual.__table__.update().\
@@ -400,7 +400,7 @@ def pre_dict():
             if pre_dict_batch >= n_inds and ii % 10000 == 0:
                 print dt.datetime.now().isoformat()[:-7], ii
                 sys.stdout.flush()
-            pre_dicts.append({'pre_dicted': u(json.dumps(ind.as_dict())),
+            pre_dicts.append({'pre_dicted': u(json.dumps(ind.as_dict(recompute=True))),
                               '_id': ind.id})
         print "  Pre-dicting took {:.4f} seconds.".format(time.time()-t0)
         if len(pre_dicts) > 0:

@@ -2,6 +2,7 @@
 var translations = (typeof translations === "undefined") ? {} : translations;
 
 translations.fi = {
+    "Start": "Käynnistä",
     "Entry": "Alku",
     "Tree": "Puu",
     "Map": "Kartta",

@@ -42,6 +42,7 @@ translations.en = {
     "::other": "Other",
     "::invalid": "Invalid data",
     "::valid": "Valid data",
+    "Start": "Start",
     "Comment:": "Comment:",
     "Submit": "Submit",
     "Unknown": "Unknown",

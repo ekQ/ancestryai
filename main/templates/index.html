@@ -117,9 +117,10 @@
                                     <table class="search-result-table">
                                         <thead>
                                             <th translate>Name</th>
-                                            <th translate>Birth date</th>
-<!--                                           <th translate>Parish</th>
                                             <th translate>Probability</th>
+                                            <!--                                           
+                                            <th translate>Birth date</th>
+                                            <th translate>Parish</th>
                                             <th translate>Birthday</th>
                                             <th>HisKi</th>
                                             <th translate>Mother</th>
@@ -133,6 +134,12 @@
                                                 <td>
                                                     {{ p.name }}
                                                 </td>
+                                                <!--<td>
+                                                    {{ p.birth_date_string }}
+                                                </td>
+                                                <td>
+                                                    {{ p.parish }}
+                                                </td>-->
                                                 <td>
                                                     {{ p.prob * 100 | number:4 }} %
                                                 </td>

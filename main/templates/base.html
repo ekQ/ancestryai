@@ -83,7 +83,7 @@
                 {% raw %}
             </div>
             <ul class="topmenu">
-                <li><button ng-click="menu.go_to_app()">To app</button></li>
+                <li><button ng-click="menu.go_to_app()" translate>Start</button></li>
                 <ul class="right-end">
                     <li><button ng-click="menu.set_language('fi')" translate>Finnish</button></li>
                     <li><button ng-click="menu.set_language('en')" translate>English</button></li>
@@ -91,10 +91,16 @@
             </ul>
             <div class="explanation">
                 <div class="lang en" ng-if="menu.language == 'en'">
-                    Explanation
+                    More information coming soon...
                 </div>
                 <div class="lang fi" ng-if="menu.language == 'fi'">
-                    Selitys
+                    <p>AncestryAI on tekoälysovellus, joka muodostaa automaattisesti sukupuita ja mahdollistaa niiden visualisoinnin sekä hakemisen. Sovellus on kehitetty tukemaan sukututkijoiden tekemää työtä.</p>
+
+                    <h2>Käyttöohjeet</h2>
+                    <p>Puuta voi laajentaa klikkaamalla vaaleanvihreitä henkilöitä vasemmassa näkymässä. Tietoa-näkymä listaa henkilön todennäköisimmät vanhemmat, mikäli algoritmi on löytänyt sopivia henkilöitä. Näkymiä voi lisätä ja poistaa sivuilla olevista 'plus'- ja 'miinus'-palkeista, ja niiden kokoja voi säätää.</p>
+
+                    <h2>Yhteystiedot</h2>
+                    <p>Otan mielelläni vastaan palautetta osoitteeseen: eric.malmi@gmail.com</p>
                 </div>
                 <div ng-if="menu.Hiski.debug_mode">
                     <button title="and a tooltip for a button that does nothing">Does nothing</button>

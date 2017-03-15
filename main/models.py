@@ -120,8 +120,8 @@ class Individual(Base):
         elif self.parish:
             location = self.parish.as_dict()
         return location
-    def as_dict(self):
-        if self.pre_dicted:
+    def as_dict(self, recompute=False):
+        if self.pre_dicted and not recompute:
             d = json.loads(self.pre_dicted)
             # because at least currently this is calculated after the pre dicting
             d["component_id"] = self.component_id
