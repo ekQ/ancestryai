@@ -96,11 +96,64 @@
                 <div class="lang fi" ng-if="menu.language == 'fi'">
                     <p>AncestryAI on tekoälysovellus, joka muodostaa automaattisesti sukupuita ja mahdollistaa niiden visualisoinnin sekä hakemisen. Sovellus on kehitetty tukemaan sukututkijoiden tekemää työtä.</p>
 
-                    <h2>Käyttöohjeet</h2>
-                    <p>Puuta voi laajentaa klikkaamalla vaaleanvihreitä henkilöitä vasemmassa näkymässä. Tietoa-näkymä listaa henkilön todennäköisimmät vanhemmat, mikäli algoritmi on löytänyt sopivia henkilöitä. Näkymiä voi lisätä ja poistaa sivuilla olevista 'plus'- ja 'miinus'-palkeista, ja niiden kokoja voi säätää.</p>
+                    <h2>Tekniset vaatimukset</h2>
+                    <p>Tuettuja selaimia ovat Chrome ja Firefox. Internet Explorer -selaimella näkymät saattavat mennä toistensa päälle.</p>
 
-                    <h2>Yhteystiedot</h2>
-                    <p>Otan mielelläni vastaan palautetta osoitteeseen: eric.malmi@gmail.com</p>
+                    <h2>Aineisto</h2>
+                    <p>Ohjelma käsittelee <a href=http://hiski.genealogia.fi/hiskitalkoot/>HisKi</a>-aineiston noin 5 miljoonaa kastetapahtumaa. Kastetapahtumia löytyy 1600-luvun puolivälistä 1800-luvun puoliväliin ja osin 1900-luvun alkuun. Omien sukujuurten tutkimiseksi on näin ollen tarpeen tietää joku 1800-luvulla syntyneistä esivanhemmistaan. Huom! Tiedoissa esiintyy aukkoja ja virheitä.</p>
+
+                    <h2>Käyttöohjeet</h2>
+                    <p>Alkuun pääsee hakemalla haluamaansa henkilöä Haku-näkymässä (oikealla ylhäällä) ja klikkaamalla jotain hakutuloksista, jolloin henkilö ilmestyy Puu-näkymään (vasemmalla). Klikkaamalla henkilöä Puu-näkymässä avautuvat hänen mahdolliset lähisukulaisensa, minkä lisäksi hänen tietonsa ilmestyvät Tietoa-näkymään (oikealla alhaalla). Tietoa-näkymässä pääsee tarkastelemaan henkilön HisKistäkin löytyviä perustietoja, joiden lisäksi näkymä listaa henkilön automaattisesti päätellyt vanhemmat todennäköisyyksineen.</p>
+
+                    <p>Näkymiä voi lisätä ja poistaa sivuilla olevista 'plus'- ja 'miinus'-palkeista, minkä lisäksi niiden kokoja voi säätää raahaamalla välipalkkeja. Puu-näkymässä on mahdollista zoomata sisään ja ulos hiiren rullalla.</p>
+
+                    <p><b>Huom! Algoritmin päättelemiä linkkejä ei tule hyväksyä sellaisenaan</b>, vaan ne on syytä vahvistaa alkuperäisistä lähteistä sekä muista aineistoista kuten rippikirjoista. AncestryAI:n avulla tätä prosessia voidaan kuitenkaan nopeuttaa kohdentamalla sukulaisten etsintää todennäköisimpiin henkilöihin.</p>
+
+                    <h2>Alinäkymät</h2>
+
+                    <h3>Puu</h3>
+                    <p>Visualisoi pääteltyä sukupuuta siten, että henkilöiden y-koordinaatit perustuvat heidän syntymäaikaansa. Puuta voi laajentaa klikkaamalla henkilöä, jonka taustaväri on vaaleanvihreä.</p>
+                    <p>Puun kasvaessa näkymä menee helposti sekavaksi, minkä välttämiseksi puun haaroja on mahdollista sulkea klikkaamalla henkilöiden välissä olevia 'miinus'-palloja. Näkymän voi keskittää valittuun henkilöön 'Paikanna'-napista ylhäältä.</p>
+
+                    <h3>Haku</h3>
+                    <p>Mahdollistaa henkilöiden hakemisen. Hakua voi rajata lisäämällä hakuehtoja. Syntymävuosikenttään on mahdollista syöttää myös aikaväli, esimerkiksi: 1750-1760. Klikkaamalla hakutulosta henkilö ilmestyy Puu-näkymään.</p>
+
+                    <h3>Tietoa</h3>
+                    <p>Näyttää Puu-näkymässä valitun henkilön perustiedot. Lisäksi listaa algoritmin päättelemät ehdokkaat henkilön vanhemmiksi todennäköisyyksineen. Ehdokkaita voi avata Puu-näkymään klikkaamalla heidän nimiään.</p>
+
+                    <p>Puu-näkymä piirtää tyypillisesti henkilön todennäköisimmät vanhemmat, mutta tietyissä tapauksissa se valitsee jonkin pienemmän todennäköisyyden ehdokkaan. Tämä tapahtuu silloin, kun jollain vanhemmalla on lapsia usean lähes samannimisen puolison kanssa, jolloin ohjelma päättelee, että nämä ovat todennäköisesti sama henkilö.</p>
+
+                    <h3>Kommentteja</h3>
+                    <p>Mahdollistaa kommenttien jättämisen liittyen valittuun henkilöön. Kommentteja toivotaan sekä ohjelman päättelemistä oikeista että vääristä linkeistä, koska näiden tietojen perusteella menetelmää voidaan opettaa päättelemään linkit tarkemmin.</p>
+
+                    <p>Kommentit näkyvät myös muille käyttäjille, jotka valitsevat kyseisen henkilön. Nimi- ja email-kenttien täyttäminen on vapaaehtoista, ja sähköpostiosoite ei näy muille käyttäjille, vaan ainoastaan ohjelman ylläpitäjällä, joka voi tarvittaessa pyytää lisätietoja kommenttiin liittyen.</p>
+
+                    <h3>Polkuhaku</h3>
+                    <p>Etsii lyhimmän polun kahden henkilön välille auttaen löytämään sukulaisuussuhteita. Lähtöhenkilö valitaan klikkaamalla jotakuta Puu-näkymässä, ja kohdehenkilön voi valita esim. ohjelman listaamien tunnettujen suomalaisten joukosta tai syöttämällä jonkun toisen henkilön HisKi ID:n.</p>
+
+                    <p>Huom! Polun ollessa pitkä epävarmuudet kasaantuvat, eikä polku näin ollen todennäköisesti pidä paikkaansa kokonaisuudessaan.</p>
+
+                    <h3>Kartta</h3>
+                    <p>Esittää Puu-näkymän henkilöt kartalla värittäen valitun henkilön valkoisella. Kartalle näytetään lisäksi linkit valitun henkilön vanhempiin ja lapsiin (elleivät he ole syntyneet samassa paikassa). Seurakuntien ja kylien koordinaatit on päätelty <a href=http://users.ics.aalto.fi/gionis/geolocation.pdf>tässä</a> tutkimusartikkelissa kuvatulla menetelmällä perustuen Maanmittauslaitoksen aineistoon.</p>
+
+                    <h2>Tunnetut ongelmat</h2>
+                    <p>Alla listattuna joitain AncestryAI:n tunnettuja puutteita. Näiden lisäksi on olemassa paljon ohjelman käytettävyyteen liittyviä parannusehdotuksia, joita ei ole toistaiseksi kyetty toteuttamaan.</p>
+                    <ol>
+                      <li>Ohjelma ei linkitä sukunimettömiä henkilöitä.</li>
+                      <li>Ohjelma ei käsittele patronyymejä.</li>
+                      <li>Henkilöitä ei ole mahdollista piilottaa tai siirtää Puu-näkymässä.</li>
+                    </ol>
+
+                    <h2>Lähdekoodi</h2>
+                    <p>Sovelluksen lähdekoodi on saatavilla <a href=https://github.com/ekQ/ancestryai>GitHubissa</a>. Ulkopuolisia kontribuutioita otetaan mielellään vastaan - erityisesti liittyen käyttöliittymän parannuksiin.</p>
+
+                    <h2>Algoritmi</h2>
+                    <p>Ohjelma päättelee sukulaisuussuhteita perustuen henkilöiden nimiin sekä ikä- ja paikkatietoihin hyödyntäen tilastollista koneoppimista. Tarkempaa tietoa algoritmin toiminnasta tullaan lisäämään myöhemmin.</p>
+
+                    <h2>Tekijät</h2>
+                    <p>Tällä hetkellä AncestryAI:n ainoana kehittäjänä toimii <a href=>Eric Malmi</a>, jonka väitöskirjatutkimus käsittelee mm. sukupuiden päättelyä tiedonlouhinnan ja koneoppimisen keinoin. Web-sovelluksen on toteuttanut alunperin Marko Rasa.</p>
+
+                    <p>Palautetta sovelluksesta voi lähettää osoitteeseen: eric.malmi@gmail.com. Kehitysehdotukset ja rakentava kritiikki ovat tervetulleita, ja kuulen myös mielelläni, jos olet onnistunut löytämään AncestyAI:n avulla jonkun aiemmin tuntemattoman sukulaisesi.</p>
                 </div>
                 <div ng-if="menu.Hiski.debug_mode">
                     <button title="and a tooltip for a button that does nothing">Does nothing</button>
