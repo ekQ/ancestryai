@@ -14,6 +14,7 @@ translations.fi = {
     "Info": "Tietoa",
     "Name": "Nimi",
     "Birth date": "Synnyinpäivä",
+    "Date of baptism": "Kastepäivä",
     "Death date": "Kuolinpäivä",
     "Gender": "Sukupuoli",
     "Female": "Nainen",

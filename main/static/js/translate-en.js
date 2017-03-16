@@ -82,6 +82,7 @@ translations.en = {
     "Uncle": "Uncle",
     "HisKi ID": "HisKi ID",
     "Birthday": "Birthday",
+    "Date of baptism": "Date of baptism",
     "Mother": "Mother",
     "Mother name": "Mother name",
     "Father": "Father",
