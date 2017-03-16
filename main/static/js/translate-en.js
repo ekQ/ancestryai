@@ -25,6 +25,7 @@ translations.en = {
     "Toggle autoexpansion": "Toggle autoexpansion",
     "Testnote": "Testnote",
     "Locate": "Locate",
+    "Clear view": "Clear view",
     "Colour by family name": "Colour by family name",
     "Colour by Soundex": "Colour by Soundex",
     "Colour by sex": "Colour by sex",

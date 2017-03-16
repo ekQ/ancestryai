@@ -374,6 +374,7 @@ var Hiski = {
         */
         if(xref in this.node_dict) {
             if(!this.node_dict[xref].is_visible()) {
+                this.node_dict[xref].visible = true;
                 this.open_fold(this.node_dict[xref]);
             }
             return;
@@ -736,10 +737,21 @@ var Hiski = {
         this.calc_layout();
         render_all();
     },
+    hide_all: function() {
+            var fold_id = this.next_fold++;
+        for(var i = 0; i < this.nodes.length; i++) {
+            var node = this.nodes[i];
+            // TODO Make sure this is the right fold id to set.
+            node.fold = fold_id;
+            node.visible = false;
+        }
+        render_all();
+    },
     open_fold: function(node) {
         var fold = node.fold;
-        if(fold == 0)
+        if(fold == 0) {
             return;
+        }
         this.reset_node_visited();
         var buffer = [node];
         while(buffer.length > 0) {

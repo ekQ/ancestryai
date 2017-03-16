@@ -26,6 +26,7 @@ translations.fi = {
     "Toggle autoexpansion": "Automaattinen laajennus",
     "Testnote": "Testiviesti",
     "Locate": "Paikanna",
+    "Clear view": "Tyhjennä näkymä",
 
     "Colour by family name": "Väritä sukunimen mukaan",
     "Colour by Soundex": "Väritä Soundex koodin mukaan",
