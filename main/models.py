@@ -48,7 +48,7 @@ class Parish(Base):
     def as_dict(self):
         return {
             "type": "parish",
-            "name": self.name,
+            "parish_name": self.name,
             "id": self.id,
             "lat": self.lat,
             "lon": self.lon,
@@ -64,7 +64,8 @@ class Village(Base):
     def as_dict(self):
         return {
             "type": "village",
-            "name": self.name,
+            "village_name": self.name,
+            "parish_name": self.parish_name,
             "id": self.id,
             "lat": self.lat,
             "lon": self.lon,

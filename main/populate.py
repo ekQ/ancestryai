@@ -339,7 +339,7 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
         count_families = i
     t.measure("{} families added".format(count_families))
     # Pre-compute dict representations for individuals and families.
-    #pre_dict()
+    pre_dict()
     t.measure("pre-dicted individuals and families")
     session.commit()
     t.measure("commit")
@@ -358,7 +358,7 @@ def yield_batch_limits(n, batch_size=1000):
 def pre_dict():
     from sqlalchemy.sql.expression import bindparam
 
-    pre_dict_batch = 1000
+    pre_dict_batch = 10000000
     n_inds = session.query(Individual).count()
     print "Pre-dicting {} individuals.".format(n_inds)
     stmt = Individual.__table__.update().\
@@ -412,6 +412,8 @@ def pre_dict():
     n_fams = session.query(Family).count()
     print "\nPre-dicting {} families.".format(n_fams)
     fam_query = Family.query
+    fam_query = fam_query.options(joinedload(Family.parents))\
+                         .options(joinedload(Family.children))
     stmt = Family.__table__.update().\
         where(Family.id == bindparam('_id')).\
         values({
