@@ -179,33 +179,46 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
         with open(sources["villages"]) as f:
             data = json.load(f)
             for d in data:
+                d.pop("parish_name", None)
                 village = Village(**d)
                 session.add(village)
             count_villages = len(data)
     session.commit()
     t.measure("{} villages added".format(count_villages))
+    celebrities = set()
+    if "celebrities" in sources:
+        with open(sources["celebrities"]) as fceleb:
+            for line in fceleb:
+                parts = line.split()
+                if len(parts) > 0:
+                    celeb_xref = u(parts[0].strip())
+                    if not celeb_xref.startswith('#'):
+                        celebrities.add(celeb_xref)
+    t.measure("{} celebrities cached.".format(len(celebrities)))
     if "individuals" in sources:
         count_individuals = 0
         ind_inserts = []
         for didx, d in enumerate(yield_data_dicts(sources["individuals"], batch_idx=batch_idx,
                                                   num_batches=num_batches)):
-            #ind = Individual(
             ind_inserts.append(to_dict(
                     xref = u(d["hiski_id"]),
                     name_first = u(d["first_name"]),
                     name_family = u(d["last_name"]),
                     name = u"{} {}".format(u(d["first_name"]), u(d["last_name"])).strip(),
                     normalized_name_first = u(d["normalized_first_name"]),
-                    normalized_name_family = u(d["normalized_last_name"]),
+                    normalized_name_family = u(d["normalized_dad_last_name"]),
                     dad_first = u(d["dad_first_name"]),
                     dad_family = u(d["dad_last_name"]),
                     dad_patronym = u(d["dad_patronym"]),
+                    normalized_dad_first = u(d["normalized_dad_first_name"]),
                     mom_first = u(d["mom_first_name"]),
                     mom_family = u(d["mom_last_name"]),
                     mom_patronym = u(d["mom_patronym"]),
+                    normalized_mom_first = u(d["normalized_mom_first_name"]),
+                    normalized_mom_family = u(d["normalized_mom_last_name"]),
                     tag = u"INDI",
                     sex = u"?",
-                    is_celebrity = d.get("is_celebrity", False),
+                    is_celebrity = d["hiski_id"] in celebrities or d.get("is_celebrity", False),
                     birth_date_string = u"{}.{}.{}".format(d["day"], d["month"], d["year"]),
                     birth_date_year = d["year"],
                     death_date_string = None,
@@ -216,13 +229,11 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
                     village_id = d["village_id"],
                     parish_id = d["parish_id"],
                     ))
-            #session.add(ind)
             count_individuals += 1
             if didx % BATCH_SIZE == 0:
                 print "\t{}\t(villages and parishes linked for {} individuals.)".format(
                         dt.datetime.now().isoformat()[:-7], didx)
                 sys.stdout.flush()
-                #session.flush()
                 engine.execute(Individual.__table__.insert(), ind_inserts)
                 ind_inserts = []
         engine.execute(Individual.__table__.insert(), ind_inserts)
@@ -231,7 +242,6 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
     xref2id = {}
     for id, xref in Individual.query.with_entities(Individual.id, Individual.xref).all():
         xref2id[xref] = id
-    #session.commit()
     t.measure("{} individuals added".format(count_individuals))
     if "edges" in sources:
         edge_inserts = []
@@ -411,9 +421,6 @@ def pre_dict():
 
     n_fams = session.query(Family).count()
     print "\nPre-dicting {} families.".format(n_fams)
-    fam_query = Family.query
-    fam_query = fam_query.options(joinedload(Family.parents))\
-                         .options(joinedload(Family.children))
     stmt = Family.__table__.update().\
         where(Family.id == bindparam('_id')).\
         values({
@@ -423,12 +430,22 @@ def pre_dict():
     for batch_i, (lo, hi) in enumerate(yield_batch_limits(n_fams, pre_dict_batch)):
         print dt.datetime.now().isoformat()[:-7], "Batch from {} to {}".format(lo, hi-1)
         sys.stdout.flush()
-        if n_fams <= pre_dict_batch:
-            for ii, fam in enumerate(fam_query.all()):
-                pre_dicts.append({'pre_dicted': u(json.dumps(fam.as_dict())), '_id': fam.id})
-        else:
-            for ii, fam in enumerate(fam_query.filter(and_(Family.id >= lo, Family.id < hi)).all()):
-                pre_dicts.append({'pre_dicted': u(json.dumps(fam.as_dict())), '_id': fam.id})
+        fam_query = Family.query
+        fam_query = fam_query.options(joinedload(Family.parents))\
+                             .options(joinedload(Family.children))
+        if n_fams > pre_dict_batch:
+            fam_query = fam_query.filter(and_(Family.id >= lo, Family.id < hi))
+        t0 = time.time()
+        fams = fam_query.all()
+        print "  Querying {} families took {:.4f} seconds.".format(len(fams), time.time()-t0)
+
+        t0 = time.time()
+        for ii, fam in enumerate(fam_query.all()):
+            if pre_dict_batch >= n_fams and ii % 10000 == 0:
+                print dt.datetime.now().isoformat()[:-7], ii
+                sys.stdout.flush()
+            pre_dicts.append({'pre_dicted': u(json.dumps(fam.as_dict())), '_id': fam.id})
+        print "  Pre-dicting took {:.4f} seconds.".format(time.time()-t0)
 
         if len(pre_dicts) > 0:
             engine.execute(stmt, pre_dicts)

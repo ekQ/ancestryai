@@ -48,7 +48,7 @@ class Parish(Base):
     def as_dict(self):
         return {
             "type": "parish",
-            "parish_name": self.name,
+            "name": self.name,
             "id": self.id,
             "lat": self.lat,
             "lon": self.lon,
@@ -58,14 +58,12 @@ class Village(Base):
     __tablename__ = "village"
     id = Column(Integer, primary_key=True)
     name = Column(Unicode(256))
-    parish_name = Column(Unicode(256))
     lat = Column(Float)
     lon = Column(Float)
     def as_dict(self):
         return {
             "type": "village",
-            "village_name": self.name,
-            "parish_name": self.parish_name,
+            "name": self.name,
             "id": self.id,
             "lat": self.lat,
             "lon": self.lon,
@@ -81,6 +79,9 @@ class Individual(Base):
     name_family = Column(Unicode(128))
     normalized_name_first = Column(Unicode(128), index=True)
     normalized_name_family = Column(Unicode(128), index=True)
+    normalized_dad_first = Column(Unicode(128), index=True)
+    normalized_mom_first = Column(Unicode(128), index=True)
+    normalized_mom_family = Column(Unicode(128), index=True)
     dad_first = Column(Unicode(128))
     dad_family = Column(Unicode(128))
     dad_patronym = Column(Unicode(64))
@@ -115,11 +116,19 @@ class Individual(Base):
     loaded_gedcom = Column(UnicodeText)
 
     def get_location(self):
-        location = {"lat": None, "lon": None, "type": "none", "name": None}
+        location = {"lat": None, "lon": None, "type": "none",
+                    "parish_name": None, "village_name": None}
+        if self.parish:
+            location['lat'] = self.parish.lat
+            location['lon'] = self.parish.lon
+            location['type'] = 'parish'
+            location['parish_name'] = self.parish.name
         if self.village:
-            location = self.village.as_dict()
-        elif self.parish:
-            location = self.parish.as_dict()
+            # Overwrite parish coords and type.
+            location['lat'] = self.village.lat
+            location['lon'] = self.village.lon
+            location['type'] = 'village'
+            location['village_name'] = self.village.name
         return location
     def as_dict(self, recompute=False):
         if self.pre_dicted and not recompute:
@@ -128,6 +137,17 @@ class Individual(Base):
             d["component_id"] = self.component_id
             return d
         t0 = time.time()
+	parent_probs = [{
+            "xref": x.parent.xref,
+            "name": x.parent.name,
+            "prob": x.probability,
+            "is_dad": x.is_dad,
+            # Newly added.
+            "birth_date_string": x.parent.birth_date_string,
+            "parish": x.parent.get_location()["parish_name"],
+            "is_selected": x.is_selected,
+            } for x in self.parent_probabilities]
+        parent_probs.sort(key=lambda x: x['prob'], reverse=True)
         ret = {
             "xref": self.xref,
             "name": self.name,
@@ -150,16 +170,7 @@ class Individual(Base):
             "sub_families": [x.xref for x in self.sub_families],
             "sup_families": [x.xref for x in self.sup_families],
             "soundex_family": self.soundex_family,
-            "parent_probabilities": [{
-                    "xref": x.parent.xref,
-                    "name": x.parent.name,
-                    "prob": x.probability,
-                    "is_dad": x.is_dad,
-                    # Newly added.
-                    "birth_date_string": x.parent.birth_date_string,
-                    "parish": x.parent.get_location()["name"],
-                    "is_selected": x.is_selected,
-                } for x in self.parent_probabilities],
+            "parent_probabilities": parent_probs,
             "location": self.get_location(),
         }
         #print "Dicting {} took {} seconds ({}, {}, {}).".format(self.xref, time.time()-t0, len(ret["sub_families"]), len(ret["sup_families"]), len(ret["parent_probabilities"]))
