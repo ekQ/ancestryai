@@ -91,7 +91,38 @@
             </ul>
             <div class="explanation">
                 <div class="lang en" ng-if="menu.language == 'en'">
-                    More information coming soon...
+                    <p>AncestryAI is an application which uses machine learning to infer family trees and enables visualizing and searching the inferred trees. It has been developed to support genealogical research.</p>
+
+                    <h2>Technical requirements</h2>
+                    <p>Only Chrome and Firefox browsers are currently supported.</p>
+
+                    <h2>Material</h2>
+                    <p>The family trees are inferred from about 5 million birth records from Finland collected by the <a href=http://hiski.genealogia.fi/historia/en/ohjeet.htm>HisKi</a> project. The records cover years from the mid-1600's to mid-1800's and partly to the early 20th century. The coverage of the records was originally close to full, but the digitized material covers only parts of the complete dataset (some material is not digitized yet, and some is lost).</p>
+
+                    <h2>Usage instructions</h2>
+                    <p>You can start by searching for an individual in the upper-right panel and clicking one of the search results which opens the person in the Tree view (on the left). Clicking a person in the Tree view opens his or her family and brings the person's information to the Info view (lower-right). The Info view also displays the most probable parents of the selected person.</p>
+
+                    <p>You can add and remove sub views from the plus and minus bars next to the borders and adjust their sizes from the middle bars. The tree view can be zoomed in and out using the mouse wheel.</p>
+
+                    <p><b>NB: When building your family tree, you should verify the links inferred by the algorithm by studying the original parish records.</b> However, with AncestryAI the process can be made more efficient since you can start from the most probable parent candidates.</p>
+
+                    <h2>Known issues</h2>
+                    <ol>
+                      <li>Individuals without a family name are currently not linked.</li>
+                      <li>The algorithm doesn't consider patronyms.</li>
+                      <li>Nodes in the Tree view cannot be moved.</li>
+                    </ol>
+
+                    <h2>Source code</h2>
+                    <p>The source code is available on <a href=https://github.com/ekQ/ancestryai>GitHub</a> under the MIT Licence. Contributions are welcome.</p>
+
+                    <h2>Algorithm</h2>
+                    <p>The family links are inferred based on the names, birth dates, and birth locations of the individuals using a probabilistic machine-learning approach. For more information, see our paper <a href=https://users.aalto.fi/~emalmi/ancestryai_www.pdf>AncestryAI: A Tool for Exploring Computationally Inferred Family Trees</a>.</p>
+
+                    <h2>Creators</h2>
+                    <p>AncestryAI is maintained by <a href=https://users.ics.aalto.fi/emalmi/>Eric Malmi</a>, who is developing collective entity resolution methods for genealogical data in his PhD project. The web application has been originally implemented by Marko Rasa.</p>
+
+                    <p>All feedback is welcome at: eric.malmi@aalto.fi</p>
                 </div>
                 <div class="lang fi" ng-if="menu.language == 'fi'">
                     <p>AncestryAI on tekoälysovellus, joka muodostaa automaattisesti sukupuita ja mahdollistaa niiden visualisoinnin sekä hakemisen. Sovellus on kehitetty tukemaan sukututkijoiden tekemää työtä.</p>
@@ -141,14 +172,14 @@
                     <ol>
                       <li>Ohjelma ei linkitä sukunimettömiä henkilöitä.</li>
                       <li>Ohjelma ei käsittele patronyymejä.</li>
-                      <li>Henkilöitä ei ole mahdollista piilottaa tai siirtää Puu-näkymässä.</li>
+                      <li>Henkilöitä ei ole mahdollista siirtää Puu-näkymässä.</li>
                     </ol>
 
                     <h2>Lähdekoodi</h2>
                     <p>Sovelluksen lähdekoodi on saatavilla <a href=https://github.com/ekQ/ancestryai>GitHubissa</a>. Ulkopuolisia kontribuutioita otetaan mielellään vastaan - erityisesti liittyen käyttöliittymän parannuksiin.</p>
 
                     <h2>Algoritmi</h2>
-                    <p>Ohjelma päättelee sukulaisuussuhteita perustuen henkilöiden nimiin sekä ikä- ja paikkatietoihin hyödyntäen tilastollista koneoppimista. Tarkempaa tietoa algoritmin toiminnasta tullaan lisäämään myöhemmin.</p>
+                    <p>Ohjelma päättelee sukulaisuussuhteita perustuen henkilöiden nimiin sekä ikä- ja paikkatietoihin hyödyntäen tilastollista koneoppimista. Tarkempaa tietoa algoritmin toiminnasta löytyy artikkelista <a href=https://users.aalto.fi/~emalmi/ancestryai_www.pdf>AncestryAI: A Tool for Exploring Computationally Inferred Family Trees</a>.</p>
 
                     <h2>Tekijät</h2>
                     <p>Tällä hetkellä AncestryAI:n ainoana kehittäjänä toimii <a href=https://users.ics.aalto.fi/emalmi/>Eric Malmi</a>, jonka väitöskirjatutkimus käsittelee mm. sukupuiden päättelyä tiedonlouhinnan ja koneoppimisen keinoin. Web-sovelluksen on toteuttanut alunperin Marko Rasa.</p>
