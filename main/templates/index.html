@@ -61,7 +61,7 @@
                             <dt translate>Date of baptism</dt>
                                 <dd>{{ menu.Hiski.selected.data.birth_date_string || "--" }}</dd>
                             <dt translate>Parish</dt>
-                                <dd>{{ menu.Hiski.selected.data.location.name || "--" }}</dd>
+                                <dd>{{ menu.Hiski.selected.data.location.parish_name || "--" }}</dd>
                             <dt translate>Father name</dt>
                                 <dd>{{ menu.Hiski.selected.data.dad_first || "--" }} {{ menu.Hiski.selected.data.dad_patronym || ""}}
                                     {{ menu.Hiski.selected.data.dad_family || ""}}
@@ -118,7 +118,7 @@
                             </table>
                             -->
                             <dt translate>Father probabilities</dt>
-                                <dd>
+                                <!--<dd>-->
                                     <table class="search-result-table">
                                         <thead>
                                             <th></th>
@@ -157,13 +157,13 @@
                                             </tr>
                                         </tbody>
                                     </table>
-                                </dd>
+                                <!--</dd>-->
                             <dt translate>Mother name</dt>
                                 <dd>{{ menu.Hiski.selected.data.mom_first || "--" }} {{ menu.Hiski.selected.data.mom_patronym || ""}}
                                     {{ menu.Hiski.selected.data.mom_family || ""}}
                                 </dd>
                             <dt translate>Mother probabilities</dt>
-                                <dd>
+                                <!--<dd>-->
                                     <table class="search-result-table">
                                         <thead>
                                             <th></th>
@@ -201,7 +201,7 @@
                                             </tr>
                                         </tbody>
                                     </table>
-                                </dd>
+                                <!--</dd>-->
                         </dl>
                         <button ng-click="menu.Hiski.toggle_hide_selected()" ng-if="menu.Hiski.selected !== null" translate>
                             Hide descendants
@@ -261,7 +261,7 @@
                                     <input ng-if="triplet.search_type != 'parish'" type="text" ng-model="triplet.search_term"></input>
                                     <select ng-if="triplet.search_type == 'parish'" ng-model="triplet.search_term">
                                         <option ng-repeat="parish in menu.Hiski.parishes" value="{{parish.id}}">
-                                            {{ parish.parish_name || parish.id }}
+                                            {{ parish.name || parish.id }}
                                         </option>
                                     </select>
                                 </div>
@@ -282,8 +282,10 @@
                                         <th translate>Date of baptism</th>
 										<th translate>Parish</th>
                                         <th>HisKi ID</th>
+                                        <!--
                                         <th translate>Father name</th>
                                         <th translate>Mother name</th>
+                                        -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -298,19 +300,21 @@
                                             {{ ind.birth_date_string }}
                                         </td>
                                         <td>
-                                            {{ ind.location.name }}
+                                                {{ ind.location.parish_name }}
                                         </td>
                                         <td>
                                             <a class="external" target="_blank" ng-href="http://hiski.genealogia.fi/hiski?{{ menu.Hiski.external_hiski_language }}+t{{ ind.xref }}">
                                                 {{ ind.xref }}
                                             </a>
                                         </td>
+                                        <!--
                                         <td>
 											{{ ind.dad_first }} {{ ind.dad_patronym }} {{ ind.dad_family }}
                                         </td>
                                         <td>
 											{{ ind.mom_first }} {{ ind.mom_family }} {{ ind.mom_patronym }}
                                         </td>
+                                        -->
                                     </tr>
                                 </tbody>
                             </table>

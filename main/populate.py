@@ -218,7 +218,7 @@ def populate_from_recons(fname, batch_idx=None, num_batches=None):
                     normalized_mom_family = u(d["normalized_mom_last_name"]),
                     tag = u"INDI",
                     sex = u"?",
-                    is_celebrity = d["hiski_id"] in celebrities or d.get("is_celebrity", False),
+                    is_celebrity = u(d["hiski_id"]) in celebrities or d.get("is_celebrity", False),
                     birth_date_string = u"{}.{}.{}".format(d["day"], d["month"], d["year"]),
                     birth_date_year = d["year"],
                     death_date_string = None,
