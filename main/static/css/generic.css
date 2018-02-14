@@ -137,6 +137,7 @@ div#map {
     -webkit-flex-direction: row;
     flex-direction: row;
     background: #ffcccc;
+    overflow: scroll;
 }
 .inner-column-container {
     -webkit-flex-grow: 1;
